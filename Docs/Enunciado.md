@@ -1,15 +1,15 @@
-# Proyecto QuindioFlix: Especificaciones y Requerimientos
+# Proyecto MinFlix: Especificaciones y Requerimientos
 
 ## 1. Descripción del Proyecto
 
-**QuindioFlix** es una plataforma de streaming de contenido multimedia con operaciones en Colombia. La empresa requiere un sistema de bases de datos robusto que soporte integralmente su modelo de negocio. A continuación, se detallan las operaciones y reglas de negocio, a partir de las cuales se deberán identificar las entidades, relaciones y restricciones necesarias para el modelado de datos.
+**MinFlix** es una plataforma de streaming de contenido multimedia con operaciones en Colombia. La empresa requiere un sistema de bases de datos robusto que soporte integralmente su modelo de negocio. A continuación, se detallan las operaciones y reglas de negocio, a partir de las cuales se deberán identificar las entidades, relaciones y restricciones necesarias para el modelado de datos.
 
 ### 1.1 Gestión del Contenido
 La plataforma ofrece un catálogo diverso que incluye películas, series, documentales, música y podcasts. 
 
 **Atributos generales del contenido:**
 - Título, año de lanzamiento, duración, sinopsis, clasificación por edad (TP, +7, +13, +16, +18) y fecha de adición al catálogo.
-- Indicador de exclusividad (producciones originales de QuindioFlix).
+- Indicador de exclusividad (producciones originales de MinFlix).
 
 **Clasificación y Organización:**
 - **Géneros:** Un contenido puede asociarse a múltiples géneros simultáneamente (e.g., Acción, Comedia, Drama, Suspenso, Romance, Ciencia Ficción, Terror, Documental, Infantil, Musical, entre otros).
@@ -45,7 +45,7 @@ El registro de usuarios requiere la recolección de datos personales (nombre, em
 - **Moderación:** Los usuarios pueden reportar contenido inapropiado. Los moderadores (usuarios con privilegios especiales) se encargan de revisar y resolver estos reportes.
 
 ### 1.4 Organización del Equipo de Trabajo
-Los empleados de QuindioFlix se estructuran en diferentes departamentos: Tecnología, Contenido, Marketing, Soporte y Finanzas.
+Los empleados de MinFlix se estructuran en diferentes departamentos: Tecnología, Contenido, Marketing, Soporte y Finanzas.
 
 **Jerarquía y Responsabilidades:**
 - Cada departamento cuenta con un jefe interno.

@@ -1,6 +1,6 @@
-# Épicas del Proyecto QuindioFlix (Formato INVEST)
+# Épicas del Proyecto MinFlix (Formato INVEST)
 
-Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sistema QuindioFlix. Se rigen bajo la metodología **INVEST** (Independent, Negotiable, Valuable, Estimable, Small/Sized appropriately, Testable).
+Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sistema MinFlix. Se rigen bajo la metodología **INVEST** (Independent, Negotiable, Valuable, Estimable, Small/Sized appropriately, Testable).
 
 ---
 
@@ -8,7 +8,7 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 **Descripción:** Como empleado de Contenido, quiero poder registrar, estructurar y catalogar el contenido multimedia (películas, series, documentales, música y podcasts), para que la plataforma pueda ofrecer catálogo diverso y bien organizado a sus usuarios.
 - **Independent (Independiente):** La gestión de catálogo no depende directamente de los pagos ni de la creación de los clientes. Creada la base, todas las plataformas la consultarán.
 - **Negotiable (Negociable):** Los campos adicionales o tipos de categorización (géneros extras) pueden ajustarse, así como el nivel de profundidad de los spin-offs en un inicio.
-- **Valuable (Valiosa):** Es el corazón o 'Core' de QuindioFlix. Sin catálogo estructurado, no hay producto que ofrecer. 
+- **Valuable (Valiosa):** Es el corazón o 'Core' de MinFlix. Sin catálogo estructurado, no hay producto que ofrecer.
 - **Estimable (Estimable):** Las restricciones de jerarquía (Serie -> Temporada -> Episodio), películas unitarias, restricciones exclusivas y géneros múltiples son claramente medibles y modelables.
 - **Small (Dimensionada correctamente):** La épica se enfoca en el puro almacenamiento del catálogo, dejando reproducciones y búsquedas por fuera. Es lo suficientemente contenida para iterar sobre su modelo relacional.
 - **Testable (Comprobable):** Se puede probar verificando que un empleado de contenido tenga flujos válidos de inserción (CRUD de catálogo) y limitando que las películas no admitan temporadas temporalmente.
@@ -60,7 +60,7 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 ---
 
 ## Épica 6: Analítica y Tomas de Decisiones Directivas e Inteligencia Empresarial
-**Descripción:** Como plana ejecutiva de QuindioFlix, requiero consultas pesadas dimensionales paramétricas y vistas materializadas cruzadas de facturación y reproducción; para detectar oportunidades accionables y direccionar el rumbo operacional de la base de datos empresarial.
+**Descripción:** Como plana ejecutiva de MinFlix, requiero consultas pesadas dimensionales paramétricas y vistas materializadas cruzadas de facturación y reproducción; para detectar oportunidades accionables y direccionar el rumbo operacional de la base de datos empresarial.
 - **Independent:** No crea lógicas transaccionales; tan solo interroga y pre-calcula los inputs procesados de las otras Épicas. Nula intromisión en el core streaming.
 - **Negotiable:** Qué agrupamientos CUBE o PIVOT entregar se pueden recalibrar si finanzas solicita otros criterios pivotales base.
 - **Valuable:** Provee conocimiento masivo (Reports analíticos de ingresos y visionados para mercadeo). 
