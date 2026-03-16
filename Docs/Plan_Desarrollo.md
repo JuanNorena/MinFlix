@@ -1,6 +1,6 @@
-# Plan de Desarrollo del Proyecto QuindioFlix
+# Plan de Desarrollo del Proyecto MinFlix
 
-Este plan de desarrollo detalla el paso a paso para la construcción de la base de datos de QuindioFlix, basándose en los requerimientos (enunciado) y las épicas definidas. El plan está diseñado para ejecutarse de manera iterativa e incremental, organizado en fases (Sprints) que se alinean con los núcleos temáticos y el cronograma sugerido.
+Este plan de desarrollo detalla el paso a paso para la construcción de la base de datos de MinFlix, basándose en los requerimientos (enunciado) y las épicas definidas. El plan está diseñado para ejecutarse de manera iterativa e incremental, organizado en fases (Sprints) que se alinean con los núcleos temáticos y el cronograma sugerido.
 
 ---
 
