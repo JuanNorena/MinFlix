@@ -1,122 +1,205 @@
 # Plan de Desarrollo del Proyecto MinFlix
 
-Este plan de desarrollo detalla el paso a paso para la construcción de la base de datos de MinFlix, basándose en los requerimientos (enunciado) y las épicas definidas. El plan está diseñado para ejecutarse de manera iterativa e incremental, organizado en fases (Sprints) que se alinean con los núcleos temáticos y el cronograma sugerido.
+Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura full stack. La planeacion conecta el enunciado academico, las epicas INVEST y la implementacion real en Oracle, backend NestJS y frontend React.
 
----
+## 1. Objetivo del Plan
+1. Traducir las epicas a entregables tecnicos medibles.
+2. Separar claramente responsabilidades entre base de datos, backend y frontend.
+3. Definir un orden de implementacion que permita demostrar avance por iteraciones.
+4. Garantizar trazabilidad con los nucleos del curso y evidencias de evaluacion.
 
-## Fase 1: Análisis y Modelado Conceptual (Semanas 1-2)
-**Objetivo:** Comprender el negocio y diseñar la estructura lógica de los datos.
-**Épicas involucradas:** Épica 1, Épica 2, Épica 4, Parte de la Épica 5.
+## 2. Arquitectura y Stack Confirmado
 
-**Pasos detallados:**
-1. **Definición del Documento de Negocio:**
-   - Identificar a los actores principales (Usuario, Moderador, Empleado de Contenido, Empleado de Soporte, Finanzas).
-   - Documentar los procesos estrella: Gestión de Catálogo, Registro de Clientes, Ciclo de Facturación.
-   - Definir al menos 10 reglas de negocio (ej. Límite de vistas infantiles a clasificaciones TP, +7, +13; Límite de perfiles según plan).
-   - Establecer restricciones de dominio (ej. estrellas entre 1 y 5).
-2. **Diseño del Modelo Entidad-Relación (MER):**
-   - Modelar entidades maestras: `Planes`, `Usuarios`, `Perfiles`, `Categorías`, `Géneros`, `Contenido`, `Empleados`, `Departamentos`.
-   - Modelar entidades transaccionales e intermedias: `Reproducciones`, `Calificaciones`, `Pagos`, `Favoritos`, `Contenidos_Relacionados` (reflexiva), `Reportes`.
-   - Validar relaciones "Supervisores" (jerarquía reflexiva en Empleados).
-   - Normalizar el modelo hasta la 3FN, garantizando eficiencia para consultas.
-3. **Revisión Continua:** Validar el MER con las reglas del documento de negocio antes de pasar a su implementación física.
+### 2.1 Capa de Base de Datos (Oracle)
+1. Motor: Oracle Database.
+2. Lenguajes: SQL y PL/SQL.
+3. Componentes tecnicos obligatorios: tablas, restricciones, triggers, procedimientos, funciones, roles, indices, vistas materializadas y transacciones.
 
----
+### 2.2 Capa Backend
+1. Runtime y framework: Node.js + NestJS + TypeScript.
+2. Persistencia: TypeORM + oracledb.
+3. Seguridad: Passport.js con estrategia local y JWT.
+4. Infraestructura API: Swagger, ValidationPipe, ConfigModule, helmet, compression, nestjs-pino.
+5. Calidad: ESLint, Prettier, eslint-plugin-tsdoc, TypeDoc, Husky, lint-staged, Jest.
 
-## Fase 2: Implementación Estructural y Población de Datos (Semanas 3-4)
-**Objetivo:** Llevar el modelo de diseño al gestor Oracle y cargar información transaccional asimétrica.
+### 2.3 Capa Frontend
+1. Framework: React + TypeScript + Vite.
+2. UI y UX: Tailwind CSS v4, framer-motion, lucide-react.
+3. Datos y formularios: React Query, Axios, React Hook Form, Zod.
+4. Navegacion: react-router-dom.
+5. Calidad: ESLint, eslint-plugin-tsdoc, TypeDoc, Vitest, Testing Library, Husky, lint-staged.
 
-**Pasos detallados:**
-1. **Script DDL (Creación de Tablas):**
-   - Escribir en SQL los `CREATE TABLE` aplicando restricciones de Primary Key, Foreign Key y Checks (ej. check de estado `exitoso, fallido, pendiente, reembolsado` en Pagos).
-   - Ejecutar la fragmentación/particionamiento solicitada en la tabla `REPRODUCCIONES` y ubicarla en distintos tablespaces o datafiles.
-   - Documentar con comandos `COMMENT` todas las tablas y columnas creadas.
-2. **Script DML (Datos de Prueba):**
-   - Insertar la data base y transaccional masiva (mínimos exigidos: 30 usuarios, 200 reproducciones, 80 pagos, etc.).
-   - Asegurarse de mantener asimetría: diferentes distribuciones de planes, cruces desiguales para que el análisis de consultas matriciales evidencie discrepancias (no todos los usuarios en el mismo plan ni de la misma ciudad).
+## 3. Principios Tecnicos de Gobierno
+1. Todo componente publico se documenta con TSDoc en espanol.
+2. Todo endpoint nuevo debe estar documentado en Swagger.
+3. Toda regla critica de negocio debe implementarse tambien en Oracle (no solo en el backend).
+4. Todo modulo funcional debe quedar mapeado a una epica INVEST.
+5. La autenticacion de inicio de sesion es obligatoriamente con Passport.js.
 
----
+## 4. Plan de Trabajo Paso a Paso
 
-## Fase 3: Análisis Descriptivo y Consultas Avanzadas (Semana 5-6)
-**Objetivo:** Dar soporte al núcleo de toma de decisiones e inteligencia empresarial de la gerencia.
-**Épica involucrada:** Épica 6.
+### Fase 0. Diagnostico y Preparacion (Semana 0)
+1. Validar alcance funcional completo desde el enunciado.
+2. Confirmar separacion de repositorios: minflix-backend y minflix-frontend.
+3. Definir convensiones de carpetas, nombres y scripts de calidad.
+4. Aprobar matriz de trazabilidad Epica -> Modulo -> Entregable.
 
-**Pasos detallados:**
-1. **Construcción de tableros de control paramétricos:**
-   - Utilizar scripts que usen variables `&`, `&&` y `DEFINE` sobre contenido top, ingresos segmentados, etc.
-2. **Matrices de cruce complejo (PIVOT y UNPIVOT):**
-   - Crear el reporte pivoteado 1: Ciudades como filas vs. Planes en columnas (Cantidad usuarios activos).
-   - Crear el reporte pivoteado 2: Categorías vs. Dispositivos (Suma de Reproducciones).
-   - Aplicar `UNPIVOT` sobre estructuras estáticas cruzadas o salidas temporales.
-3. **Uso de Agrupamientos Especializados:**
-   - Construir consultas de agregación analítica con `ROLLUP` (ventas con subtotales por ciudad) y `CUBE` (todas las combinaciones posibles en reproducciones).
-   - Emplear `GROUPING()` para manejar nulos adecuadamente y `GROUPING SETS`.
-4. **Vistas Materializadas:**
-   - Generar la vista para pre-calcular ingresos mensuales.
-   - Generar la vista para almacenar la calificación promedio del contenido.
+### Fase 1. Fundaciones Tecnicas (Semanas 1-2)
 
----
+#### Backend
+1. Inicializar proyecto NestJS y configuracion base.
+2. Configurar TypeORM con Oracle via variables de entorno.
+3. Activar prefijo global de API: /api/v1.
+4. Activar Swagger en /api/docs.
+5. Configurar middlewares de seguridad y observabilidad.
 
-## Fase 4: Lógica de Negocio en Base de Datos - PL/SQL (Semanas 7-11)
-**Objetivo:** Desarrollar el core operacional (Registro, Cambio de Planes, Validaciones automáticas).
-**Épicas involucradas:** Épicas 1, 2, 3, 4, 5.
+#### Frontend
+1. Inicializar proyecto React TypeScript con Vite.
+2. Configurar Tailwind, Router y React Query.
+3. Crear estructura de carpetas por capas: pages, router, shared, features.
+4. Configurar cliente Axios y variable VITE_API_URL.
 
-**Pasos detallados:**
-1. **Programación de Procedimientos (Procesos pesados):**
-   - Construir `SP_REGISTRAR_USUARIO`, implementando validación de email directo y alta en serie de cuenta y pago base. Incluir lógica de manejo de excepciones para duplicados o falla transaccional.
-   - Construir `SP_CAMBIAR_PLAN`, protegiendo el modelo ante descensos de categoría (downgrade) si el número de perfiles activos del usuario excede el límite del plan menor.
-   - Programar iteradores (`cursores`) masivos para la identificación de carteras vencidas después de 30 días y actualizaciones de estado de popularidad basadas en visionados completos (>90%).
-2. **Programación de Funciones (Cálculos dinámicos):**
-   - Función para cálculo del próximo monto de facturación sumando descuentos por referidos y años de fidelidad (+12 o +24 meses).
-   - Función básica paramétrica de afinidad/recomendación por perfiles (favoritos y más vistos combinados).
-3. **Disparadores - Triggers (Reglas automáticas y restricciones):**
-   - Bloquear nuevas filas en *Reproducciones* si el usuario dueño está inactivo.
-   - Bloquear nuevas inserciones en *Perfiles* cuando se alcanza el tope según plan asociado (Basic 2, etc.).
-   - Impedir reseñas (*Calificaciones*) de contenido cuya reproducción no acumule más de un 50% de avance.
-   - Reestablecer estado_cuenta = 'ACTIVO' luego del `INSERT` de un pago exitoso.
+### Fase 2. Seguridad y Acceso (Semanas 2-3)
 
----
+#### Backend
+1. Implementar AuthModule con Passport LocalStrategy + JwtStrategy.
+2. Exponer endpoints de autenticacion:
+   - POST /api/v1/auth/login.
+   - GET /api/v1/auth/profile.
+3. Crear guards para rutas protegidas.
+4. Definir esquema de roles base de aplicacion.
 
-## Fase 5: Concurrencia y Transaccionalidad (Semanas 12-13)
-**Objetivo:** Blindar la base de datos contra choques funcionales bajo estado productivo de múltiples concurrentes y controlar el ciclo ACID.
+#### Frontend
+1. Construir pantalla de login con React Hook Form + Zod.
+2. Conectar formulario contra API de autenticacion.
+3. Manejar estado de sesion y errores de autenticacion.
+4. Proteger rutas privadas de panel segun JWT.
 
-**Pasos detallados:**
-1. **Especificación Estructural de Transacciones:**
-   - Diagramar flujos confirmables y prever la ruta de aborto en a) El registro completo, b) Transacción masiva de facturación mensual haciendo uso forzoso de `SAVEPOINT`, c) La eliminación del cliente y su rastro con cascadas de borrado atómico.
-2. **Verificación de Escenarios de Concurrencia:**
-   - Crear script emulador: Dos hilos atacando el update de plan del mismo ID de Usuario en franjas milimétricas. Resolver colisión agregando `SELECT FOR UPDATE` para evitar condiciones de carrera.
+### Fase 3. Estandares y Calidad Continua (Semana 3)
+1. Activar y ajustar reglas de lint para backend y frontend.
+2. Forzar TSDoc en espanol para APIs publicas y servicios criticos.
+3. Configurar TypeDoc en ambos repos.
+4. Activar hooks de Husky y lint-staged.
+5. Establecer checklist de Definition of Done para cada historia tecnica.
 
----
+### Fase 4. Base de Datos Academica y Operativa (Semanas 3-5)
+1. Crear carpeta de scripts versionados en orden de ejecucion.
+2. Construir script de esquema con integridad referencial completa.
+3. Construir script de carga inicial de datos asimetricos.
+4. Construir consultas avanzadas de NT1.
+5. Construir objetos PL/SQL de NT2.
+6. Construir transacciones y pruebas de concurrencia de NT3.
+7. Construir indices y comparativas de plan de ejecucion de NT4.
+8. Construir modelo de roles y grants de NT5.
 
-## Fase 6: Optimización de Consultas - Índices (Semana 14)
-**Objetivo:** Generar mejoras de rendimiento comprobables en búsquedas.
-**Épica involucrada:** Épica 3 y Épica 6.
+### Fase 5. Implementacion Funcional por Iteraciones (Semanas 5-10)
 
-**Pasos detallados:**
-1. **Construcción y Justificación Criteriosa:**
-   - Implementar los índices funcionales: Histórico (`id_perfil, fecha`), validación (`email`), Catálogo (`categoria, anio`). Un cuarto índice personal sobre columnas de alta cardinalidad o JOINs usados (ej: `estado_cuenta`).
-2. **Auditoría Performante:**
-   - Realizar la traza de impacto. Ejecutar un select sumatorio masivo previo y posterior al índice y extraer el `EXPLAIN PLAN` para demostrar ahorro costo/tiempo.
+#### Iteracion 1 (Epicas 1 y 2)
+1. Backend:
+   - Persistencia real de usuarios y credenciales en Oracle.
+   - CRUD de perfiles por cuenta con reglas de plan.
+   - CRUD inicial de catalogo.
+2. Frontend:
+   - Flujo completo de login y perfil autenticado.
+   - Vistas de gestion de perfiles.
+   - Vistas base de catalogo.
+3. Base de datos:
+   - Triggers de limite de perfiles por plan.
+   - Restricciones de clasificacion para perfiles infantiles.
 
----
+#### Iteracion 2 (Epicas 3 y 4)
+1. Backend:
+   - Registro de reproducciones con progreso y dispositivo.
+   - Favoritos, calificaciones y reportes de contenido.
+2. Frontend:
+   - Vista seguir viendo.
+   - Favoritos y calificacion con validaciones visuales.
+   - Registro de reportes por usuario.
+3. Base de datos:
+   - Trigger para impedir calificar sin consumo minimo.
+   - Regla de cuenta activa para permitir reproduccion.
 
-## Fase 7: Seguridad y Administración de Acceso (Semana 15)
-**Objetivo:** Limitar la visualización y manipulación de datos acorde a las funciones corporativas.
+#### Iteracion 3 (Epica 5)
+1. Backend:
+   - Modulo de facturacion y pagos.
+   - Endpoints de estado de cuenta y beneficios.
+2. Frontend:
+   - Vista de pagos, historial y vencimientos.
+   - Indicadores de descuentos por referidos y antiguedad.
+3. Base de datos:
+   - Procedimientos para renovacion mensual.
+   - Manejo de fallos con savepoint y rollback.
 
-**Pasos detallados:**
-1. **Perfiles Dinámicos de Acceso (PROFILE):**
-   - Implementar control a base de datos delimitando el máximo de sesiones en paralelo y lock por reintentos o inactividad temporizada.
-2. **Modelo de Roles Específicos:**
-   - Crear roles definidos por enunciado: `ROL_ADMIN` (Sin restricciones), `ROL_ANALISTA` (Solo Selects, Views), `ROL_SOPORTE` (Solo CRUD de Usuarios, Pagos), y `ROL_CONTENIDO` (Solo CRUD de catálogo, Select de stats).
-3. **Distribución de Roles y QA:**
-   - Crear cuentas genéricas (`C_USER_1`, etc.), heredar roles respectivos mediante el uso estricto y exacto de `GRANT`, e intentar forzar fallos por denegación (ej: Usuario Contenido intentando borrar un Pago) como mecanismo probatorio.
+#### Iteracion 4 (Epica 6)
+1. Backend:
+   - Endpoints de analitica y consolidado financiero.
+   - Integracion de vistas materializadas para lectura.
+2. Frontend:
+   - Dashboards de consumo y finanzas.
+   - Filtros por periodo, plan y categoria.
+3. Base de datos:
+   - Consultas OLAP con rollup, cube y grouping sets.
 
----
+#### Iteracion 5 (Hardening transversal)
+1. Aplicar autorizacion por rol en todo endpoint sensible.
+2. Completar pruebas de integracion E2E clave.
+3. Ejecutar pruebas de regresion funcional en frontend.
+4. Cerrar brechas entre reglas del backend y reglas Oracle.
 
-## Fase 8: Consolidación y Preparación de Sustentación (Semana 16)
-**Objetivo:** Ensamblado final unificado para el docente y repaso.
+### Fase 6. Cierre Academico y Sustentacion (Semanas 11-16)
+1. Ejecutar scripts Oracle en orden y validar evidencia por nucleo.
+2. Generar paquete de pruebas de backend y frontend.
+3. Consolidar capturas de resultados, explain plan y concurrencia.
+4. Preparar narrativa de sustentacion enlazando:
+   - Enunciado.
+   - Epicas INVEST.
+   - Implementacion en codigo.
+   - Evidencias de ejecucion.
 
-**Pasos detallados:**
-1. Extracción completa y organización de Scripts (Limpios, tabulados y comentados en cabeceras).
-2. Generar el documento global recopilatorio donde conste: MER HD, casos teóricos evaluados, justificación analítica de los índices elaborados e historiales/screenshots de transacciones.
-3. Simulacros de equipo (Sustentación): Todos los miembros deberán poder exponer la lógica detrás y el flujo PL/SQL del sistema diseñado y evidenciar funcionalidad.
+## 5. Matriz de Trazabilidad Epica - Implementacion
+
+### Epica 1. Catalogo
+1. Backend: modulo de contenido, entidades y validaciones.
+2. Frontend: vistas de listado, detalle y administracion.
+3. Oracle: tablas de contenido, categorias, generos y relaciones.
+
+### Epica 2. Usuarios y perfiles
+1. Backend: autenticacion, cuentas, perfiles y limites por plan.
+2. Frontend: login, perfil activo, alta y gestion de perfiles.
+3. Oracle: reglas de plan, restricciones de perfil infantil.
+
+### Epica 3. Reproducciones
+1. Backend: endpoints de tracking y continuidad de consumo.
+2. Frontend: reproduccion, progreso y continuar viendo.
+3. Oracle: tabla de reproducciones con volumen alto e indices.
+
+### Epica 4. Comunidad
+1. Backend: favoritos, calificaciones y reportes.
+2. Frontend: interacciones comunitarias por perfil.
+3. Oracle: reglas de elegibilidad para calificar y moderacion.
+
+### Epica 5. Finanzas
+1. Backend: facturacion, cobros y estado de cuenta.
+2. Frontend: panel de pagos y beneficios.
+3. Oracle: transacciones ACID y automatizacion mensual.
+
+### Epica 6. Inteligencia empresarial
+1. Backend: APIs de consultas analiticas.
+2. Frontend: dashboards gerenciales.
+3. Oracle: OLAP, vistas materializadas y optimizacion.
+
+## 6. Entregables Minimos por Iteracion
+1. Codigo funcional en backend y frontend.
+2. Scripts Oracle asociados al alcance de la iteracion.
+3. Pruebas basicas ejecutadas y evidencia.
+4. Actualizacion de README y avance en documentacion tecnica.
+
+## 7. Estado Actual y Proximo Paso
+1. Estado actual:
+   - Fundaciones de backend y frontend creadas.
+   - Login inicial con Passport.js ya integrado.
+   - Pipeline de calidad basico operativo.
+2. Proximo paso inmediato:
+   - Implementar persistencia real en Oracle para autenticacion y cuentas.
+   - Completar Iteracion 1 con usuarios, perfiles y catalogo base.
+

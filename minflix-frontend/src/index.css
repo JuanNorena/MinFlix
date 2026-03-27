@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+:root {
+  --color-brand: #0f172a;
+  --color-highlight: #0e7490;
+  --color-bg: #f6f8fb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: #0f172a;
+  font-family: "Manrope", "Segoe UI", sans-serif;
+}
