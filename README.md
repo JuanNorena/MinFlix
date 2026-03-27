@@ -172,14 +172,43 @@ Detalle completo del plan:
 ## 7. Guia Visual de Auth (Fase 1)
 1. La UI de login y registro usa una paleta cinematica con acentos rojos y dorados.
 2. La base visual y componentes se centralizan en minflix-frontend/src/index.css.
-3. Referencia de estilo detallada en Docs/Guia_Diseno_UI.md.
+3. Tipografia oficial de interfaz: Helvetica Neue / Helvetica / Arial.
+4. Se incluyo toggle ver/ocultar contrasena en login y registro.
+5. Se incluyo vista de planes y beneficios en /planes para apoyar la decision de registro.
+6. Referencia de estilo detallada en Docs/Guia_Diseno_UI.md.
 
-## 8. Estandares de Documentacion y Calidad
+## 8. Helpers de UX (Campos ambiguos)
+1. Perfil inicial:
+   - Es el primer perfil de reproduccion creado para la cuenta principal.
+   - Se usa para separar recomendaciones, historial y continuidad de visualizacion.
+2. Plan inicial:
+   - Define limite de perfiles y condiciones de reproduccion.
+3. Contraseña:
+   - Incluye control visual para ver/ocultar durante digitacion.
+
+Ubicacion de helpers en frontend:
+- minflix-frontend/src/shared/helpers/authFieldHelp.ts
+- minflix-frontend/src/shared/helpers/plansCatalog.ts
+
+## 9. Estandares de Documentacion y Calidad
 1. TSDoc en espanol es obligatorio para codigo publico.
 2. Todo endpoint debe documentarse en Swagger.
 3. Todo cambio debe pasar lint y build en backend y frontend.
 
-## 9. Estructura del Workspace
+## 10. Estructura del Workspace
 1. Docs/: enunciado, epicas y plan.
 2. minflix-backend/: API y seguridad.
 3. minflix-frontend/: aplicacion web.
+
+## 11. Diagnostico ORA-00942 (Backend)
+Si al iniciar backend aparece ORA-00942 sobre USUARIOS, valide en este orden:
+
+1. Confirmar owner real de tablas en Oracle:
+    SELECT OWNER, TABLE_NAME
+    FROM ALL_TABLES
+    WHERE OWNER IN ('SYSTEM', 'MINFLIX_APP')
+       AND TABLE_NAME IN ('USUARIOS', 'PLANES', 'PERFILES')
+    ORDER BY OWNER, TABLE_NAME;
+2. Ajustar DB_SCHEMA en minflix-backend/.env al owner real detectado.
+3. Reiniciar backend y validar que mapea rutas sin excepcion en onModuleInit.
+4. Si las tablas no existen en ningun owner esperado, reejecutar database/01_bootstrap_oracle_iteracion1.sql con el usuario correcto.

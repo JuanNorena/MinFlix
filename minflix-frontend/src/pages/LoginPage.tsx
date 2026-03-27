@@ -1,9 +1,12 @@
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { apiClient } from '../shared/api/client'
+import { authFieldHelp } from '../shared/helpers/authFieldHelp'
+import { AuthSplitLayout } from '../shared/ui/AuthSplitLayout'
+import { buttonClassName } from '../shared/ui/buttonStyles'
+import { PasswordInput } from '../shared/ui/PasswordInput'
 
 const loginSchema = z.object({
   email: z.email('Ingrese un correo valido'),
@@ -20,6 +23,7 @@ export function LoginPage() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
@@ -43,50 +47,47 @@ export function LoginPage() {
   }
 
   return (
-    <main className="nf-shell">
-      <section className="nf-auth-layout">
-        <motion.div
-          initial={{ opacity: 0, x: -28 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.45 }}
-          className="nf-promo-panel"
+    <AuthSplitLayout
+      chip="Fase 1 · Autenticacion"
+      title="Bienvenido de nuevo al panel de MinFlix."
+      description="Inicia sesion con Passport.js y JWT. Esta pantalla ya consume el backend conectado a Oracle para validar credenciales reales."
+    >
+      <h2>Iniciar sesion</h2>
+      <p className="nf-subtitle">Acceso seguro con Passport local + JWT</p>
+
+      <form className="nf-form" onSubmit={handleSubmit(onSubmit)}>
+        <label htmlFor="email">Correo</label>
+        <input id="email" type="email" className="nf-input" {...register('email')} />
+        <p className="nf-helper-field">{authFieldHelp.loginEmail}</p>
+        {errors.email ? <p className="nf-error">{errors.email.message}</p> : null}
+
+        <label htmlFor="password">Contrasena</label>
+        <Controller
+          control={control}
+          name="password"
+          render={({ field }) => (
+            <PasswordInput
+              id="password"
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
+        <p className="nf-helper-field">{authFieldHelp.loginPassword}</p>
+        {errors.password ? <p className="nf-error">{errors.password.message}</p> : null}
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={buttonClassName('primary')}
         >
-          <span className="nf-chip">Fase 1 · Autenticacion</span>
-          <h1>Bienvenido de nuevo al panel de MinFlix.</h1>
-          <p>
-            Inicia sesion con Passport.js y JWT. Esta pantalla ya consume el backend conectado
-            a Oracle para validar credenciales reales.
-          </p>
-        </motion.div>
+          {isSubmitting ? 'Validando...' : 'Entrar'}
+        </button>
+      </form>
 
-        <motion.section
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.45, delay: 0.05 }}
-          className="nf-auth-card"
-        >
-          <h2>Iniciar sesion</h2>
-          <p className="nf-subtitle">Acceso seguro con Passport local + JWT</p>
-
-          <form className="nf-form" onSubmit={handleSubmit(onSubmit)}>
-            <label htmlFor="email">Correo</label>
-            <input id="email" type="email" className="nf-input" {...register('email')} />
-            {errors.email ? <p className="nf-error">{errors.email.message}</p> : null}
-
-            <label htmlFor="password">Contrasena</label>
-            <input id="password" type="password" className="nf-input" {...register('password')} />
-            {errors.password ? <p className="nf-error">{errors.password.message}</p> : null}
-
-            <button type="submit" disabled={isSubmitting} className="nf-button-primary">
-              {isSubmitting ? 'Validando...' : 'Entrar'}
-            </button>
-          </form>
-
-          <p className="nf-helper-row">
-            Aun no tienes cuenta? <Link to="/register">Registrate</Link>
-          </p>
-        </motion.section>
-      </section>
-    </main>
+      <p className="nf-helper-row">
+        Aun no tienes cuenta? <Link to="/register">Registrate</Link>
+      </p>
+    </AuthSplitLayout>
   )
 }

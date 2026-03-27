@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
@@ -12,6 +17,8 @@ import { RegisterDto } from './dto/register.dto';
  */
 @Injectable()
 export class AuthService implements OnModuleInit {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
@@ -168,24 +175,62 @@ export class AuthService implements OnModuleInit {
       this.configService.get<string>('BCRYPT_SALT_ROUNDS') ?? '12',
     );
 
-    const existingAdmin = await this.userRepository.findOne({
-      where: { email: adminEmail },
-    });
+    try {
+      const existingAdmin = await this.userRepository.findOne({
+        where: { email: adminEmail },
+      });
 
-    if (existingAdmin) {
-      return;
+      if (existingAdmin) {
+        return;
+      }
+
+      const passwordHash = await hash(adminPassword, saltRounds);
+
+      await this.userRepository.save(
+        this.userRepository.create({
+          nombre: 'Administrador MinFlix',
+          email: adminEmail,
+          passwordHash,
+          rol: 'admin',
+          estadoCuenta: 'ACTIVO',
+        }),
+      );
+    } catch (error) {
+      if (this.isOracleMissingTableError(error)) {
+        const dbUser =
+          this.configService.get<string>('DB_USER')?.toUpperCase() ??
+          'NO_DEFINIDO';
+        const dbSchema =
+          this.configService.get<string>('DB_SCHEMA')?.toUpperCase() ??
+          '(vacío)';
+
+        this.logger.warn(
+          [
+            'No se pudo ejecutar el seed de admin porque la tabla USUARIOS no existe en el esquema configurado.',
+            `DB_USER=${dbUser}, DB_SCHEMA=${dbSchema}.`,
+            'Verifique el owner real de tablas y ajuste DB_SCHEMA o recree tablas en el esquema esperado.',
+          ].join(' '),
+        );
+        return;
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Determina si la excepcion corresponde a ORA-00942 (tabla o vista no existe).
+   * @param error - Error capturado en operación de base de datos.
+   * @returns True si coincide con ORA-00942.
+   */
+  private isOracleMissingTableError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
     }
 
-    const passwordHash = await hash(adminPassword, saltRounds);
-
-    await this.userRepository.save(
-      this.userRepository.create({
-        nombre: 'Administrador MinFlix',
-        email: adminEmail,
-        passwordHash,
-        rol: 'admin',
-        estadoCuenta: 'ACTIVO',
-      }),
+    return (
+      error.message.includes('ORA-00942') ||
+      error.message.includes('tabla o vista')
     );
   }
 }
