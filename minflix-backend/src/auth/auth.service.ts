@@ -1,12 +1,35 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { compare, hash } from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
+import { PlanEntity, ProfileEntity, UserEntity } from './entities';
+import { Repository } from 'typeorm';
+import { RegisterDto } from './dto/register.dto';
 
 /**
  * Servicio de autenticacion base para el arranque del proyecto.
  */
 @Injectable()
-export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+export class AuthService implements OnModuleInit {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(PlanEntity)
+    private readonly planRepository: Repository<PlanEntity>,
+    @InjectRepository(ProfileEntity)
+    private readonly profileRepository: Repository<ProfileEntity>,
+  ) {}
+
+  /**
+   * Inicializa datos minimos de autenticacion al arrancar.
+   * @returns Promesa completada cuando termina la inicializacion.
+   */
+  async onModuleInit(): Promise<void> {
+    await this.ensureAdminSeed();
+  }
 
   /**
    * Valida credenciales de usuario.
@@ -14,19 +37,30 @@ export class AuthService {
    * @param password - Contrasena en texto plano.
    * @returns Usuario minimo autenticado o null si no coincide.
    */
-  validateUser(
+  async validateUser(
     email: string,
     password: string,
-  ): { userId: number; email: string; role: string } | null {
-    if (email === 'admin@minflix.com' && password === 'Admin123*') {
-      return {
-        userId: 1,
-        email,
-        role: 'admin',
-      };
+  ): Promise<{ userId: number; email: string; role: string } | null> {
+    const user = await this.userRepository
+      .createQueryBuilder('usuario')
+      .where('UPPER(usuario.email) = UPPER(:email)', { email })
+      .andWhere('usuario.estadoCuenta = :estado', { estado: 'ACTIVO' })
+      .getOne();
+
+    if (!user) {
+      return null;
     }
 
-    return null;
+    const passwordMatch = await compare(password, user.passwordHash);
+    if (!passwordMatch) {
+      return null;
+    }
+
+    return {
+      userId: user.id,
+      email: user.email,
+      role: user.rol,
+    };
   }
 
   /**
@@ -52,5 +86,106 @@ export class AuthService {
         role: user.role,
       },
     };
+  }
+
+  /**
+   * Registra una cuenta principal y su perfil inicial.
+   * @param payload - Datos de registro de cuenta.
+   * @returns Token y datos basicos del usuario creado.
+   */
+  async register(payload: RegisterDto): Promise<{
+    accessToken: string;
+    user: { id: number; email: string; role: string };
+  }> {
+    const existingUser = await this.userRepository
+      .createQueryBuilder('usuario')
+      .where('UPPER(usuario.email) = UPPER(:email)', { email: payload.email })
+      .getOne();
+
+    if (existingUser) {
+      throw new BadRequestException('El correo ya se encuentra registrado');
+    }
+
+    const planNombre = payload.planNombre ?? 'BASICO';
+    const plan = await this.planRepository
+      .createQueryBuilder('plan')
+      .where('UPPER(plan.nombre) = UPPER(:nombre)', { nombre: planNombre })
+      .getOne();
+
+    if (!plan) {
+      throw new BadRequestException('El plan seleccionado no existe');
+    }
+
+    const saltRounds = Number(
+      this.configService.get<string>('BCRYPT_SALT_ROUNDS') ?? '12',
+    );
+    const passwordHash = await hash(payload.password, saltRounds);
+
+    const savedUser = await this.userRepository.save(
+      this.userRepository.create({
+        nombre: payload.nombre,
+        email: payload.email,
+        passwordHash,
+        rol: 'usuario',
+        estadoCuenta: 'ACTIVO',
+        plan,
+      }),
+    );
+
+    await this.profileRepository.save(
+      this.profileRepository.create({
+        nombre: payload.nombrePerfilInicial ?? payload.nombre,
+        tipoPerfil: 'adulto',
+        usuario: savedUser,
+      }),
+    );
+
+    return this.login({
+      userId: savedUser.id,
+      email: savedUser.email,
+      role: savedUser.rol,
+    });
+  }
+
+  /**
+   * Crea un usuario administrador inicial si esta habilitado por entorno.
+   * @returns Promesa completada cuando termina el seed.
+   */
+  private async ensureAdminSeed(): Promise<void> {
+    const enabled =
+      this.configService.get<string>('AUTH_SEED_ADMIN_ENABLED') === 'true';
+
+    if (!enabled) {
+      return;
+    }
+
+    const adminEmail =
+      this.configService.get<string>('AUTH_SEED_ADMIN_EMAIL') ??
+      'admin@minflix.com';
+    const adminPassword =
+      this.configService.get<string>('AUTH_SEED_ADMIN_PASSWORD') ?? 'Admin123*';
+    const saltRounds = Number(
+      this.configService.get<string>('BCRYPT_SALT_ROUNDS') ?? '12',
+    );
+
+    const existingAdmin = await this.userRepository.findOne({
+      where: { email: adminEmail },
+    });
+
+    if (existingAdmin) {
+      return;
+    }
+
+    const passwordHash = await hash(adminPassword, saltRounds);
+
+    await this.userRepository.save(
+      this.userRepository.create({
+        nombre: 'Administrador MinFlix',
+        email: adminEmail,
+        passwordHash,
+        rol: 'admin',
+        estadoCuenta: 'ACTIVO',
+      }),
+    );
   }
 }

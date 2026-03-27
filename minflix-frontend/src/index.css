@@ -1,9 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --color-brand: #0f172a;
-  --color-highlight: #0e7490;
-  --color-bg: #f6f8fb;
+  --nf-red: #e50914;
+  --nf-red-soft: #f84b54;
+  --nf-gold: #ffc857;
+  --nf-ink: #f4f5f8;
+  --nf-muted: #bec2d0;
+  --nf-bg-900: #07090f;
+  --nf-bg-800: #101524;
+  --nf-surface: rgba(16, 21, 36, 0.78);
+  --nf-border: rgba(255, 255, 255, 0.16);
 }
 
 * {
@@ -18,7 +24,175 @@ body,
 }
 
 body {
-  background: var(--color-bg);
-  color: #0f172a;
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 16% 12%, rgb(229 9 20 / 30%), transparent 36%),
+    radial-gradient(circle at 84% 0%, rgb(255 200 87 / 18%), transparent 32%),
+    linear-gradient(165deg, var(--nf-bg-900) 0%, var(--nf-bg-800) 78%);
+  color: var(--nf-ink);
+  font-family: "Poppins", "Segoe UI", sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Oswald", "Arial Narrow", sans-serif;
+  letter-spacing: 0.03em;
+}
+
+.nf-shell {
+  min-height: 100vh;
+  color: var(--nf-ink);
+}
+
+.nf-auth-layout {
+  margin: 0 auto;
+  display: grid;
+  max-width: 1120px;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  padding: 2.5rem 1.5rem;
+}
+
+.nf-promo-panel {
+  border: 1px solid var(--nf-border);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgb(255 255 255 / 7%), rgb(255 255 255 / 3%));
+  padding: 2rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 32px 60px rgb(0 0 0 / 34%);
+}
+
+.nf-promo-panel h1 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: clamp(2rem, 4.2vw, 4rem);
+  line-height: 1.02;
+}
+
+.nf-promo-panel p {
+  max-width: 56ch;
+  color: var(--nf-muted);
+  font-size: 1.04rem;
+}
+
+.nf-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  background: rgb(255 255 255 / 10%);
+  padding: 0.35rem 0.8rem;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nf-auth-card {
+  border: 1px solid var(--nf-border);
+  border-radius: 1.2rem;
+  background: var(--nf-surface);
+  padding: 1.8rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 26px 44px rgb(0 0 0 / 30%);
+}
+
+.nf-auth-card h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.nf-subtitle {
+  margin-top: 0.4rem;
+  color: var(--nf-muted);
+}
+
+.nf-form {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.nf-form label {
+  margin-top: 0.4rem;
+  color: var(--nf-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.nf-input {
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 0.85rem;
+  background: rgb(9 12 20 / 78%);
+  padding: 0.78rem 0.92rem;
+  color: var(--nf-ink);
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.nf-input:focus {
+  border-color: var(--nf-red-soft);
+}
+
+.nf-button-primary {
+  margin-top: 1rem;
+  border: none;
+  border-radius: 0.85rem;
+  background: linear-gradient(90deg, var(--nf-red) 0%, var(--nf-red-soft) 100%);
+  padding: 0.84rem 1.06rem;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+
+.nf-button-primary:disabled {
+  filter: grayscale(0.4);
+  cursor: not-allowed;
+}
+
+.nf-button-primary:hover:enabled {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.nf-button-ghost {
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 0.85rem;
+  background: rgb(255 255 255 / 8%);
+  padding: 0.84rem 1.06rem;
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 180ms ease;
+}
+
+.nf-button-ghost:hover {
+  border-color: var(--nf-gold);
+}
+
+.nf-error {
+  margin: 0;
+  color: #ff8e95;
+  font-size: 0.82rem;
+}
+
+.nf-helper-row {
+  margin-top: 1rem;
+  color: var(--nf-muted);
+}
+
+.nf-helper-row a {
+  color: var(--nf-gold);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 920px) {
+  .nf-auth-layout {
+    grid-template-columns: 1fr;
+    padding: 1.5rem 1rem 2.2rem;
+  }
 }

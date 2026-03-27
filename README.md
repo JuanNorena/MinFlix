@@ -151,28 +151,35 @@ Detalle completo del plan:
 
 ### 5.3 Base de datos Oracle
 1. Ejecutar scripts en orden versionado:
-   - 01_schema.sql.
-   - 02_seed.sql.
-   - 03_queries_nt1.sql.
-   - 04_plsql_nt2.sql.
-   - 05_tx_nt3.sql.
-   - 06_indexes_nt4.sql.
-   - 07_roles_nt5.sql.
+   - database/01_bootstrap_oracle_iteracion1.sql.
 2. Guardar evidencia de ejecucion y resultados de pruebas.
+
+### 5.4 Ejecucion rapida desde raiz
+1. Desde la raiz del workspace, ejecutar el script PowerShell start-dev.ps1.
+2. El script abre dos terminales: backend y frontend, ambos en modo desarrollo.
+3. Verificar:
+   - Frontend: http://localhost:5173.
+   - Backend Swagger: http://localhost:3000/api/docs.
 
 ## 6. Seguridad de Inicio de Sesion
 1. El login usa Passport.js de forma obligatoria.
 2. Flujo actual:
    - POST /api/v1/auth/login.
+   - POST /api/v1/auth/register.
    - GET /api/v1/auth/profile con JWT.
-3. En la siguiente iteracion el login sera validado contra Oracle real.
+3. El login y registro ya se validan contra Oracle usando bcrypt para PASSWORD_HASH.
 
-## 7. Estandares de Documentacion y Calidad
+## 7. Guia Visual de Auth (Fase 1)
+1. La UI de login y registro usa una paleta cinematica con acentos rojos y dorados.
+2. La base visual y componentes se centralizan en minflix-frontend/src/index.css.
+3. Referencia de estilo detallada en Docs/Guia_Diseno_UI.md.
+
+## 8. Estandares de Documentacion y Calidad
 1. TSDoc en espanol es obligatorio para codigo publico.
 2. Todo endpoint debe documentarse en Swagger.
 3. Todo cambio debe pasar lint y build en backend y frontend.
 
-## 8. Estructura del Workspace
+## 9. Estructura del Workspace
 1. Docs/: enunciado, epicas y plan.
 2. minflix-backend/: API y seguridad.
 3. minflix-frontend/: aplicacion web.

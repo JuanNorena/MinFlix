@@ -1,6 +1,8 @@
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { motion } from 'framer-motion'
+import { Link, useNavigate } from 'react-router-dom'
 import { apiClient } from '../shared/api/client'
 
 const loginSchema = z.object({
@@ -14,6 +16,8 @@ type LoginForm = z.infer<typeof loginSchema>
  * Pantalla de inicio de sesion para autenticacion con Passport local.
  */
 export function LoginPage() {
+  const navigate = useNavigate()
+
   const {
     register,
     handleSubmit,
@@ -21,7 +25,7 @@ export function LoginPage() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@minflix.com',
+      email: 'admin@example.com',
       password: 'Admin123*',
     },
   })
@@ -35,51 +39,53 @@ export function LoginPage() {
     // En la siguiente iteracion se movara a un store seguro con refresh token.
     window.localStorage.setItem('minflix_access_token', response.data.accessToken)
     window.alert('Sesion iniciada correctamente')
+    navigate('/')
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 px-6 py-16">
-      <section className="mx-auto max-w-md rounded-2xl bg-white p-8 shadow-lg">
-        <h1 className="text-2xl font-semibold text-slate-900">Iniciar sesion</h1>
-        <p className="mt-2 text-sm text-slate-600">Autenticacion con Passport.js (local + JWT)</p>
+    <main className="nf-shell">
+      <section className="nf-auth-layout">
+        <motion.div
+          initial={{ opacity: 0, x: -28 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45 }}
+          className="nf-promo-panel"
+        >
+          <span className="nf-chip">Fase 1 · Autenticacion</span>
+          <h1>Bienvenido de nuevo al panel de MinFlix.</h1>
+          <p>
+            Inicia sesion con Passport.js y JWT. Esta pantalla ya consume el backend conectado
+            a Oracle para validar credenciales reales.
+          </p>
+        </motion.div>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit(onSubmit)}>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="email">
-              Correo
-            </label>
-            <input
-              id="email"
-              type="email"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2"
-              {...register('email')}
-            />
-            {errors.email ? <p className="mt-1 text-sm text-red-600">{errors.email.message}</p> : null}
-          </div>
+        <motion.section
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="nf-auth-card"
+        >
+          <h2>Iniciar sesion</h2>
+          <p className="nf-subtitle">Acceso seguro con Passport local + JWT</p>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700" htmlFor="password">
-              Contrasena
-            </label>
-            <input
-              id="password"
-              type="password"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2"
-              {...register('password')}
-            />
-            {errors.password ? (
-              <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
-            ) : null}
-          </div>
+          <form className="nf-form" onSubmit={handleSubmit(onSubmit)}>
+            <label htmlFor="email">Correo</label>
+            <input id="email" type="email" className="nf-input" {...register('email')} />
+            {errors.email ? <p className="nf-error">{errors.email.message}</p> : null}
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-slate-900 px-4 py-2 text-white disabled:opacity-60"
-          >
-            {isSubmitting ? 'Validando...' : 'Entrar'}
-          </button>
-        </form>
+            <label htmlFor="password">Contrasena</label>
+            <input id="password" type="password" className="nf-input" {...register('password')} />
+            {errors.password ? <p className="nf-error">{errors.password.message}</p> : null}
+
+            <button type="submit" disabled={isSubmitting} className="nf-button-primary">
+              {isSubmitting ? 'Validando...' : 'Entrar'}
+            </button>
+          </form>
+
+          <p className="nf-helper-row">
+            Aun no tienes cuenta? <Link to="/register">Registrate</Link>
+          </p>
+        </motion.section>
       </section>
     </main>
   )

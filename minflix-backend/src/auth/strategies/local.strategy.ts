@@ -22,8 +22,22 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
   validate(
     email: string,
     password: string,
-  ): { userId: number; email: string; role: string } {
-    const user = this.authService.validateUser(email, password);
+  ): Promise<{ userId: number; email: string; role: string }> {
+    return this.validateCredentials(email, password);
+  }
+
+  /**
+   * Ejecuta la validacion asincrona de credenciales.
+   * @param email - Correo suministrado por el cliente.
+   * @param password - Contrasena suministrada por el cliente.
+   * @returns Usuario autenticado para inyectar en el request.
+   * @throws UnauthorizedException Cuando las credenciales no son validas.
+   */
+  private async validateCredentials(
+    email: string,
+    password: string,
+  ): Promise<{ userId: number; email: string; role: string }> {
+    const user = await this.authService.validateUser(email, password);
     if (!user) {
       throw new UnauthorizedException('Credenciales invalidas');
     }
