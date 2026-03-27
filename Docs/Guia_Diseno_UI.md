@@ -23,11 +23,15 @@ Construir una experiencia de autenticacion estilo plataforma de streaming premiu
 - nf-promo-panel: bloque narrativo de valor.
 - nf-auth-card: tarjeta principal de formulario.
 - nf-input: campo uniforme con enfoque visible.
-- nf-password-wrap + nf-password-toggle: campo reutilizable con ver/ocultar contrasena.
+- nf-password-wrap + nf-password-toggle: campo reutilizable con ver/ocultar contrasena (usando iconos Eye y EyeOff de Lucide).
 - nf-helper-field: texto explicativo bajo campos sensibles o ambiguos.
 - nf-button-primary: CTA principal en gradiente rojo.
 - nf-button-ghost: CTA secundario translcido.
 - nf-chip: etiqueta contextual de fase/modulo.
+
+## Feedback y Alertas
+1. **Mensajes de Confirmacion / Error:** No se deben usar alertas nativas del navegador (window.alert). Todo feedback debe manejarse mediante **React Hot Toast**, en la esquina superior derecha, con los colores oscuros de la paleta.
+2. **Iconografia:** El icono de visualizacion para la contraseña sera siempre un ojo (`Eye` / `EyeOff`) extraido de `lucide-react`.
 
 ## Helpers funcionales
 1. authFieldHelp: glosario corto para explicar campos de login/registro.

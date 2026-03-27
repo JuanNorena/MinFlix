@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
 
 interface PasswordInputProps {
   id: string
@@ -8,7 +9,7 @@ interface PasswordInputProps {
 }
 
 /**
- * Input de contrasena reutilizable con toggle para ver u ocultar texto.
+ * Input de contrasena reutilizable con toggle para ver u ocultar texto usando iconos.
  */
 export function PasswordInput({
   id,
@@ -33,8 +34,9 @@ export function PasswordInput({
         className="nf-password-toggle"
         onClick={() => setShowPassword((current) => !current)}
         aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
+        title={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
       >
-        {showPassword ? 'Ocultar' : 'Ver'}
+        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
       </button>
     </div>
   )

@@ -2,6 +2,7 @@ import { Controller, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { apiClient } from '../shared/api/client'
 import { authFieldHelp } from '../shared/helpers/authFieldHelp'
 import { AuthSplitLayout } from '../shared/ui/AuthSplitLayout'
@@ -39,11 +40,15 @@ export function LoginPage() {
     * @param values - Datos del formulario de acceso.
    */
   const onSubmit = async (values: LoginForm) => {
-    const response = await apiClient.post('/auth/login', values)
-    // En la siguiente iteracion se movara a un store seguro con refresh token.
-    window.localStorage.setItem('minflix_access_token', response.data.accessToken)
-    window.alert('Sesion iniciada correctamente')
-    navigate('/')
+    try {
+      const response = await apiClient.post('/auth/login', values)
+      // En la siguiente iteracion se movara a un store seguro con refresh token.
+      window.localStorage.setItem('minflix_access_token', response.data.accessToken)
+      toast.success('Sesion iniciada correctamente')
+      navigate('/')
+    } catch (error) {
+      toast.error('Error al iniciar sesion. Verifique sus credenciales.')
+    }
   }
 
   return (

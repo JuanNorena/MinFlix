@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import { z } from 'zod'
 import { apiClient } from '../shared/api/client'
 import { authFieldHelp } from '../shared/helpers/authFieldHelp'
@@ -45,10 +46,14 @@ export function RegisterPage() {
    * @param values - Datos del formulario de registro.
    */
   const onSubmit = async (values: RegisterForm) => {
-    const response = await apiClient.post('/auth/register', values)
-    window.localStorage.setItem('minflix_access_token', response.data.accessToken)
-    window.alert('Cuenta creada correctamente')
-    navigate('/')
+    try {
+      const response = await apiClient.post('/auth/register', values)
+      window.localStorage.setItem('minflix_access_token', response.data.accessToken)
+      toast.success('Cuenta creada correctamente')
+      navigate('/')
+    } catch {
+      toast.error('Error al crear la cuenta. Por favor, intente de nuevo.')
+    }
   }
 
   return (

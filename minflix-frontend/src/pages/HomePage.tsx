@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { buttonClassName } from '../shared/ui/buttonStyles'
+import { plansCatalog } from '../shared/helpers/plansCatalog'
 
 /**
  * Pantalla inicial del proyecto MinFlix.
@@ -24,7 +25,7 @@ export function HomePage() {
           transition={{ delay: 0.1, duration: 0.5 }}
           className="nf-hero-title"
         >
-          El backstage de streaming que conecta diseno, analitica y rendimiento.
+          Películas, series ilimitadas y mucho más
         </motion.h1>
 
         <motion.p
@@ -33,8 +34,7 @@ export function HomePage() {
           transition={{ delay: 0.2, duration: 0.45 }}
           className="nf-hero-description"
         >
-          Iniciamos con autenticacion real sobre Oracle. Esta primera fase implementa login y registro
-          con experiencia visual de plataforma premium, preparados para evolucionar a catalogo y perfiles.
+          Disfruta donde quieras. Cancela cuando quieras. Iniciamos con autenticación sobre Oracle Database.
         </motion.p>
 
         <motion.div
@@ -42,12 +42,10 @@ export function HomePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.45 }}
           className="nf-hero-actions"
+          style={{ marginTop: '2rem' }}
         >
           <Link to="/login" className={buttonClassName('primary')}>
-            Iniciar sesion
-          </Link>
-          <Link to="/planes" className={buttonClassName('ghost')}>
-            Ver planes
+            Iniciar sesión
           </Link>
           <Link to="/register" className={buttonClassName('ghost')}>
             Crear cuenta
@@ -62,25 +60,30 @@ export function HomePage() {
           </a>
         </motion.div>
 
-        <motion.section
+        <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.45 }}
-          className="nf-feature-grid"
+          style={{ marginTop: '4rem' }}
         >
-          <article className="nf-feature-card">
-            <h3>Autenticacion robusta</h3>
-            <p>Passport local, JWT y hash bcrypt sobre Oracle Database.</p>
-          </article>
-          <article className="nf-feature-card">
-            <h3>Escalamiento por fases</h3>
-            <p>Base lista para catalogo, perfiles, reproduccion y analitica.</p>
-          </article>
-          <article className="nf-feature-card">
-            <h3>Experiencia premium</h3>
-            <p>UI consistente, responsive y optimizada para conversion en auth.</p>
-          </article>
-        </motion.section>
+          <h2 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>Planes disponibles</h2>
+          <div className="nf-plans-grid">
+            {plansCatalog.map((plan) => (
+              <article key={plan.code} className="nf-plan-card">
+                <h3>{plan.title}</h3>
+                <p className="nf-plan-price">{plan.monthlyPrice} / mes</p>
+                <p className="nf-plan-meta">{plan.profileLimit}</p>
+                <p className="nf-plan-meta">Calidad: {plan.quality}</p>
+                <p className="nf-plan-meta">Dispositivos: {plan.simultaneousDevices}</p>
+                <ul>
+                  {plan.benefits.map((benefit, i) => (
+                    <li key={i}>{benefit}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </motion.div>
       </section>
     </main>
   )

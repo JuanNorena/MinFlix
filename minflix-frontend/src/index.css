@@ -54,9 +54,10 @@ h3 {
 .nf-hero-title {
   margin-top: 1.1rem;
   margin-bottom: 0;
-  max-width: 16ch;
-  font-size: clamp(2.2rem, 5.4vw, 5rem);
-  line-height: 1.04;
+  max-width: 800px;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1.1;
+  font-weight: 800;
 }
 
 .nf-hero-description {
@@ -294,15 +295,14 @@ h3 {
 }
 
 .nf-button-primary {
-  margin-top: 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 0.85rem;
-  background: linear-gradient(90deg, var(--nf-red) 0%, var(--nf-red-soft) 100%);
-  padding: 0.84rem 1.06rem;
-  min-width: 128px;
+  background: linear-gradient(90deg, var(--nf-red) 0%, var(--nf-red-soft) 100%);     
+  padding: 0.84rem 1.4rem;
+  min-width: 140px;
   color: #fff;
   font-weight: 700;
   cursor: pointer;
@@ -327,9 +327,8 @@ h3 {
   border: 1px solid rgb(255 255 255 / 25%);
   border-radius: 0.85rem;
   background: rgb(255 255 255 / 8%);
-  padding: 0.84rem 1.06rem;
-  min-width: 128px;
-  color: #fff;
+  padding: 0.84rem 1.4rem;
+  min-width: 140px;
   font-weight: 700;
   text-decoration: none;
   transition: border-color 180ms ease, background-color 180ms ease;
