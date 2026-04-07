@@ -33,6 +33,18 @@ Construir una experiencia de autenticacion estilo plataforma de streaming premiu
 1. **Mensajes de Confirmacion / Error:** No se deben usar alertas nativas del navegador (window.alert). Todo feedback debe manejarse mediante **React Hot Toast**, en la esquina superior derecha, con los colores oscuros de la paleta.
 2. **Iconografia:** El icono de visualizacion para la contraseña sera siempre un ojo (`Eye` / `EyeOff`) extraido de `lucide-react`.
 
+## Flujo de navegacion autenticado
+1. El Home inicial (`/`) se mantiene como landing publica.
+2. Tras login o registro exitoso, el usuario va a `profiles/select` para elegir perfil.
+3. La vista `profiles/select` replica el flujo Netflix "Quien esta viendo" y no retorna al landing mientras haya sesion activa.
+4. Luego de seleccionar perfil, el usuario entra a `browse`.
+
+## Carga de avatar desde explorador de archivos
+1. El formulario de gestion de perfiles usa input `type=file` para abrir el explorador del sistema.
+2. Solo se aceptan archivos de imagen (`image/*`) y maximo 5MB.
+3. El backend recibe la imagen por `multipart/form-data` en `/auth/profiles/avatar` y retorna URL publica.
+4. El frontend guarda esa URL en el perfil al crearlo o actualizarlo.
+
 ## Helpers funcionales
 1. authFieldHelp: glosario corto para explicar campos de login/registro.
 2. plansCatalog: catalogo de planes y beneficios para la vista de comparacion.
@@ -61,9 +73,11 @@ Sirve para separar historial, recomendaciones y progreso desde el primer ingreso
 ## Ubicacion tecnica
 La implementacion de esta guia se centraliza en minflix-frontend/src/index.css y es consumida por:
 - minflix-frontend/src/pages/HomePage.tsx
+- minflix-frontend/src/pages/ProfileSelectorPage.tsx
+- minflix-frontend/src/pages/BrowsePage.tsx
 - minflix-frontend/src/pages/LoginPage.tsx
 - minflix-frontend/src/pages/RegisterPage.tsx
-- minflix-frontend/src/pages/PlansPage.tsx
+- minflix-frontend/src/pages/ProfilesPage.tsx
 - minflix-frontend/src/shared/ui/PasswordInput.tsx
 - minflix-frontend/src/shared/helpers/authFieldHelp.ts
 - minflix-frontend/src/shared/helpers/plansCatalog.ts

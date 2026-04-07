@@ -2,15 +2,19 @@ import {
   BadRequestException,
   Injectable,
   Logger,
+  NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { compare, hash } from 'bcrypt';
 import { ConfigService } from '@nestjs/config';
 import { PlanEntity, ProfileEntity, UserEntity } from './entities';
 import { Repository } from 'typeorm';
+import { CreateProfileDto } from './dto/create-profile.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 /**
  * Servicio de autenticacion base para el arranque del proyecto.
@@ -152,6 +156,204 @@ export class AuthService implements OnModuleInit {
       email: savedUser.email,
       role: savedUser.rol,
     });
+  }
+
+  /**
+   * Lista los perfiles registrados para una cuenta.
+   * @param userId - Identificador de la cuenta autenticada.
+   * @returns Coleccion de perfiles visibles para la cuenta.
+   */
+  async listProfiles(userId: number): Promise<
+    Array<{
+      id: number;
+      nombre: string;
+      avatar: string | null;
+      tipoPerfil: string;
+    }>
+  > {
+    const profiles = await this.profileRepository
+      .createQueryBuilder('perfil')
+      .innerJoin('perfil.usuario', 'usuario')
+      .where('usuario.id = :userId', { userId })
+      .orderBy('perfil.id', 'ASC')
+      .getMany();
+
+    return profiles.map((profile) => ({
+      id: profile.id,
+      nombre: profile.nombre,
+      avatar: profile.avatar ?? null,
+      tipoPerfil: profile.tipoPerfil,
+    }));
+  }
+
+  /**
+   * Crea un perfil adicional para una cuenta validando el limite del plan.
+   * @param userId - Identificador de la cuenta autenticada.
+   * @param payload - Datos del perfil a crear.
+   * @returns Perfil creado.
+   */
+  async createProfile(
+    userId: number,
+    payload: CreateProfileDto,
+  ): Promise<{
+    id: number;
+    nombre: string;
+    avatar: string | null;
+    tipoPerfil: string;
+  }> {
+    const user = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: { plan: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('La cuenta autenticada no existe');
+    }
+
+    const currentProfiles = await this.profileRepository
+      .createQueryBuilder('perfil')
+      .innerJoin('perfil.usuario', 'usuario')
+      .where('usuario.id = :userId', { userId })
+      .getCount();
+
+    const profileLimit = user.plan?.limitePerfiles ?? 1;
+    if (currentProfiles >= profileLimit) {
+      throw new BadRequestException(
+        `El plan actual permite maximo ${profileLimit} perfiles`,
+      );
+    }
+
+    const savedProfile = await this.profileRepository.save(
+      this.profileRepository.create({
+        nombre: payload.nombre,
+        avatar: payload.avatar,
+        tipoPerfil: payload.tipoPerfil,
+        usuario: user,
+      }),
+    );
+
+    return {
+      id: savedProfile.id,
+      nombre: savedProfile.nombre,
+      avatar: savedProfile.avatar ?? null,
+      tipoPerfil: savedProfile.tipoPerfil,
+    };
+  }
+
+  /**
+   * Actualiza los datos editables de un perfil perteneciente al usuario.
+   * @param userId - Identificador de la cuenta autenticada.
+   * @param profileId - Identificador del perfil.
+   * @param payload - Campos a actualizar del perfil.
+   * @returns Perfil actualizado.
+   */
+  async updateProfile(
+    userId: number,
+    profileId: number,
+    payload: UpdateProfileDto,
+  ): Promise<{
+    id: number;
+    nombre: string;
+    avatar: string | null;
+    tipoPerfil: string;
+  }> {
+    if (
+      payload.nombre === undefined &&
+      payload.avatar === undefined &&
+      payload.tipoPerfil === undefined
+    ) {
+      throw new BadRequestException(
+        'Debe enviar al menos un campo para actualizar',
+      );
+    }
+
+    const profile = await this.profileRepository.findOne({
+      where: { id: profileId },
+      relations: { usuario: true },
+    });
+
+    if (!profile || profile.usuario.id !== userId) {
+      throw new NotFoundException('Perfil no encontrado para la cuenta actual');
+    }
+
+    if (payload.nombre !== undefined) {
+      profile.nombre = payload.nombre;
+    }
+
+    if (payload.avatar !== undefined) {
+      profile.avatar = payload.avatar;
+    }
+
+    if (payload.tipoPerfil !== undefined) {
+      profile.tipoPerfil = payload.tipoPerfil;
+    }
+
+    const savedProfile = await this.profileRepository.save(profile);
+
+    return {
+      id: savedProfile.id,
+      nombre: savedProfile.nombre,
+      avatar: savedProfile.avatar ?? null,
+      tipoPerfil: savedProfile.tipoPerfil,
+    };
+  }
+
+  /**
+   * Elimina un perfil de la cuenta siempre que exista al menos uno restante.
+   * @param userId - Identificador de la cuenta autenticada.
+   * @param profileId - Identificador del perfil a eliminar.
+   * @returns Confirmacion de eliminacion.
+   */
+  async deleteProfile(
+    userId: number,
+    profileId: number,
+  ): Promise<{ message: string }> {
+    const profile = await this.profileRepository.findOne({
+      where: { id: profileId },
+      relations: { usuario: true },
+    });
+
+    if (!profile || profile.usuario.id !== userId) {
+      throw new NotFoundException('Perfil no encontrado para la cuenta actual');
+    }
+
+    const currentProfiles = await this.profileRepository
+      .createQueryBuilder('perfil')
+      .innerJoin('perfil.usuario', 'usuario')
+      .where('usuario.id = :userId', { userId })
+      .getCount();
+
+    if (currentProfiles <= 1) {
+      throw new BadRequestException(
+        'La cuenta debe conservar al menos un perfil activo',
+      );
+    }
+
+    await this.profileRepository.remove(profile);
+
+    return { message: 'Perfil eliminado correctamente' };
+  }
+
+  /**
+   * Construye la URL publica de avatar para exponerla al frontend.
+   * @param req - Request HTTP actual para resolver host.
+   * @param fileName - Nombre final del archivo persistido.
+   * @returns Metadata publica del recurso cargado.
+   */
+  resolveAvatarAsset(
+    req: Request,
+    fileName: string,
+  ): { avatarUrl: string; avatarPath: string } {
+    const configuredBaseUrl = this.configService.get<string>('PUBLIC_BASE_URL');
+    const fallbackHost = req.get('host') ?? 'localhost:3000';
+    const computedBaseUrl = `${req.protocol}://${fallbackHost}`;
+    const baseUrl = (configuredBaseUrl ?? computedBaseUrl).replace(/\/$/, '');
+    const avatarPath = `/uploads/avatars/${fileName}`;
+
+    return {
+      avatarUrl: `${baseUrl}${avatarPath}`,
+      avatarPath,
+    };
   }
 
   /**

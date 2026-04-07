@@ -5,6 +5,7 @@ import { toast } from 'react-hot-toast'
 import { z } from 'zod'
 import { apiClient } from '../shared/api/client'
 import { authFieldHelp } from '../shared/helpers/authFieldHelp'
+import { clearActiveProfile } from '../shared/session/profileSession'
 import { AuthSplitLayout } from '../shared/ui/AuthSplitLayout'
 import { buttonClassName } from '../shared/ui/buttonStyles'
 import { PasswordInput } from '../shared/ui/PasswordInput'
@@ -49,8 +50,9 @@ export function RegisterPage() {
     try {
       const response = await apiClient.post('/auth/register', values)
       window.localStorage.setItem('minflix_access_token', response.data.accessToken)
+      clearActiveProfile()
       toast.success('Cuenta creada correctamente')
-      navigate('/')
+      navigate('/profiles/select', { replace: true })
     } catch {
       toast.error('Error al crear la cuenta. Por favor, intente de nuevo.')
     }

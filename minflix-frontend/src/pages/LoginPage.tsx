@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
 import { apiClient } from '../shared/api/client'
 import { authFieldHelp } from '../shared/helpers/authFieldHelp'
+import { clearActiveProfile } from '../shared/session/profileSession'
 import { AuthSplitLayout } from '../shared/ui/AuthSplitLayout'
 import { buttonClassName } from '../shared/ui/buttonStyles'
 import { PasswordInput } from '../shared/ui/PasswordInput'
@@ -44,9 +45,10 @@ export function LoginPage() {
       const response = await apiClient.post('/auth/login', values)
       // En la siguiente iteracion se movara a un store seguro con refresh token.
       window.localStorage.setItem('minflix_access_token', response.data.accessToken)
+      clearActiveProfile()
       toast.success('Sesion iniciada correctamente')
-      navigate('/')
-    } catch (error) {
+      navigate('/profiles/select', { replace: true })
+    } catch {
       toast.error('Error al iniciar sesion. Verifique sus credenciales.')
     }
   }
