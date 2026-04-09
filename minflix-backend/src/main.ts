@@ -3,13 +3,29 @@ import compression from 'compression';
 import helmet from 'helmet';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { existsSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import express from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const uploadsDirectory = join(process.cwd(), 'uploads');
+  const avatarsDirectory = join(uploadsDirectory, 'avatars');
 
-  app.use(helmet());
+  if (!existsSync(avatarsDirectory)) {
+    mkdirSync(avatarsDirectory, { recursive: true });
+  }
+
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: {
+        policy: 'cross-origin',
+      },
+    }),
+  );
   app.use(compression());
+  app.use('/uploads', express.static(uploadsDirectory));
   app.enableCors({
     origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
     credentials: true,

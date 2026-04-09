@@ -1,9 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --color-brand: #0f172a;
-  --color-highlight: #0e7490;
-  --color-bg: #f6f8fb;
+  --nf-red: #e50914;
+  --nf-red-soft: #f84b54;
+  --nf-gold: #ffc857;
+  --nf-ink: #f4f5f8;
+  --nf-muted: #bec2d0;
+  --nf-bg-900: #07090f;
+  --nf-bg-800: #101524;
+  --nf-surface: rgba(16, 21, 36, 0.78);
+  --nf-border: rgba(255, 255, 255, 0.16);
 }
 
 * {
@@ -18,7 +24,613 @@ body,
 }
 
 body {
-  background: var(--color-bg);
-  color: #0f172a;
-  font-family: "Manrope", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 16% 12%, rgb(229 9 20 / 30%), transparent 36%),
+    radial-gradient(circle at 84% 0%, rgb(255 200 87 / 18%), transparent 32%),
+    linear-gradient(165deg, var(--nf-bg-900) 0%, var(--nf-bg-800) 78%);
+  color: var(--nf-ink);
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.nf-shell {
+  min-height: 100vh;
+  color: var(--nf-ink);
+}
+
+.nf-hero-wrap {
+  margin: 0 auto;
+  max-width: 1200px;
+  padding: 2.6rem 1.5rem 2.2rem;
+}
+
+.nf-hero-title {
+  margin-top: 1.1rem;
+  margin-bottom: 0;
+  max-width: 800px;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.nf-hero-description {
+  margin-top: 1.4rem;
+  max-width: 65ch;
+  color: rgb(255 255 255 / 78%);
+  font-size: clamp(1rem, 2.2vw, 1.48rem);
+}
+
+.nf-hero-actions {
+  margin-top: 1.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.nf-feature-grid {
+  margin-top: 2.2rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.nf-feature-card {
+  border: 1px solid var(--nf-border);
+  border-radius: 1rem;
+  background: linear-gradient(160deg, rgb(255 255 255 / 10%), rgb(255 255 255 / 4%));
+  padding: 1rem 1rem 1.05rem;
+  backdrop-filter: blur(8px);
+}
+
+.nf-feature-card h3 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.nf-feature-card p {
+  margin-top: 0.42rem;
+  margin-bottom: 0;
+  color: var(--nf-muted);
+}
+
+.nf-plans-grid {
+  margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.nf-plan-card {
+  border: 1px solid var(--nf-border);
+  border-radius: 1rem;
+  background: linear-gradient(158deg, rgb(255 255 255 / 9%), rgb(255 255 255 / 4%));
+  padding: 1.05rem;
+  backdrop-filter: blur(8px);
+}
+
+.nf-plan-card h3 {
+  margin: 0;
+  font-size: 1.28rem;
+}
+
+.nf-plan-price {
+  margin: 0.4rem 0 0.62rem;
+  color: var(--nf-gold);
+  font-size: 1.04rem;
+  font-weight: 700;
+}
+
+.nf-plan-meta {
+  margin: 0.28rem 0;
+  color: var(--nf-muted);
+  font-size: 0.92rem;
+}
+
+.nf-plan-card ul {
+  margin: 0.7rem 0 0;
+  padding-left: 1rem;
+}
+
+.nf-plan-card li {
+  margin-bottom: 0.35rem;
+  color: #edf0f7;
+  font-size: 0.9rem;
+}
+
+.nf-helper-panel {
+  margin-top: 1.35rem;
+  border: 1px solid var(--nf-border);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 8%);
+  padding: 1rem 1.1rem;
+}
+
+.nf-helper-panel h2 {
+  margin: 0;
+  font-size: 1.22rem;
+}
+
+.nf-helper-panel ul {
+  margin: 0.62rem 0 0;
+  padding-left: 1rem;
+}
+
+.nf-helper-panel li {
+  margin-bottom: 0.28rem;
+  color: var(--nf-muted);
+}
+
+.nf-auth-layout {
+  margin: 0 auto;
+  display: grid;
+  max-width: 1120px;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  padding: 2.5rem 1.5rem;
+}
+
+.nf-promo-panel {
+  border: 1px solid var(--nf-border);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgb(255 255 255 / 7%), rgb(255 255 255 / 3%));
+  padding: 2rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 32px 60px rgb(0 0 0 / 34%);
+}
+
+.nf-promo-panel h1 {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  font-size: clamp(2rem, 4.2vw, 4rem);
+  line-height: 1.02;
+}
+
+.nf-promo-panel p {
+  max-width: 56ch;
+  color: var(--nf-muted);
+  font-size: 1.04rem;
+}
+
+.nf-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  background: rgb(255 255 255 / 10%);
+  padding: 0.35rem 0.8rem;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.nf-auth-card {
+  border: 1px solid var(--nf-border);
+  border-radius: 1.2rem;
+  background: var(--nf-surface);
+  padding: 1.8rem;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 26px 44px rgb(0 0 0 / 30%);
+}
+
+.nf-auth-card h2 {
+  margin: 0;
+  font-size: 2rem;
+}
+
+.nf-subtitle {
+  margin-top: 0.4rem;
+  color: var(--nf-muted);
+}
+
+.nf-form {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.nf-form label {
+  margin-top: 0.4rem;
+  color: var(--nf-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.nf-helper-field {
+  margin: 0.18rem 0 0;
+  color: var(--nf-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.nf-input {
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 0.85rem;
+  background: rgb(9 12 20 / 78%);
+  padding: 0.78rem 0.92rem;
+  color: var(--nf-ink);
+  outline: none;
+  transition: border-color 180ms ease;
+}
+
+.nf-input:focus {
+  border-color: var(--nf-red-soft);
+}
+
+.nf-password-wrap {
+  position: relative;
+}
+
+.nf-password-input {
+  width: 100%;
+  padding-right: 5rem;
+}
+
+.nf-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.52rem;
+  transform: translateY(-50%);
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 0.6rem;
+  background: rgb(255 255 255 / 12%);
+  padding: 0.3rem 0.62rem;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nf-password-toggle:hover {
+  border-color: var(--nf-gold);
+}
+
+.nf-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 0.85rem;
+  background: linear-gradient(90deg, var(--nf-red) 0%, var(--nf-red-soft) 100%);     
+  padding: 0.84rem 1.4rem;
+  min-width: 140px;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease;
+  text-decoration: none;
+}
+
+.nf-button-primary:disabled {
+  filter: grayscale(0.4);
+  cursor: not-allowed;
+}
+
+.nf-button-primary:hover:enabled {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.nf-button-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 0.85rem;
+  background: rgb(255 255 255 / 8%);
+  padding: 0.84rem 1.4rem;
+  min-width: 140px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.nf-button-ghost:hover {
+  border-color: var(--nf-gold);
+  background: rgb(255 255 255 / 14%);
+}
+
+.nf-error {
+  margin: 0;
+  color: #ff8e95;
+  font-size: 0.82rem;
+}
+
+.nf-helper-row {
+  margin-top: 1rem;
+  color: var(--nf-muted);
+}
+
+.nf-helper-row a {
+  color: var(--nf-gold);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nf-profile-selector-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(circle at 50% -12%, rgb(255 255 255 / 8%), transparent 45%),
+    linear-gradient(180deg, #0b0d12 0%, #090b10 100%);
+}
+
+.nf-profile-selector-wrap {
+  width: min(100%, 980px);
+  text-align: center;
+}
+
+.nf-profile-selector-title {
+  margin: 0;
+  font-size: clamp(2rem, 4.5vw, 3.4rem);
+  font-weight: 700;
+}
+
+.nf-profile-selector-loading {
+  margin-top: 1.9rem;
+  color: var(--nf-muted);
+  font-size: 1rem;
+}
+
+.nf-profile-empty-state {
+  margin: 2rem auto 0;
+  width: min(100%, 420px);
+  border: 1px solid var(--nf-border);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 6%);
+  padding: 1.4rem;
+}
+
+.nf-profile-empty-state h2 {
+  margin: 0;
+}
+
+.nf-profile-empty-state p {
+  margin-top: 0.6rem;
+  margin-bottom: 1rem;
+  color: var(--nf-muted);
+}
+
+.nf-profile-selector-grid {
+  margin: 2.2rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 1.1rem;
+  max-width: 820px;
+}
+
+.nf-profile-tile {
+  border: none;
+  background: transparent;
+  color: var(--nf-ink);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+}
+
+.nf-profile-avatar-frame {
+  width: 132px;
+  height: 132px;
+  border-radius: 0.55rem;
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: linear-gradient(130deg, #5b647a 0%, #2d3344 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.nf-profile-tile:hover .nf-profile-avatar-frame,
+.nf-profile-tile:focus-visible .nf-profile-avatar-frame {
+  transform: translateY(-2px);
+  border-color: rgb(255 255 255 / 72%);
+}
+
+.nf-profile-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.nf-profile-avatar-fallback {
+  font-size: 2.15rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.nf-profile-name {
+  font-size: 1.65rem;
+  color: #8f96a8;
+}
+
+.nf-profile-tile:hover .nf-profile-name,
+.nf-profile-tile:focus-visible .nf-profile-name {
+  color: #fff;
+}
+
+.nf-profile-selector-actions {
+  margin-top: 2.8rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.nf-profile-manage-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgb(255 255 255 / 32%);
+  border-radius: 0.2rem;
+  background: transparent;
+  color: #a8aebb;
+  text-decoration: none;
+  min-width: 220px;
+  padding: 0.78rem 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.nf-profile-manage-button:hover {
+  color: #fff;
+  border-color: rgb(255 255 255 / 66%);
+}
+
+.nf-avatar-upload-preview {
+  margin-top: 0.38rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--nf-border);
+  border-radius: 0.85rem;
+  background: rgb(255 255 255 / 6%);
+  padding: 0.55rem;
+}
+
+.nf-avatar-upload-preview img {
+  width: 62px;
+  height: 62px;
+  border-radius: 0.62rem;
+  object-fit: cover;
+  border: 1px solid rgb(255 255 255 / 20%);
+}
+
+.nf-profile-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.48rem;
+}
+
+.nf-profile-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.nf-profile-edit-form label {
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--nf-ink);
+}
+
+.nf-profile-card-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.nf-profile-card-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 0.62rem;
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.nf-profile-card-avatar-fallback {
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: rgb(255 255 255 / 8%);
+}
+
+.nf-browse-header {
+  margin-top: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nf-browse-avatar {
+  width: 78px;
+  height: 78px;
+  border-radius: 0.72rem;
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: rgb(255 255 255 / 7%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+
+.nf-browse-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 920px) {
+  .nf-hero-wrap {
+    padding: 1.35rem 1rem 2rem;
+  }
+
+  .nf-hero-actions {
+    gap: 0.55rem;
+  }
+
+  .nf-feature-grid,
+  .nf-plans-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nf-button-primary,
+  .nf-button-ghost {
+    width: 100%;
+  }
+
+  .nf-auth-layout {
+    grid-template-columns: 1fr;
+    padding: 1.5rem 1rem 2.2rem;
+  }
+
+  .nf-profile-selector-title {
+    font-size: 2rem;
+  }
+
+  .nf-profile-selector-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.8rem;
+  }
+
+  .nf-profile-avatar-frame {
+    width: 118px;
+    height: 118px;
+  }
+
+  .nf-profile-name {
+    font-size: 1.15rem;
+  }
+
+  .nf-browse-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nf-profile-manage-button {
+    width: 100%;
+  }
 }
