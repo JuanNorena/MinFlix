@@ -31,14 +31,14 @@ export function LoginPage() {
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@example.com',
-      password: 'Admin123*',
+      email: '',
+      password: '',
     },
   })
 
   /**
-   * Envía credenciales al endpoint de login.
-    * @param values - Datos del formulario de acceso.
+   * Envia credenciales al endpoint de login.
+   * @param values - Datos del formulario de acceso.
    */
   const onSubmit = async (values: LoginForm) => {
     try {
@@ -49,18 +49,18 @@ export function LoginPage() {
       toast.success('Sesion iniciada correctamente')
       navigate('/profiles/select', { replace: true })
     } catch {
-      toast.error('Error al iniciar sesion. Verifique sus credenciales.')
+      toast.error('No pudimos iniciar sesion. Revisa tu correo y contrasena.')
     }
   }
 
   return (
     <AuthSplitLayout
-      chip="Fase 1 · Autenticacion"
-      title="Bienvenido de nuevo al panel de MinFlix."
-      description="Inicia sesion con Passport.js y JWT. Esta pantalla ya consume el backend conectado a Oracle para validar credenciales reales."
+      chip="Bienvenido a casa"
+      title="Todo lo que te gusta, en un solo lugar."
+      description="Inicia sesion y sigue disfrutando tus series, peliculas y documentales favoritos."
     >
       <h2>Iniciar sesion</h2>
-      <p className="nf-subtitle">Acceso seguro con Passport local + JWT</p>
+      <p className="nf-subtitle">Tu cuenta te esta esperando</p>
 
       <form className="nf-form" onSubmit={handleSubmit(onSubmit)}>
         <label htmlFor="email">Correo</label>
@@ -88,7 +88,7 @@ export function LoginPage() {
           disabled={isSubmitting}
           className={buttonClassName('primary')}
         >
-          {isSubmitting ? 'Validando...' : 'Entrar'}
+          {isSubmitting ? 'Entrando...' : 'Entrar'}
         </button>
       </form>
 

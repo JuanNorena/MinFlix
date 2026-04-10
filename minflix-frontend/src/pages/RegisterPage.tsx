@@ -54,18 +54,18 @@ export function RegisterPage() {
       toast.success('Cuenta creada correctamente')
       navigate('/profiles/select', { replace: true })
     } catch {
-      toast.error('Error al crear la cuenta. Por favor, intente de nuevo.')
+      toast.error('No pudimos crear tu cuenta. Intenta de nuevo en unos momentos.')
     }
   }
 
   return (
     <AuthSplitLayout
-      chip="Cuenta principal"
-      title="Crea tu cuenta y arranca tu catalogo personalizado."
-      description="Registro de usuario principal con plan inicial y primer perfil de reproduccion, conectado directamente a Oracle."
+      chip="Empieza hoy"
+      title="Crea tu cuenta y empieza a disfrutar ahora."
+      description="Elige tu plan, crea tu perfil y descubre contenido hecho para ti."
     >
       <h2>Registro</h2>
-      <p className="nf-subtitle">Configura tu cuenta de acceso MinFlix</p>
+      <p className="nf-subtitle">Toma menos de un minuto</p>
 
       <form className="nf-form" onSubmit={handleSubmit(onSubmit)}>
         <label htmlFor="nombre">Nombre completo</label>

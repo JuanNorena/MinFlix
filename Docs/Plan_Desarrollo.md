@@ -197,9 +197,138 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
 ## 7. Estado Actual y Proximo Paso
 1. Estado actual:
    - Fundaciones de backend y frontend creadas.
-   - Login inicial con Passport.js ya integrado.
+   - Login y registro con Passport.js + JWT integrados sobre Oracle.
+   - Flujo de perfiles estilo streaming implementado (selector, gestion y avatar por archivo).
+   - Catalogo base (categorias + contenidos) integrado en backend y browse frontend.
+   - Home autenticado (browse) ajustado a patron tipo Netflix y sin bloque de planes en sesion autenticada.
+   - Responsividad reforzada en browse para escritorio, tablet y movil con filas horizontales y toolbar adaptable.
+   - Textos de la experiencia frontend actualizados a tono orientado a usuario final (sin mensajes tecnicos visibles).
+   - Menu hamburguesa implementado en la barra superior de browse para dispositivos moviles.
+   - Script Oracle de catalogo base ejecutado en instancia activa con evidencia de carga:
+     - CATEGORIAS: 5 registros.
+     - CONTENIDOS: 5 registros.
+     - CONTENIDOS con ID_EMPLEADO_PUBLICADOR: 5 registros.
+   - Script Oracle de reproducciones ejecutado en instancia activa con evidencia de objetos:
+     - Tabla: REPRODUCCIONES.
+     - Trigger: TRG_REPRODUCCIONES_REGLAS_BIU (VALID).
+     - Vista: VW_CONTINUAR_VIENDO (VALID).
+    - Modulo backend de reproducciones implementado con endpoints protegidos por JWT:
+       - POST /api/v1/playback/start.
+       - POST /api/v1/playback/progress.
+       - GET /api/v1/playback/continue-watching.
+       - GET /api/v1/playback/history.
+    - Script Oracle de comunidad (favoritos) preparado para ejecucion:
+       - Script: database/05_comunidad_favoritos_iteracion3.sql.
+       - Objetos: FAVORITOS, IDX_FAVORITOS_PERFIL_FECHA, TRG_FAVORITOS_REGLAS_BI.
+    - Modulo backend de comunidad implementado para bloque 1 de Epica 4:
+       - POST /api/v1/community/favorites.
+       - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id.
+       - GET /api/v1/community/favorites?perfilId=:id.
+       - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id.
+    - Browse frontend conectado con la fila "Continua viendo" usando la vista Oracle VW_CONTINUAR_VIENDO.
+    - Acciones de reproduccion en browse integradas con backend para iniciar y retomar avances.
+    - Seccion "Actividad reciente" integrada en browse con consumo del endpoint de historial.
+      - Navegacion de detalle de contenido implementada (click en catalogo, continuar viendo e historial).
+      - Integracion de favoritos en frontend:
+         - Boton agregar/quitar favoritos en detalle de contenido.
+         - Fila "Mi lista" en browse conectada a comunidad.
+    - Mejoras responsivas adicionales aplicadas para viewport pequeno (max-width: 480px).
+      - Suite de pruebas backend ampliada para reproduccion, auth y comunidad:
+         - 4 suites.
+         - 15 pruebas exitosas.
+   - Error de tipado en pruebas de backend corregido agregando tipos globales de Jest en tsconfig.
    - Pipeline de calidad basico operativo.
 2. Proximo paso inmediato:
-   - Implementar persistencia real en Oracle para autenticacion y cuentas.
-   - Completar Iteracion 1 con usuarios, perfiles y catalogo base.
+    - Continuar Epica 4 (comunidad), bloque 2: calificaciones por perfil y elegibilidad >50%.
+    - Documentar evidencia de ejecucion Oracle para favoritos y flujo UI de comunidad.
+
+## 7.1 Avance Cuantificado (Think Deeper)
+1. Epica actual en ejecucion: Epica 4 (comunidad), bloque 1 completado y bloque 2 en preparacion.
+2. Avance global estimado del proyecto: 47%.
+3. Porcentaje faltante del proyecto: 53%.
+4. Estado por epica (estimacion tecnica actual):
+   - Epica 1 (catalogo): 45%.
+     - Hecho: categorias, contenidos base, CRUD/filtros principales y browse por categoria.
+     - Falta: generos M:N, temporadas/episodios, relaciones entre contenidos y reglas avanzadas.
+   - Epica 2 (usuarios/perfiles): 70%.
+     - Hecho: registro/login JWT, selector/gestion de perfiles, avatar, limites por plan.
+     - Falta: programa de referidos completo y cobertura de datos personales extendidos.
+   - Epica 3 (reproducciones): 58%.
+     - Hecho: start/progress, continuar viendo, historial por perfil, validaciones Oracle y UI integrada.
+     - Falta: seguimiento por episodio, reproductor real y eventos completos de sesion.
+   - Epica 4 (comunidad): 18%.
+     - Hecho: favoritos por perfil (backend + frontend + script Oracle de soporte).
+     - Falta: calificaciones, resenas, reportes y bandeja de moderacion.
+   - Epica 5 (facturacion): 0%.
+   - Epica 6 (analitica): 0%.
+5. Lectura ejecutiva:
+   - La base de plataforma (auth, perfiles, catalogo inicial, tracking base y favoritos) esta funcional.
+   - La brecha principal restante esta en comunidad, finanzas y analitica (epicas 4-6), ademas de nucleos academicos avanzados en Oracle.
+
+## 8. Continuacion Paso a Paso (Detallada)
+1. Paso 1 - Cerrar reglas Oracle de Iteracion 1:
+   - Crear script versionado para reglas de perfiles por plan y perfil infantil.
+   - Definir trigger de limite de perfiles por cuenta usando PLANES.LIMITE_PERFILES.
+   - Definir validacion de clasificacion permitida para perfil infantil como regla reutilizable para consumo.
+   - Estado actual:
+     - Script creado: database/03_reglas_perfiles_iteracion1.sql.
+     - Objetos aplicados en Oracle: TRG_PERFILES_LIMITE_PLAN_BI, FN_CLASIFICACION_PERMITIDA_PARA_PERFIL, VW_CONTENIDO_VISIBLE_POR_PERFIL.
+     - Estado de compilacion: VALID en trigger, funcion y vista.
+2. Paso 2 - Alinear backend con reglas Oracle:
+   - Manejar errores Oracle de negocio (por ejemplo ORA-20001) en AuthService para mensajes controlados.
+   - Agregar pruebas unitarias de limite de perfiles para garantizar simetria backend/DB.
+   - Estado actual:
+     - Manejo de ORA-20011 y ORA-20012 integrado en AuthService.createProfile.
+       - Pruebas unitarias especificas de limite por trigger implementadas en minflix-backend/src/auth/auth.service.spec.ts.
+3. Paso 3 - Iniciar Iteracion 2 en base de datos:
+   - Crear tabla REPRODUCCIONES con progreso, dispositivo y fechas de control.
+   - Crear indices para consulta por perfil, contenido y fecha de ultima reproduccion.
+   - Preparar trigger para validar cuenta activa al registrar reproduccion.
+   - Estado actual:
+     - Script creado: database/04_reproducciones_iteracion2.sql.
+     - Objetos aplicados en Oracle: REPRODUCCIONES, TRG_REPRODUCCIONES_REGLAS_BIU, VW_CONTINUAR_VIENDO.
+     - Validacion funcional: insercion de reproduccion de prueba con PORCENTAJE_AVANCE calculado.
+4. Paso 4 - Iniciar Iteracion 2 en backend:
+   - Crear modulo de reproducciones con endpoints de iniciar, actualizar progreso y continuar viendo.
+   - Incorporar guardas por perfil activo y validaciones de ownership.
+    - Estado actual:
+       - Modulo creado: minflix-backend/src/playback/playback.module.ts.
+       - Servicio creado: minflix-backend/src/playback/playback.service.ts.
+       - Endpoints listos y documentados en Swagger:
+          - POST /api/v1/playback/start.
+          - POST /api/v1/playback/progress.
+          - GET /api/v1/playback/continue-watching.
+          - GET /api/v1/playback/history.
+       - Validaciones Oracle mapeadas a errores controlados para ORA-20021, ORA-20022, ORA-20023 y ORA-20024.
+       - Browse integrado con consumo real de continuar viendo y acciones de iniciar/retomar reproduccion.
+       - Browse integrado con historial de reproduccion por perfil para trazabilidad operativa.
+      - Pruebas unitarias de PlaybackService implementadas en minflix-backend/src/playback/playback.service.spec.ts.
+      - Validacion automatizada completada: npm run lint, npm run test -- --runInBand y npm run build en backend.
+5. Paso 5 - Evidencia y calidad por cada bloque:
+   - Ejecutar SQL por bloque y guardar resultados de conteo/validacion.
+   - Ejecutar npm test, npm run lint y npm run build al cierre de cada subfase.
+   - Actualizar README y este plan con estado real al finalizar cada bloque.
+6. Paso 6 - Mejorar responsividad de vistas nuevas:
+   - Revisar comportamiento en 920px, 640px y 480px.
+   - Ajustar toolbar, hero, tarjetas y filas de scroll horizontal para pantallas pequenas.
+   - Estado actual:
+     - Validacion de build/lint frontend completada sin errores.
+     - Ajustes aplicados en minflix-frontend/src/index.css para 480px (acciones, anchos y legibilidad).
+     - Seccion Actividad reciente adaptada a grid responsivo (2 columnas en tablet, 1 columna en movil).
+7. Paso 7 - Iniciar Epica 4 bloque 1 (favoritos por perfil):
+    - Crear script Oracle de favoritos con restriccion de contenido por perfil infantil.
+    - Exponer endpoints protegidos de comunidad para agregar, listar, validar estado y eliminar favoritos.
+    - Integrar frontend con boton de favoritos en detalle y fila "Mi lista" en browse.
+    - Estado actual:
+       - Script creado: database/05_comunidad_favoritos_iteracion3.sql.
+       - Modulo creado: minflix-backend/src/community/community.module.ts.
+       - Endpoints listos y documentados en Swagger:
+          - POST /api/v1/community/favorites.
+          - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id.
+          - GET /api/v1/community/favorites?perfilId=:id.
+          - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id.
+       - Frontend integrado en minflix-frontend/src/pages/ContentDetailPage.tsx y minflix-frontend/src/pages/BrowsePage.tsx.
+       - Validacion automatizada completada:
+          - Backend: npm run lint, npm run test -- --runInBand, npm run build.
+          - Frontend: npm run lint, npm run build.
 

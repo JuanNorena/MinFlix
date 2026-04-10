@@ -5,6 +5,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { databaseConfig } from './config/database.config';
 import { AuthModule } from './auth/auth.module';
+import { CatalogModule } from './catalog/catalog.module';
+import { PlaybackModule } from './playback/playback.module';
+import { CommunityModule } from './community/community.module';
 
 @Module({
   imports: [
@@ -14,6 +17,9 @@ import { AuthModule } from './auth/auth.module';
     }),
     TypeOrmModule.forRootAsync(databaseConfig),
     AuthModule,
+    CatalogModule,
+    PlaybackModule,
+    CommunityModule,
   ],
   controllers: [AppController],
   providers: [AppService],

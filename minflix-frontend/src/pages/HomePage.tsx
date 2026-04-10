@@ -16,7 +16,7 @@ export function HomePage() {
           transition={{ duration: 0.45 }}
           className="nf-chip"
         >
-          MinFlix · Oracle + NestJS + React
+          Solo en MinFlix
         </motion.p>
 
         <motion.h1
@@ -34,7 +34,7 @@ export function HomePage() {
           transition={{ delay: 0.2, duration: 0.45 }}
           className="nf-hero-description"
         >
-          Disfruta donde quieras. Cancela cuando quieras. Iniciamos con autenticación sobre Oracle Database.
+          Disfruta donde quieras. Cancela cuando quieras. Tus series y peliculas favoritas, en un solo lugar.
         </motion.p>
 
         <motion.div
@@ -45,7 +45,7 @@ export function HomePage() {
           style={{ marginTop: '2rem' }}
         >
           <Link to="/login" className={buttonClassName('primary')}>
-            Iniciar sesión
+            Iniciar sesion
           </Link>
           <Link to="/register" className={buttonClassName('ghost')}>
             Crear cuenta

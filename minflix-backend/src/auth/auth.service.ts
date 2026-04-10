@@ -223,21 +223,35 @@ export class AuthService implements OnModuleInit {
       );
     }
 
-    const savedProfile = await this.profileRepository.save(
-      this.profileRepository.create({
-        nombre: payload.nombre,
-        avatar: payload.avatar,
-        tipoPerfil: payload.tipoPerfil,
-        usuario: user,
-      }),
-    );
+    try {
+      const savedProfile = await this.profileRepository.save(
+        this.profileRepository.create({
+          nombre: payload.nombre,
+          avatar: payload.avatar,
+          tipoPerfil: payload.tipoPerfil,
+          usuario: user,
+        }),
+      );
 
-    return {
-      id: savedProfile.id,
-      nombre: savedProfile.nombre,
-      avatar: savedProfile.avatar ?? null,
-      tipoPerfil: savedProfile.tipoPerfil,
-    };
+      return {
+        id: savedProfile.id,
+        nombre: savedProfile.nombre,
+        avatar: savedProfile.avatar ?? null,
+        tipoPerfil: savedProfile.tipoPerfil,
+      };
+    } catch (error) {
+      if (this.isOracleBusinessRuleError(error, 'ORA-20011')) {
+        throw new BadRequestException(
+          `El plan actual permite maximo ${profileLimit} perfiles`,
+        );
+      }
+
+      if (this.isOracleBusinessRuleError(error, 'ORA-20012')) {
+        throw new NotFoundException('La cuenta autenticada no existe');
+      }
+
+      throw error;
+    }
   }
 
   /**
@@ -434,5 +448,22 @@ export class AuthService implements OnModuleInit {
       error.message.includes('ORA-00942') ||
       error.message.includes('tabla o vista')
     );
+  }
+
+  /**
+   * Determina si un error corresponde a una regla de negocio Oracle.
+   * @param error - Error capturado en operación de base de datos.
+   * @param oracleCode - Codigo Oracle esperado, por ejemplo ORA-20011.
+   * @returns True si el mensaje contiene el codigo esperado.
+   */
+  private isOracleBusinessRuleError(
+    error: unknown,
+    oracleCode: string,
+  ): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    return error.message.includes(oracleCode);
   }
 }

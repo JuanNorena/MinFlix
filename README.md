@@ -152,6 +152,10 @@ Detalle completo del plan:
 ### 5.3 Base de datos Oracle
 1. Ejecutar scripts en orden versionado:
    - database/01_bootstrap_oracle_iteracion1.sql.
+   - database/02_catalogo_base_iteracion2.sql.
+   - database/03_reglas_perfiles_iteracion1.sql.
+   - database/04_reproducciones_iteracion2.sql.
+   - database/05_comunidad_favoritos_iteracion3.sql.
 2. Guardar evidencia de ejecucion y resultados de pruebas.
 
 ### 5.4 Ejecucion rapida desde raiz
@@ -167,7 +171,15 @@ Detalle completo del plan:
    - POST /api/v1/auth/login.
    - POST /api/v1/auth/register.
    - GET /api/v1/auth/profile con JWT.
-3. El login y registro ya se validan contra Oracle usando bcrypt para PASSWORD_HASH.
+   - POST /api/v1/playback/start con JWT.
+   - POST /api/v1/playback/progress con JWT.
+   - GET /api/v1/playback/continue-watching?perfilId=:id con JWT.
+   - GET /api/v1/playback/history?perfilId=:id con JWT.
+   - POST /api/v1/community/favorites con JWT.
+   - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id con JWT.
+   - GET /api/v1/community/favorites?perfilId=:id con JWT.
+   - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id con JWT.
+3. El login, registro, tracking de reproduccion y favoritos se validan contra Oracle usando bcrypt y reglas de negocio en triggers.
 
 ## 7. Guia Visual de Auth (Fase 1)
 1. La UI de login y registro usa una paleta cinematica con acentos rojos y dorados.

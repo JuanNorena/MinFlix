@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { BrowsePage } from '../pages/BrowsePage'
+import { ContentDetailPage } from '../pages/ContentDetailPage'
 import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
 import { ProfileSelectorPage } from '../pages/ProfileSelectorPage'
@@ -42,6 +43,7 @@ export function AppRouter() {
 
         <Route element={<RequireProfileSelection />}>
           <Route path="/browse" element={<BrowsePage />} />
+          <Route path="/browse/content/:contentId" element={<ContentDetailPage />} />
         </Route>
       </Route>
 

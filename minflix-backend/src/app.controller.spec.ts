@@ -15,8 +15,11 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    it('should return service health status', () => {
+      expect(appController.getStatus()).toEqual({
+        service: 'minflix-backend',
+        status: 'ok',
+      });
     });
   });
 });
