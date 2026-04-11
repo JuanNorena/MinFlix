@@ -157,6 +157,14 @@ Detalle completo del plan:
    - database/04_reproducciones_iteracion2.sql.
    - database/05_comunidad_favoritos_iteracion3.sql.
    - database/06_comunidad_calificaciones_iteracion3.sql.
+   - database/07_catalogo_extendido_iteracion4.sql.
+   - database/08_comunidad_reportes_moderacion_iteracion4.sql.
+   - database/09_finanzas_referidos_iteracion5.sql.
+   - database/10_organizacion_equipo_iteracion5.sql.
+   - database/11_seguridad_roles_nt5.sql.
+   - database/12_diccionario_comentarios_modelo_fisico.sql.
+   - database/13_seed_usuarios_roles_login_iteracion5.sql.
+   - database/14_seed_datos_funcionales_iteracion5.sql.
 2. Guardar evidencia de ejecucion y resultados de pruebas.
 
 ### 5.4 Ejecucion rapida desde raiz
