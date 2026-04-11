@@ -1,9 +1,10 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { ProfileEntity } from '../auth/entities';
+import { ProfileEntity, UserEntity } from '../auth/entities';
 import { ContentEntity } from '../catalog/entities';
 import { CommunityService } from './community.service';
 import { FavoriteEntity, RatingEntity } from './entities';
+import { ReportEntity } from './entities/report.entity';
 
 describe('CommunityService', () => {
   let service: CommunityService;
@@ -21,8 +22,17 @@ describe('CommunityService', () => {
     delete: jest.Mock;
     createQueryBuilder: jest.Mock;
   };
+  let reportRepository: {
+    create: jest.Mock;
+    save: jest.Mock;
+    findOne: jest.Mock;
+    createQueryBuilder: jest.Mock;
+  };
   let profileRepository: {
     createQueryBuilder: jest.Mock;
+  };
+  let userRepository: {
+    findOne: jest.Mock;
   };
   let contentRepository: {
     findOne: jest.Mock;
@@ -45,8 +55,19 @@ describe('CommunityService', () => {
       createQueryBuilder: jest.fn(),
     };
 
+    reportRepository = {
+      create: jest.fn(),
+      save: jest.fn(),
+      findOne: jest.fn(),
+      createQueryBuilder: jest.fn(),
+    };
+
     profileRepository = {
       createQueryBuilder: jest.fn(),
+    };
+
+    userRepository = {
+      findOne: jest.fn(),
     };
 
     contentRepository = {
@@ -56,7 +77,9 @@ describe('CommunityService', () => {
     service = new CommunityService(
       favoriteRepository as unknown as Repository<FavoriteEntity>,
       ratingRepository as unknown as Repository<RatingEntity>,
+      reportRepository as unknown as Repository<ReportEntity>,
       profileRepository as unknown as Repository<ProfileEntity>,
+      userRepository as unknown as Repository<UserEntity>,
       contentRepository as unknown as Repository<ContentEntity>,
     );
   });
@@ -408,5 +431,80 @@ describe('CommunityService', () => {
       puntaje: 5,
       resena: 'Excelente',
     });
+  });
+
+  it('debe crear reporte y mapear respuesta', async () => {
+    const profile = {
+      id: 10,
+      nombre: 'Perfil Principal',
+      tipoPerfil: 'adulto',
+    } as ProfileEntity;
+    const content = {
+      id: 21,
+      titulo: 'Norte Incierto',
+      tipoContenido: 'serie',
+      clasificacionEdad: '+16',
+    } as unknown as ContentEntity;
+
+    const ownershipQueryBuilder = {
+      innerJoinAndSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      getOne: jest.fn().mockResolvedValue(profile),
+    };
+
+    profileRepository.createQueryBuilder.mockReturnValue(ownershipQueryBuilder);
+    contentRepository.findOne.mockResolvedValue(content);
+    reportRepository.create.mockReturnValue({} as ReportEntity);
+    reportRepository.save.mockResolvedValue({ id: 800 });
+
+    const reportDate = new Date('2026-04-10T17:00:00.000Z');
+    reportRepository.findOne.mockResolvedValue({
+      id: 800,
+      perfilReportador: profile,
+      contenido: content,
+      motivo: 'INAPROPIADO',
+      detalle: 'Lenguaje no apto para este perfil.',
+      estadoReporte: 'ABIERTO',
+      usuarioModerador: undefined,
+      resolucion: undefined,
+      fechaReporte: reportDate,
+      fechaActualizacion: reportDate,
+      fechaResolucion: undefined,
+    } as ReportEntity);
+
+    const result = await service.createReport(99, {
+      perfilId: 10,
+      contenidoId: 21,
+      motivo: 'INAPROPIADO',
+      detalle: 'Lenguaje no apto para este perfil.',
+    });
+
+    expect(result).toEqual({
+      idReporte: 800,
+      perfilId: 10,
+      nombrePerfil: 'Perfil Principal',
+      contenidoId: 21,
+      tituloContenido: 'Norte Incierto',
+      motivo: 'INAPROPIADO',
+      detalle: 'Lenguaje no apto para este perfil.',
+      estadoReporte: 'ABIERTO',
+      moderadorId: null,
+      moderadorEmail: null,
+      resolucion: null,
+      fechaReporte: reportDate,
+      fechaActualizacion: reportDate,
+      fechaResolucion: null,
+    });
+  });
+
+  it('debe bloquear moderacion para rol sin privilegios', async () => {
+    await expect(
+      service.listModerationReports(99, 'usuario', {
+        limit: 20,
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    expect(userRepository.findOne).not.toHaveBeenCalled();
   });
 });

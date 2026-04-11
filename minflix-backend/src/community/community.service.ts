@@ -6,21 +6,27 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProfileEntity } from '../auth/entities';
+import { ProfileEntity, UserEntity } from '../auth/entities';
 import { ContentEntity } from '../catalog/entities';
 import {
   FavoriteItemView,
   FavoriteStatusView,
+  ReportItemView,
   RatingItemView,
   RatingStatusView,
 } from './contracts/community-view.types';
 import { AddFavoriteDto } from './dto/add-favorite.dto';
+import { CreateReportDto } from './dto/create-report.dto';
 import { FavoriteStatusQueryDto } from './dto/favorite-status-query.dto';
+import { ListModerationReportsQueryDto } from './dto/list-moderation-reports-query.dto';
 import { ListFavoritesQueryDto } from './dto/list-favorites-query.dto';
+import { ListReportsQueryDto } from './dto/list-reports-query.dto';
 import { ListRatingsQueryDto } from './dto/list-ratings-query.dto';
+import { ModerateReportDto } from './dto/moderate-report.dto';
 import { RatingStatusQueryDto } from './dto/rating-status-query.dto';
 import { UpsertRatingDto } from './dto/upsert-rating.dto';
 import { FavoriteEntity, RatingEntity } from './entities';
+import { ReportEntity } from './entities/report.entity';
 
 /**
  * Servicio de comunidad para favoritos por perfil.
@@ -32,8 +38,12 @@ export class CommunityService {
     private readonly favoriteRepository: Repository<FavoriteEntity>,
     @InjectRepository(RatingEntity)
     private readonly ratingRepository: Repository<RatingEntity>,
+    @InjectRepository(ReportEntity)
+    private readonly reportRepository: Repository<ReportEntity>,
     @InjectRepository(ProfileEntity)
     private readonly profileRepository: Repository<ProfileEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(ContentEntity)
     private readonly contentRepository: Repository<ContentEntity>,
   ) {}
@@ -364,6 +374,214 @@ export class CommunityService {
   }
 
   /**
+   * Crea un reporte de contenido asociado a un perfil de la cuenta.
+   * @param userId - Cuenta autenticada.
+   * @param payload - Datos de reporte recibidos.
+   * @returns Reporte persistido para respuesta de API.
+   */
+  async createReport(
+    userId: number,
+    payload: CreateReportDto,
+  ): Promise<ReportItemView> {
+    const profile = await this.ensureProfileOwnership(payload.perfilId, userId);
+    const content = await this.contentRepository.findOne({
+      where: { id: payload.contenidoId },
+    });
+
+    if (!content) {
+      throw new NotFoundException('El contenido seleccionado no existe');
+    }
+
+    const detailText = payload.detalle?.trim() || undefined;
+    let persistedReportId: number | null = null;
+
+    try {
+      const savedReport = await this.reportRepository.save(
+        this.reportRepository.create({
+          perfilReportador: profile,
+          contenido: content,
+          motivo: payload.motivo,
+          detalle: detailText,
+          estadoReporte: 'ABIERTO',
+        }),
+      );
+
+      persistedReportId = savedReport.id;
+    } catch (error) {
+      if (this.isOracleBusinessRuleError(error, 'ORA-20061')) {
+        throw new NotFoundException(
+          'No existe el perfil reportador asociado al reporte',
+        );
+      }
+
+      if (this.isOracleBusinessRuleError(error, 'ORA-20062')) {
+        throw new NotFoundException(
+          'No existe el contenido asociado al reporte',
+        );
+      }
+
+      throw error;
+    }
+
+    if (persistedReportId === null) {
+      throw new NotFoundException('No fue posible registrar el reporte');
+    }
+
+    const persistedReport = await this.findReportById(persistedReportId);
+
+    if (!persistedReport) {
+      throw new NotFoundException('No fue posible registrar el reporte');
+    }
+
+    return this.mapReport(persistedReport);
+  }
+
+  /**
+   * Lista reportes de un perfil perteneciente a la cuenta autenticada.
+   * @param userId - Cuenta autenticada.
+   * @param query - Parametros de consulta para historial de reportes.
+   * @returns Coleccion de reportes por perfil.
+   */
+  async listReportsByProfile(
+    userId: number,
+    query: ListReportsQueryDto,
+  ): Promise<ReportItemView[]> {
+    await this.ensureProfileOwnership(query.perfilId, userId);
+
+    const reportsQuery = this.reportRepository
+      .createQueryBuilder('reporte')
+      .innerJoinAndSelect('reporte.perfilReportador', 'perfil')
+      .innerJoinAndSelect('reporte.contenido', 'contenido')
+      .leftJoinAndSelect('reporte.usuarioModerador', 'moderador')
+      .where('perfil.id = :perfilId', { perfilId: query.perfilId });
+
+    if (query.estado) {
+      reportsQuery.andWhere('reporte.estadoReporte = :estado', {
+        estado: query.estado,
+      });
+    }
+
+    const reports: ReportEntity[] = await reportsQuery
+      .orderBy('reporte.fechaActualizacion', 'DESC')
+      .take(query.limit ?? 20)
+      .getMany();
+
+    return reports.map((report): ReportItemView => this.mapReport(report));
+  }
+
+  /**
+   * Lista bandeja de reportes para moderacion por soporte/admin.
+   * @param userId - Cuenta autenticada.
+   * @param userRole - Rol del usuario autenticado.
+   * @param query - Filtros de bandeja.
+   * @returns Coleccion de reportes para moderacion.
+   */
+  async listModerationReports(
+    userId: number,
+    userRole: string,
+    query: ListModerationReportsQueryDto,
+  ): Promise<ReportItemView[]> {
+    await this.ensureModeratorAccess(userId, userRole);
+
+    const moderationQuery = this.reportRepository
+      .createQueryBuilder('reporte')
+      .innerJoinAndSelect('reporte.perfilReportador', 'perfil')
+      .innerJoinAndSelect('reporte.contenido', 'contenido')
+      .leftJoinAndSelect('reporte.usuarioModerador', 'moderador');
+
+    if (query.estado) {
+      moderationQuery.where('reporte.estadoReporte = :estado', {
+        estado: query.estado,
+      });
+    } else {
+      moderationQuery.where('reporte.estadoReporte IN (:...estados)', {
+        estados: ['ABIERTO', 'EN_REVISION'],
+      });
+    }
+
+    const reports: ReportEntity[] = await moderationQuery
+      .orderBy('reporte.fechaActualizacion', 'DESC')
+      .take(query.limit ?? 30)
+      .getMany();
+
+    return reports.map((report): ReportItemView => this.mapReport(report));
+  }
+
+  /**
+   * Ejecuta moderacion de un reporte con control por rol.
+   * @param userId - Cuenta autenticada.
+   * @param userRole - Rol reportado por JWT.
+   * @param reportId - Reporte objetivo de la accion.
+   * @param payload - Estado y resolucion a aplicar.
+   * @returns Reporte actualizado tras moderacion.
+   */
+  async moderateReport(
+    userId: number,
+    userRole: string,
+    reportId: number,
+    payload: ModerateReportDto,
+  ): Promise<ReportItemView> {
+    const moderator = await this.ensureModeratorAccess(userId, userRole);
+
+    if (
+      (payload.estado === 'RESUELTO' || payload.estado === 'DESCARTADO') &&
+      !payload.resolucion?.trim()
+    ) {
+      throw new BadRequestException(
+        'Para cerrar un reporte debes registrar una resolucion',
+      );
+    }
+
+    const existingReport = await this.findReportById(reportId);
+
+    if (!existingReport) {
+      throw new NotFoundException('El reporte seleccionado no existe');
+    }
+
+    existingReport.estadoReporte = payload.estado;
+    existingReport.resolucion = payload.resolucion?.trim() || undefined;
+    existingReport.usuarioModerador = moderator;
+
+    try {
+      await this.reportRepository.save(existingReport);
+    } catch (error) {
+      if (this.isOracleBusinessRuleError(error, 'ORA-20063')) {
+        throw new ForbiddenException(
+          'Solo usuarios con rol soporte o admin pueden moderar reportes',
+        );
+      }
+
+      if (this.isOracleBusinessRuleError(error, 'ORA-20064')) {
+        throw new BadRequestException(
+          'No se permite reabrir reportes cerrados',
+        );
+      }
+
+      if (this.isOracleBusinessRuleError(error, 'ORA-20065')) {
+        throw new BadRequestException(
+          'Para cerrar un reporte se requiere moderador asignado',
+        );
+      }
+
+      if (this.isOracleBusinessRuleError(error, 'ORA-20066')) {
+        throw new NotFoundException(
+          'No existe el usuario moderador asociado al reporte',
+        );
+      }
+
+      throw error;
+    }
+
+    const persistedReport = await this.findReportById(reportId);
+
+    if (!persistedReport) {
+      throw new NotFoundException('No fue posible actualizar el reporte');
+    }
+
+    return this.mapReport(persistedReport);
+  }
+
+  /**
    * Verifica ownership del perfil contra la cuenta autenticada.
    * @param profileId - Perfil evaluado.
    * @param userId - Cuenta autenticada.
@@ -387,6 +605,42 @@ export class CommunityService {
     }
 
     return profile;
+  }
+
+  /**
+   * Valida acceso de moderacion para roles soporte/admin.
+   * @param userId - Cuenta autenticada.
+   * @param userRole - Rol recibido en JWT.
+   * @returns Usuario moderador validado.
+   */
+  private async ensureModeratorAccess(
+    userId: number,
+    userRole: string,
+  ): Promise<UserEntity> {
+    const normalizedRole = userRole.toLowerCase();
+
+    if (normalizedRole !== 'soporte' && normalizedRole !== 'admin') {
+      throw new ForbiddenException(
+        'Solo usuarios con rol soporte o admin pueden moderar reportes',
+      );
+    }
+
+    const moderator = await this.userRepository.findOne({
+      where: { id: userId },
+    });
+
+    if (!moderator) {
+      throw new NotFoundException('No existe la cuenta moderadora autenticada');
+    }
+
+    const persistedRole = moderator.rol.toLowerCase();
+    if (persistedRole !== 'soporte' && persistedRole !== 'admin') {
+      throw new ForbiddenException(
+        'La cuenta autenticada no tiene permisos de moderacion',
+      );
+    }
+
+    return moderator;
   }
 
   /**
@@ -476,6 +730,22 @@ export class CommunityService {
   }
 
   /**
+   * Busca reporte por identificador con relaciones para respuesta API.
+   * @param reportId - Identificador del reporte.
+   * @returns Reporte hidratado o null.
+   */
+  private async findReportById(reportId: number): Promise<ReportEntity | null> {
+    return this.reportRepository.findOne({
+      where: { id: reportId },
+      relations: {
+        perfilReportador: true,
+        contenido: true,
+        usuarioModerador: true,
+      },
+    });
+  }
+
+  /**
    * Mapea entidad de calificacion al contrato de API.
    * @param rating - Entidad de calificacion hidratada.
    * @returns Vista de calificacion para cliente.
@@ -496,6 +766,30 @@ export class CommunityService {
       puntaje: rating.puntaje,
       resena: rating.resena ?? null,
       fechaCalificacion: rating.fechaCalificacion,
+    };
+  }
+
+  /**
+   * Mapea entidad de reporte al contrato de API.
+   * @param report - Entidad de reporte hidratada.
+   * @returns Vista de reporte para cliente/moderacion.
+   */
+  private mapReport(report: ReportEntity): ReportItemView {
+    return {
+      idReporte: report.id,
+      perfilId: report.perfilReportador.id,
+      nombrePerfil: report.perfilReportador.nombre,
+      contenidoId: report.contenido.id,
+      tituloContenido: report.contenido.titulo,
+      motivo: report.motivo,
+      detalle: report.detalle ?? null,
+      estadoReporte: report.estadoReporte,
+      moderadorId: report.usuarioModerador?.id ?? null,
+      moderadorEmail: report.usuarioModerador?.email ?? null,
+      resolucion: report.resolucion ?? null,
+      fechaReporte: report.fechaReporte,
+      fechaActualizacion: report.fechaActualizacion,
+      fechaResolucion: report.fechaResolucion ?? null,
     };
   }
 

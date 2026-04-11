@@ -8,6 +8,10 @@ import {
   clearActiveProfile,
   getActiveProfile,
 } from '../shared/session/profileSession'
+import {
+  getAuthSession,
+  hasModeratorRole,
+} from '../shared/session/authSession'
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
 interface CatalogCategory {
@@ -125,6 +129,8 @@ export function BrowsePage() {
   const navigate = useNavigate()
   const activeProfile = getActiveProfile()
   const activeProfileId = activeProfile?.id ?? null
+  const authSession = useMemo(() => getAuthSession(), [])
+  const canModerateReports = hasModeratorRole(authSession)
   const [categories, setCategories] = useState<CatalogCategory[]>([])
   const [contents, setContents] = useState<CatalogContent[]>([])
   const [continueWatchingItems, setContinueWatchingItems] =
@@ -500,6 +506,15 @@ export function BrowsePage() {
             >
               Administrar
             </Link>
+            {canModerateReports ? (
+              <Link
+                to="/moderation/reports"
+                className={buttonClassName('ghost')}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Moderacion
+              </Link>
+            ) : null}
             <button
               type="button"
               className={buttonClassName('primary')}

@@ -5,6 +5,7 @@ import { HomePage } from '../pages/HomePage'
 import { LoginPage } from '../pages/LoginPage'
 import { ProfileSelectorPage } from '../pages/ProfileSelectorPage'
 import { ProfilesPage } from '../pages/ProfilesPage'
+import { ReportsModerationPage } from '../pages/ReportsModerationPage'
 import { RegisterPage } from '../pages/RegisterPage'
 import { RequireAuth } from './RequireAuth'
 import { RequireProfileSelection } from './RequireProfileSelection'
@@ -40,6 +41,7 @@ export function AppRouter() {
       <Route element={<RequireAuth />}>
         <Route path="/profiles/select" element={<ProfileSelectorPage />} />
         <Route path="/profiles/manage" element={<ProfilesPage />} />
+        <Route path="/moderation/reports" element={<ReportsModerationPage />} />
 
         <Route element={<RequireProfileSelection />}>
           <Route path="/browse" element={<BrowsePage />} />

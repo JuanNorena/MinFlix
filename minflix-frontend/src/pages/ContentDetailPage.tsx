@@ -9,6 +9,10 @@ import {
   clearActiveProfile,
   getActiveProfile,
 } from '../shared/session/profileSession'
+import {
+  getAuthSession,
+  hasModeratorRole,
+} from '../shared/session/authSession'
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
 interface CatalogCategory {
@@ -47,6 +51,32 @@ interface ApiErrorResponse {
   message?: string | string[]
 }
 
+interface ReportItemResponse {
+  idReporte: number
+  perfilId: number
+  nombrePerfil: string
+  contenidoId: number
+  tituloContenido: string
+  motivo: string
+  detalle: string | null
+  estadoReporte: string
+  moderadorId: number | null
+  moderadorEmail: string | null
+  resolucion: string | null
+  fechaReporte: string
+  fechaActualizacion: string
+  fechaResolucion: string | null
+}
+
+const REPORT_MOTIVE_OPTIONS = [
+  { value: 'INAPROPIADO', label: 'Inapropiado' },
+  { value: 'VIOLENCIA', label: 'Violencia explicita' },
+  { value: 'DERECHOS_AUTOR', label: 'Derechos de autor' },
+  { value: 'DESINFORMACION', label: 'Desinformacion' },
+  { value: 'SPAM', label: 'Spam o fraude' },
+  { value: 'OTRO', label: 'Otro motivo' },
+] as const
+
 function prettifyContentType(type: string): string {
   switch (type) {
     case 'pelicula':
@@ -82,6 +112,35 @@ function resolveApiErrorMessage(error: unknown, fallback: string): string {
   return fallback
 }
 
+function prettifyReportStatus(status: string): string {
+  switch (status) {
+    case 'ABIERTO':
+      return 'Abierto'
+    case 'EN_REVISION':
+      return 'En revision'
+    case 'RESUELTO':
+      return 'Resuelto'
+    case 'DESCARTADO':
+      return 'Descartado'
+    default:
+      return status
+  }
+}
+
+function formatReportDate(value: string): string {
+  const parsedDate = new Date(value)
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Sin fecha'
+  }
+
+  return parsedDate.toLocaleString('es-CO', {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
 /**
  * Pantalla de detalle de contenido para navegacion tipo streaming.
  */
@@ -89,6 +148,8 @@ export function ContentDetailPage() {
   const navigate = useNavigate()
   const { contentId } = useParams<{ contentId: string }>()
   const activeProfile = getActiveProfile()
+  const authSession = useMemo(() => getAuthSession(), [])
+  const canModerateReports = hasModeratorRole(authSession)
   const activeProfileId = activeProfile?.id ?? null
   const numericContentId = Number(contentId)
   const isContentIdValid = Number.isInteger(numericContentId) && numericContentId > 0
@@ -107,6 +168,12 @@ export function ContentDetailPage() {
   const [isCheckingRatingStatus, setIsCheckingRatingStatus] = useState(true)
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
   const [isRemovingRating, setIsRemovingRating] = useState(false)
+  const [selectedReportMotive, setSelectedReportMotive] =
+    useState<(typeof REPORT_MOTIVE_OPTIONS)[number]['value']>('INAPROPIADO')
+  const [reportDetail, setReportDetail] = useState('')
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false)
+  const [isLoadingRecentReports, setIsLoadingRecentReports] = useState(true)
+  const [recentReports, setRecentReports] = useState<ReportItemResponse[]>([])
 
   const avatarUrl = useMemo(
     () => resolveAvatarUrl(activeProfile?.avatar ?? null),
@@ -224,6 +291,42 @@ export function ContentDetailPage() {
   )
 
   /**
+   * Carga reportes recientes del perfil activo para el contenido actual.
+   * @param targetContentId - Contenido evaluado.
+   */
+  const fetchRecentReports = useCallback(
+    async (targetContentId: number) => {
+      if (!activeProfileId) {
+        setRecentReports([])
+        setIsLoadingRecentReports(false)
+        return
+      }
+
+      try {
+        setIsLoadingRecentReports(true)
+
+        const response = await apiClient.get<ReportItemResponse[]>('/community/reports', {
+          params: {
+            perfilId: activeProfileId,
+            limit: 25,
+          },
+        })
+
+        setRecentReports(
+          response.data
+            .filter((item) => item.contenidoId === targetContentId)
+            .slice(0, 4),
+        )
+      } catch {
+        setRecentReports([])
+      } finally {
+        setIsLoadingRecentReports(false)
+      }
+    },
+    [activeProfileId],
+  )
+
+  /**
    * Consulta detalle de contenido por id y dispara carga de relacionados.
    * @param targetContentId - Contenido a consultar.
    */
@@ -241,6 +344,7 @@ export function ContentDetailPage() {
           fetchRelatedContents(response.data),
           fetchFavoriteStatus(response.data.id),
           fetchRatingStatus(response.data.id),
+          fetchRecentReports(response.data.id),
         ])
       } catch {
         setContent(null)
@@ -251,12 +355,19 @@ export function ContentDetailPage() {
         setRatingScore(5)
         setRatingReview('')
         setIsCheckingRatingStatus(false)
+        setRecentReports([])
+        setIsLoadingRecentReports(false)
         toast.error('No pudimos cargar este titulo. Intenta de nuevo.')
       } finally {
         setIsLoadingContent(false)
       }
     },
-    [fetchFavoriteStatus, fetchRatingStatus, fetchRelatedContents],
+    [
+      fetchFavoriteStatus,
+      fetchRatingStatus,
+      fetchRecentReports,
+      fetchRelatedContents,
+    ],
   )
 
   useEffect(() => {
@@ -271,6 +382,8 @@ export function ContentDetailPage() {
       setRatingScore(5)
       setRatingReview('')
       setIsCheckingRatingStatus(false)
+      setRecentReports([])
+      setIsLoadingRecentReports(false)
       return
     }
 
@@ -447,6 +560,41 @@ export function ContentDetailPage() {
     }
   }
 
+  /**
+   * Registra reporte del contenido actual para el perfil activo.
+   */
+  async function handleSubmitReport() {
+    if (!content || !activeProfileId) {
+      return
+    }
+
+    const normalizedDetail = reportDetail.trim()
+
+    try {
+      setIsSubmittingReport(true)
+
+      await apiClient.post('/community/reports', {
+        perfilId: activeProfileId,
+        contenidoId: content.id,
+        motivo: selectedReportMotive,
+        detalle: normalizedDetail.length > 0 ? normalizedDetail : undefined,
+      })
+
+      setReportDetail('')
+      toast.success('Reporte enviado correctamente para revision del equipo.')
+      await fetchRecentReports(content.id)
+    } catch (error) {
+      toast.error(
+        resolveApiErrorMessage(
+          error,
+          'No pudimos registrar tu reporte. Intenta de nuevo.',
+        ),
+      )
+    } finally {
+      setIsSubmittingReport(false)
+    }
+  }
+
   return (
     <main className="nf-shell nf-content-detail-shell">
       <section className="nf-content-detail-container">
@@ -490,6 +638,11 @@ export function ContentDetailPage() {
             <Link to="/profiles/select" className={buttonClassName('ghost')}>
               Cambiar perfil
             </Link>
+            {canModerateReports ? (
+              <Link to="/moderation/reports" className={buttonClassName('ghost')}>
+                Moderacion
+              </Link>
+            ) : null}
             <button
               type="button"
               className={buttonClassName('primary')}
@@ -672,6 +825,111 @@ export function ContentDetailPage() {
                     </button>
                   </div>
                 </article>
+              )}
+            </motion.section>
+
+            <motion.section
+              className="nf-content-detail-report"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.32 }}
+            >
+              <header className="nf-catalog-row-header">
+                <h2 className="nf-browse-section-title">Reportar contenido</h2>
+                <span>{recentReports.length} reportes recientes</span>
+              </header>
+
+              <article className="nf-content-detail-rating-card">
+                <p className="nf-rating-helper">
+                  Si detectas contenido inapropiado, describe el caso para que
+                  soporte lo revise.
+                </p>
+
+                <label htmlFor="report-motive" className="nf-rating-label">
+                  Motivo del reporte
+                </label>
+                <select
+                  id="report-motive"
+                  className="nf-input"
+                  value={selectedReportMotive}
+                  onChange={(event) =>
+                    setSelectedReportMotive(
+                      event.target.value as (typeof REPORT_MOTIVE_OPTIONS)[number]['value'],
+                    )
+                  }
+                  disabled={isSubmittingReport}
+                >
+                  {REPORT_MOTIVE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+
+                <label htmlFor="report-detail" className="nf-rating-label">
+                  Detalle (opcional)
+                </label>
+                <textarea
+                  id="report-detail"
+                  className="nf-input nf-rating-review"
+                  rows={4}
+                  maxLength={1000}
+                  value={reportDetail}
+                  onChange={(event) => setReportDetail(event.target.value)}
+                  placeholder="Describe que observaste para apoyar la moderacion..."
+                  disabled={isSubmittingReport}
+                />
+                <p className="nf-rating-counter">{reportDetail.length}/1000 caracteres</p>
+
+                <div className="nf-content-detail-actions nf-rating-actions">
+                  <button
+                    type="button"
+                    className={buttonClassName('primary')}
+                    onClick={() => void handleSubmitReport()}
+                    disabled={isSubmittingReport}
+                  >
+                    {isSubmittingReport ? 'Enviando reporte...' : 'Enviar reporte'}
+                  </button>
+                </div>
+              </article>
+
+              {isLoadingRecentReports ? (
+                <article className="nf-feature-card" style={{ marginTop: '0.9rem' }}>
+                  <h3>Cargando reportes previos...</h3>
+                  <p>Estamos consultando tu historial reciente para este titulo.</p>
+                </article>
+              ) : recentReports.length === 0 ? (
+                <article className="nf-feature-card" style={{ marginTop: '0.9rem' }}>
+                  <h3>Sin reportes previos en este titulo</h3>
+                  <p>
+                    Cuando registres un reporte, su estado de moderacion aparecera aqui.
+                  </p>
+                </article>
+              ) : (
+                <ul className="nf-report-recent-list">
+                  {recentReports.map((report) => (
+                    <li key={report.idReporte} className="nf-report-recent-item">
+                      <header className="nf-catalog-row-header">
+                        <h3>Reporte #{report.idReporte}</h3>
+                        <span className="nf-catalog-badge">
+                          {prettifyReportStatus(report.estadoReporte)}
+                        </span>
+                      </header>
+                      <p className="nf-catalog-meta">Motivo: {report.motivo}</p>
+                      <p className="nf-content-tile-description">
+                        {report.detalle ?? 'Sin detalle adicional.'}
+                      </p>
+                      <p className="nf-catalog-meta">
+                        Ultima actualizacion: {formatReportDate(report.fechaActualizacion)}
+                      </p>
+                      {report.resolucion ? (
+                        <p className="nf-catalog-meta">
+                          Resolucion: {report.resolucion}
+                        </p>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
               )}
             </motion.section>
 

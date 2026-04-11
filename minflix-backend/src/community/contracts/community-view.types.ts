@@ -56,3 +56,23 @@ export interface RatingStatusView {
   puntaje: number | null;
   resena: string | null;
 }
+
+/**
+ * Vista de reporte para consumidor final y bandeja de moderacion.
+ */
+export interface ReportItemView {
+  idReporte: number;
+  perfilId: number;
+  nombrePerfil: string;
+  contenidoId: number;
+  tituloContenido: string;
+  motivo: string;
+  detalle: string | null;
+  estadoReporte: string;
+  moderadorId: number | null;
+  moderadorEmail: string | null;
+  resolucion: string | null;
+  fechaReporte: Date;
+  fechaActualizacion: Date;
+  fechaResolucion: Date | null;
+}
