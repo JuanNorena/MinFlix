@@ -156,6 +156,7 @@ Detalle completo del plan:
    - database/03_reglas_perfiles_iteracion1.sql.
    - database/04_reproducciones_iteracion2.sql.
    - database/05_comunidad_favoritos_iteracion3.sql.
+   - database/06_comunidad_calificaciones_iteracion3.sql.
 2. Guardar evidencia de ejecucion y resultados de pruebas.
 
 ### 5.4 Ejecucion rapida desde raiz
@@ -179,7 +180,11 @@ Detalle completo del plan:
    - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id con JWT.
    - GET /api/v1/community/favorites?perfilId=:id con JWT.
    - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id con JWT.
-3. El login, registro, tracking de reproduccion y favoritos se validan contra Oracle usando bcrypt y reglas de negocio en triggers.
+   - POST /api/v1/community/ratings con JWT.
+   - DELETE /api/v1/community/ratings/:contenidoId?perfilId=:id con JWT.
+   - GET /api/v1/community/ratings?perfilId=:id con JWT.
+   - GET /api/v1/community/ratings/status?perfilId=:id&contenidoId=:id con JWT.
+3. El login, registro, tracking de reproduccion, favoritos y calificaciones se validan contra Oracle usando bcrypt y reglas de negocio en triggers.
 
 ## 7. Guia Visual de Auth (Fase 1)
 1. La UI de login y registro usa una paleta cinematica con acentos rojos y dorados.

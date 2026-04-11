@@ -4,14 +4,19 @@ import { ProfileEntity } from '../auth/entities';
 import { ContentEntity } from '../catalog/entities';
 import { CommunityController } from './community.controller';
 import { CommunityService } from './community.service';
-import { FavoriteEntity } from './entities';
+import { FavoriteEntity, RatingEntity } from './entities';
 
 /**
  * Modulo de comunidad para funcionalidades sociales.
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FavoriteEntity, ProfileEntity, ContentEntity]),
+    TypeOrmModule.forFeature([
+      FavoriteEntity,
+      RatingEntity,
+      ProfileEntity,
+      ContentEntity,
+    ]),
   ],
   controllers: [CommunityController],
   providers: [CommunityService],

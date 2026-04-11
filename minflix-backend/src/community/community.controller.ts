@@ -15,11 +15,17 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   FavoriteItemView,
   FavoriteStatusView,
+  RatingItemView,
+  RatingStatusView,
 } from './contracts/community-view.types';
 import { AddFavoriteDto } from './dto/add-favorite.dto';
 import { FavoriteStatusQueryDto } from './dto/favorite-status-query.dto';
 import { ListFavoritesQueryDto } from './dto/list-favorites-query.dto';
 import { RemoveFavoriteQueryDto } from './dto/remove-favorite-query.dto';
+import { ListRatingsQueryDto } from './dto/list-ratings-query.dto';
+import { RatingStatusQueryDto } from './dto/rating-status-query.dto';
+import { RemoveRatingQueryDto } from './dto/remove-rating-query.dto';
+import { UpsertRatingDto } from './dto/upsert-rating.dto';
 import { CommunityService } from './community.service';
 
 interface AuthenticatedRequest {
@@ -103,5 +109,70 @@ export class CommunityController {
     @Query() query: FavoriteStatusQueryDto,
   ): Promise<FavoriteStatusView> {
     return this.communityService.getFavoriteStatus(req.user.userId, query);
+  }
+
+  /**
+   * Crea o actualiza calificacion para un contenido.
+   * @param req - Request autenticado.
+   * @param payload - Datos de la calificacion.
+   * @returns Calificacion consolidada.
+   */
+  @ApiOperation({ summary: 'Crear o actualizar calificacion por perfil' })
+  @Post('ratings')
+  upsertRating(
+    @Req() req: AuthenticatedRequest,
+    @Body() payload: UpsertRatingDto,
+  ): Promise<RatingItemView> {
+    return this.communityService.upsertRating(req.user.userId, payload);
+  }
+
+  /**
+   * Elimina calificacion por contenido para el perfil autenticado.
+   * @param req - Request autenticado.
+   * @param contenidoId - Contenido a descalificar.
+   * @param query - Perfil que ejecuta la operacion.
+   */
+  @ApiOperation({ summary: 'Eliminar calificacion por perfil y contenido' })
+  @Delete('ratings/:contenidoId')
+  removeRating(
+    @Req() req: AuthenticatedRequest,
+    @Param('contenidoId', ParseIntPipe) contenidoId: number,
+    @Query() query: RemoveRatingQueryDto,
+  ): Promise<void> {
+    return this.communityService.removeRating(
+      req.user.userId,
+      query.perfilId,
+      contenidoId,
+    );
+  }
+
+  /**
+   * Lista calificaciones por perfil.
+   * @param req - Request autenticado.
+   * @param query - Parametros del listado.
+   * @returns Coleccion de calificaciones.
+   */
+  @ApiOperation({ summary: 'Listar calificaciones por perfil' })
+  @Get('ratings')
+  listRatings(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListRatingsQueryDto,
+  ): Promise<RatingItemView[]> {
+    return this.communityService.listRatings(req.user.userId, query);
+  }
+
+  /**
+   * Consulta estado de calificacion para un contenido.
+   * @param req - Request autenticado.
+   * @param query - Parametros de estado por contenido.
+   * @returns Estado de calificacion (si existe o no).
+   */
+  @ApiOperation({ summary: 'Consultar estado de calificacion por contenido' })
+  @Get('ratings/status')
+  getRatingStatus(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: RatingStatusQueryDto,
+  ): Promise<RatingStatusView> {
+    return this.communityService.getRatingStatus(req.user.userId, query);
   }
 }

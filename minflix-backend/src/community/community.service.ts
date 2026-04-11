@@ -11,11 +11,16 @@ import { ContentEntity } from '../catalog/entities';
 import {
   FavoriteItemView,
   FavoriteStatusView,
+  RatingItemView,
+  RatingStatusView,
 } from './contracts/community-view.types';
 import { AddFavoriteDto } from './dto/add-favorite.dto';
 import { FavoriteStatusQueryDto } from './dto/favorite-status-query.dto';
 import { ListFavoritesQueryDto } from './dto/list-favorites-query.dto';
-import { FavoriteEntity } from './entities';
+import { ListRatingsQueryDto } from './dto/list-ratings-query.dto';
+import { RatingStatusQueryDto } from './dto/rating-status-query.dto';
+import { UpsertRatingDto } from './dto/upsert-rating.dto';
+import { FavoriteEntity, RatingEntity } from './entities';
 
 /**
  * Servicio de comunidad para favoritos por perfil.
@@ -25,6 +30,8 @@ export class CommunityService {
   constructor(
     @InjectRepository(FavoriteEntity)
     private readonly favoriteRepository: Repository<FavoriteEntity>,
+    @InjectRepository(RatingEntity)
+    private readonly ratingRepository: Repository<RatingEntity>,
     @InjectRepository(ProfileEntity)
     private readonly profileRepository: Repository<ProfileEntity>,
     @InjectRepository(ContentEntity)
@@ -189,6 +196,174 @@ export class CommunityService {
   }
 
   /**
+   * Crea o actualiza calificacion para un contenido por perfil.
+   * @param userId - Cuenta autenticada.
+   * @param payload - Datos de calificacion recibidos.
+   * @returns Calificacion consolidada para respuesta API.
+   */
+  async upsertRating(
+    userId: number,
+    payload: UpsertRatingDto,
+  ): Promise<RatingItemView> {
+    const profile = await this.ensureProfileOwnership(payload.perfilId, userId);
+    const content = await this.contentRepository.findOne({
+      where: { id: payload.contenidoId },
+      relations: { categoria: true },
+    });
+
+    if (!content) {
+      throw new NotFoundException('El contenido seleccionado no existe');
+    }
+
+    this.ensureContentAllowedForProfile(profile, content);
+
+    const existingRating = await this.findRatingByProfileAndContent(
+      payload.perfilId,
+      payload.contenidoId,
+    );
+
+    const reviewText = payload.resena?.trim() || undefined;
+    let persistedRatingId: number | null = null;
+
+    try {
+      if (existingRating) {
+        existingRating.puntaje = payload.puntaje;
+        existingRating.resena = reviewText;
+
+        const updatedRating = await this.ratingRepository.save(existingRating);
+        persistedRatingId = updatedRating.id;
+      } else {
+        const savedRating = await this.ratingRepository.save(
+          this.ratingRepository.create({
+            perfil: profile,
+            contenido: content,
+            puntaje: payload.puntaje,
+            resena: reviewText,
+          }),
+        );
+
+        persistedRatingId = savedRating.id;
+      }
+    } catch (error) {
+      if (this.isOracleBusinessRuleError(error, 'ORA-20041')) {
+        throw new BadRequestException(
+          'Debes superar el 50% de reproduccion para calificar este contenido',
+        );
+      }
+
+      if (this.isOracleBusinessRuleError(error, 'ORA-20042')) {
+        throw new NotFoundException(
+          'No existe perfil o contenido asociado para registrar calificacion',
+        );
+      }
+
+      throw error;
+    }
+
+    const persistedRating =
+      persistedRatingId !== null
+        ? await this.ratingRepository.findOne({
+            where: { id: persistedRatingId },
+            relations: { perfil: true, contenido: { categoria: true } },
+          })
+        : await this.findRatingByProfileAndContent(
+            payload.perfilId,
+            payload.contenidoId,
+          );
+
+    if (!persistedRating) {
+      throw new NotFoundException('No fue posible registrar la calificacion');
+    }
+
+    return this.mapRating(persistedRating);
+  }
+
+  /**
+   * Elimina calificacion por contenido para el perfil autenticado.
+   * @param userId - Cuenta autenticada.
+   * @param perfilId - Perfil que elimina la calificacion.
+   * @param contenidoId - Contenido asociado.
+   */
+  async removeRating(
+    userId: number,
+    perfilId: number,
+    contenidoId: number,
+  ): Promise<void> {
+    await this.ensureProfileOwnership(perfilId, userId);
+
+    const rating = await this.findRatingByProfileAndContent(
+      perfilId,
+      contenidoId,
+    );
+    if (!rating) {
+      return;
+    }
+
+    await this.ratingRepository.delete({ id: rating.id });
+  }
+
+  /**
+   * Lista calificaciones por perfil ordenadas por fecha descendente.
+   * @param userId - Cuenta autenticada.
+   * @param query - Parametros de consulta.
+   * @returns Coleccion de calificaciones para el perfil.
+   */
+  async listRatings(
+    userId: number,
+    query: ListRatingsQueryDto,
+  ): Promise<RatingItemView[]> {
+    await this.ensureProfileOwnership(query.perfilId, userId);
+
+    const ratings = await this.ratingRepository
+      .createQueryBuilder('calificacion')
+      .innerJoinAndSelect('calificacion.perfil', 'perfil')
+      .innerJoinAndSelect('calificacion.contenido', 'contenido')
+      .innerJoinAndSelect('contenido.categoria', 'categoria')
+      .where('perfil.id = :perfilId', { perfilId: query.perfilId })
+      .orderBy('calificacion.fechaCalificacion', 'DESC')
+      .take(query.limit ?? 20)
+      .getMany();
+
+    return ratings.map((rating) => this.mapRating(rating));
+  }
+
+  /**
+   * Consulta estado de calificacion para contenido puntual.
+   * @param userId - Cuenta autenticada.
+   * @param query - Perfil y contenido evaluados.
+   * @returns Estado de calificacion para el contenido.
+   */
+  async getRatingStatus(
+    userId: number,
+    query: RatingStatusQueryDto,
+  ): Promise<RatingStatusView> {
+    await this.ensureProfileOwnership(query.perfilId, userId);
+
+    const rating = await this.findRatingByProfileAndContent(
+      query.perfilId,
+      query.contenidoId,
+    );
+
+    if (!rating) {
+      return {
+        perfilId: query.perfilId,
+        contenidoId: query.contenidoId,
+        tieneCalificacion: false,
+        puntaje: null,
+        resena: null,
+      };
+    }
+
+    return {
+      perfilId: query.perfilId,
+      contenidoId: query.contenidoId,
+      tieneCalificacion: true,
+      puntaje: rating.puntaje,
+      resena: rating.resena ?? null,
+    };
+  }
+
+  /**
    * Verifica ownership del perfil contra la cuenta autenticada.
    * @param profileId - Perfil evaluado.
    * @param userId - Cuenta autenticada.
@@ -277,6 +452,50 @@ export class CommunityService {
         descripcion: favorite.contenido.categoria.descripcion ?? null,
       },
       fechaAdicion: favorite.fechaAdicion,
+    };
+  }
+
+  /**
+   * Busca calificacion por perfil y contenido para upsert/status.
+   * @param perfilId - Perfil consultado.
+   * @param contenidoId - Contenido consultado.
+   * @returns Calificacion encontrada o null.
+   */
+  private async findRatingByProfileAndContent(
+    perfilId: number,
+    contenidoId: number,
+  ): Promise<RatingEntity | null> {
+    return this.ratingRepository
+      .createQueryBuilder('calificacion')
+      .innerJoinAndSelect('calificacion.perfil', 'perfil')
+      .innerJoinAndSelect('calificacion.contenido', 'contenido')
+      .innerJoinAndSelect('contenido.categoria', 'categoria')
+      .where('perfil.id = :perfilId', { perfilId })
+      .andWhere('contenido.id = :contenidoId', { contenidoId })
+      .getOne();
+  }
+
+  /**
+   * Mapea entidad de calificacion al contrato de API.
+   * @param rating - Entidad de calificacion hidratada.
+   * @returns Vista de calificacion para cliente.
+   */
+  private mapRating(rating: RatingEntity): RatingItemView {
+    return {
+      idCalificacion: rating.id,
+      perfilId: rating.perfil.id,
+      contenidoId: rating.contenido.id,
+      titulo: rating.contenido.titulo,
+      tipoContenido: rating.contenido.tipoContenido,
+      clasificacionEdad: rating.contenido.clasificacionEdad,
+      categoria: {
+        id: rating.contenido.categoria.id,
+        nombre: rating.contenido.categoria.nombre,
+        descripcion: rating.contenido.categoria.descripcion ?? null,
+      },
+      puntaje: rating.puntaje,
+      resena: rating.resena ?? null,
+      fechaCalificacion: rating.fechaCalificacion,
     };
   }
 

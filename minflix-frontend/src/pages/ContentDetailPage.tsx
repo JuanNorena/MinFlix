@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'react-hot-toast'
+import axios from 'axios'
 import { apiClient } from '../shared/api/client'
 import { profileInitials, resolveAvatarUrl } from '../shared/helpers/avatarUrl'
 import {
@@ -34,6 +35,18 @@ interface FavoriteStatusResponse {
   esFavorito: boolean
 }
 
+interface RatingStatusResponse {
+  perfilId: number
+  contenidoId: number
+  tieneCalificacion: boolean
+  puntaje: number | null
+  resena: string | null
+}
+
+interface ApiErrorResponse {
+  message?: string | string[]
+}
+
 function prettifyContentType(type: string): string {
   switch (type) {
     case 'pelicula':
@@ -49,6 +62,24 @@ function prettifyContentType(type: string): string {
     default:
       return type
   }
+}
+
+function resolveApiErrorMessage(error: unknown, fallback: string): string {
+  if (!axios.isAxiosError<ApiErrorResponse>(error)) {
+    return fallback
+  }
+
+  const message = error.response?.data?.message
+
+  if (Array.isArray(message) && message.length > 0) {
+    return message[0]
+  }
+
+  if (typeof message === 'string' && message.trim().length > 0) {
+    return message
+  }
+
+  return fallback
 }
 
 /**
@@ -70,6 +101,12 @@ export function ContentDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [isCheckingFavoriteStatus, setIsCheckingFavoriteStatus] = useState(true)
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false)
+  const [hasRating, setHasRating] = useState(false)
+  const [ratingScore, setRatingScore] = useState(5)
+  const [ratingReview, setRatingReview] = useState('')
+  const [isCheckingRatingStatus, setIsCheckingRatingStatus] = useState(true)
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false)
+  const [isRemovingRating, setIsRemovingRating] = useState(false)
 
   const avatarUrl = useMemo(
     () => resolveAvatarUrl(activeProfile?.avatar ?? null),
@@ -139,6 +176,54 @@ export function ContentDetailPage() {
   )
 
   /**
+   * Consulta si el perfil activo ya califico el contenido actual.
+   * @param targetContentId - Contenido evaluado.
+   */
+  const fetchRatingStatus = useCallback(
+    async (targetContentId: number) => {
+      if (!activeProfileId) {
+        setHasRating(false)
+        setRatingScore(5)
+        setRatingReview('')
+        setIsCheckingRatingStatus(false)
+        return
+      }
+
+      try {
+        setIsCheckingRatingStatus(true)
+
+        const response = await apiClient.get<RatingStatusResponse>(
+          '/community/ratings/status',
+          {
+            params: {
+              perfilId: activeProfileId,
+              contenidoId: targetContentId,
+            },
+          },
+        )
+
+        if (response.data.tieneCalificacion) {
+          setHasRating(true)
+          setRatingScore(response.data.puntaje ?? 5)
+          setRatingReview(response.data.resena ?? '')
+          return
+        }
+
+        setHasRating(false)
+        setRatingScore(5)
+        setRatingReview('')
+      } catch {
+        setHasRating(false)
+        setRatingScore(5)
+        setRatingReview('')
+      } finally {
+        setIsCheckingRatingStatus(false)
+      }
+    },
+    [activeProfileId],
+  )
+
+  /**
    * Consulta detalle de contenido por id y dispara carga de relacionados.
    * @param targetContentId - Contenido a consultar.
    */
@@ -155,18 +240,23 @@ export function ContentDetailPage() {
         await Promise.all([
           fetchRelatedContents(response.data),
           fetchFavoriteStatus(response.data.id),
+          fetchRatingStatus(response.data.id),
         ])
       } catch {
         setContent(null)
         setRelatedContents([])
         setIsFavorite(false)
         setIsCheckingFavoriteStatus(false)
+        setHasRating(false)
+        setRatingScore(5)
+        setRatingReview('')
+        setIsCheckingRatingStatus(false)
         toast.error('No pudimos cargar este titulo. Intenta de nuevo.')
       } finally {
         setIsLoadingContent(false)
       }
     },
-    [fetchFavoriteStatus, fetchRelatedContents],
+    [fetchFavoriteStatus, fetchRatingStatus, fetchRelatedContents],
   )
 
   useEffect(() => {
@@ -177,6 +267,10 @@ export function ContentDetailPage() {
       setIsLoadingRelated(false)
       setIsFavorite(false)
       setIsCheckingFavoriteStatus(false)
+      setHasRating(false)
+      setRatingScore(5)
+      setRatingReview('')
+      setIsCheckingRatingStatus(false)
       return
     }
 
@@ -282,6 +376,74 @@ export function ContentDetailPage() {
       toast.error('No pudimos actualizar tu lista de favoritos. Intenta de nuevo.')
     } finally {
       setIsTogglingFavorite(false)
+    }
+  }
+
+  /**
+   * Crea o actualiza la calificacion del perfil activo.
+   */
+  async function handleSubmitRating() {
+    if (!content || !activeProfileId) {
+      return
+    }
+
+    const normalizedReview = ratingReview.trim()
+    const shouldShowUpdateMessage = hasRating
+
+    try {
+      setIsSubmittingRating(true)
+
+      await apiClient.post('/community/ratings', {
+        perfilId: activeProfileId,
+        contenidoId: content.id,
+        puntaje: ratingScore,
+        resena: normalizedReview.length > 0 ? normalizedReview : undefined,
+      })
+
+      setHasRating(true)
+      setRatingReview(normalizedReview)
+      toast.success(
+        shouldShowUpdateMessage
+          ? `Actualizaste tu calificacion para "${content.titulo}".`
+          : `Calificaste "${content.titulo}" exitosamente.`,
+      )
+    } catch (error) {
+      toast.error(
+        resolveApiErrorMessage(
+          error,
+          'No pudimos guardar tu calificacion. Intenta de nuevo.',
+        ),
+      )
+    } finally {
+      setIsSubmittingRating(false)
+    }
+  }
+
+  /**
+   * Elimina la calificacion del contenido para el perfil activo.
+   */
+  async function handleRemoveRating() {
+    if (!content || !activeProfileId || !hasRating) {
+      return
+    }
+
+    try {
+      setIsRemovingRating(true)
+
+      await apiClient.delete(`/community/ratings/${content.id}`, {
+        params: {
+          perfilId: activeProfileId,
+        },
+      })
+
+      setHasRating(false)
+      setRatingScore(5)
+      setRatingReview('')
+      toast.success(`Quitaste tu calificacion para "${content.titulo}".`)
+    } catch {
+      toast.error('No pudimos eliminar tu calificacion. Intenta de nuevo.')
+    } finally {
+      setIsRemovingRating(false)
     }
   }
 
@@ -422,6 +584,95 @@ export function ContentDetailPage() {
                   Explorar mas titulos
                 </button>
               </div>
+            </motion.section>
+
+            <motion.section
+              className="nf-content-detail-rating"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.08, duration: 0.32 }}
+            >
+              <header className="nf-catalog-row-header">
+                <h2 className="nf-browse-section-title">Tu calificacion</h2>
+                <span>
+                  {hasRating ? 'Ya calificaste este titulo' : 'Aun sin calificar'}
+                </span>
+              </header>
+
+              {isCheckingRatingStatus ? (
+                <article className="nf-feature-card">
+                  <h3>Cargando calificacion...</h3>
+                  <p>Estamos consultando tu puntaje y reseña para este titulo.</p>
+                </article>
+              ) : (
+                <article className="nf-content-detail-rating-card">
+                  <p className="nf-rating-helper">
+                    Para calificar debes haber visto al menos el 50% del contenido.
+                  </p>
+
+                  <div
+                    className="nf-rating-stars"
+                    role="radiogroup"
+                    aria-label="Seleccionar puntaje de 1 a 5"
+                  >
+                    {[1, 2, 3, 4, 5].map((value) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className={`nf-rating-star ${value <= ratingScore ? 'is-active' : ''}`}
+                        onClick={() => setRatingScore(value)}
+                        disabled={isSubmittingRating || isRemovingRating}
+                        aria-pressed={value === ratingScore}
+                      >
+                        {value <= ratingScore ? '★' : '☆'}
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="nf-rating-selected">{ratingScore} de 5 estrellas</p>
+
+                  <label htmlFor="rating-review" className="nf-rating-label">
+                    Reseña (opcional)
+                  </label>
+                  <textarea
+                    id="rating-review"
+                    className="nf-input nf-rating-review"
+                    rows={4}
+                    maxLength={1000}
+                    value={ratingReview}
+                    onChange={(event) => setRatingReview(event.target.value)}
+                    placeholder="Comparte brevemente que te parecio este titulo..."
+                    disabled={isSubmittingRating || isRemovingRating}
+                  />
+                  <p className="nf-rating-counter">{ratingReview.length}/1000 caracteres</p>
+
+                  <div className="nf-content-detail-actions nf-rating-actions">
+                    <button
+                      type="button"
+                      className={buttonClassName('primary')}
+                      onClick={() => void handleSubmitRating()}
+                      disabled={isSubmittingRating || isRemovingRating}
+                    >
+                      {isSubmittingRating
+                        ? hasRating
+                          ? 'Actualizando...'
+                          : 'Guardando...'
+                        : hasRating
+                          ? 'Actualizar calificacion'
+                          : 'Guardar calificacion'}
+                    </button>
+
+                    <button
+                      type="button"
+                      className={buttonClassName('ghost')}
+                      onClick={() => void handleRemoveRating()}
+                      disabled={isRemovingRating || isSubmittingRating || !hasRating}
+                    >
+                      {isRemovingRating ? 'Eliminando...' : 'Quitar calificacion'}
+                    </button>
+                  </div>
+                </article>
+              )}
             </motion.section>
 
             <motion.section

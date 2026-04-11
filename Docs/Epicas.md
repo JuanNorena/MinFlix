@@ -12,6 +12,8 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 - **Estimable (Estimable):** Las restricciones de jerarquía (Serie -> Temporada -> Episodio), películas unitarias, restricciones exclusivas y géneros múltiples son claramente medibles y modelables.
 - **Small (Dimensionada correctamente):** La épica se enfoca en el puro almacenamiento del catálogo, dejando reproducciones y búsquedas por fuera. Es lo suficientemente contenida para iterar sobre su modelo relacional.
 - **Testable (Comprobable):** Se puede probar verificando que un empleado de contenido tenga flujos válidos de inserción (CRUD de catálogo) y limitando que las películas no admitan temporadas temporalmente.
+- **Cobertura obligatoria del enunciado (Think Deeper):** Debe incluir géneros M:N, temporadas y episodios para series/podcasts, relaciones entre contenidos (secuela/precuela/remake/spin-off), y trazabilidad del empleado publicador bajo responsabilidad del departamento de contenido.
+- **Roles y permisos asociados:** `ROL_CONTENIDO` como rol operativo principal para publicación y mantenimiento del catálogo; `ROL_ADMIN` para auditoría y administración global.
 
 ---
 
@@ -23,6 +25,8 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 - **Estimable:** Cada regla de negocio referida a "N perfiles máximos por plan" tiene una estimación puntual y medible.
 - **Small:** Se centra exclusivamente en el ingreso, la selección del plan y el despliegue del árbol familiar de perfiles (sin tocar facturación ni reproducciones cruzadas).
 - **Testable:** Evaluada fácilmente forzando la creación de N+1 perfiles para un plan Básico, con el trigger bloqueando la solicitud de inmediato.
+- **Cobertura obligatoria del enunciado (Think Deeper):** Debe cerrar captura completa de datos personales, límites por plan, perfiles infantiles y programa de referidos (quién refiere a quién) con evidencia de beneficio aplicado en el siguiente ciclo.
+- **Roles y permisos asociados:** `ROL_ADMIN` para administración de cuentas y soporte de operación; controles de acceso para evitar escalamiento no autorizado.
 
 ---
 
@@ -34,6 +38,8 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 - **Estimable:** La complejidad viene del gran volumen de registros (200 mín). El esfuerzo en base de datos implica modelado transaccional e indexado para un entorno de alta fragmentación (+ partitioning).
 - **Small:** Solo abarca registros operacionales (`REPRODUCCIONES`). Calificación y listas irán en su propia épica de comunidad.
 - **Testable:** Probable inyectando reproducción y validando (mediante Trigger) que la reproducción sea frenada si la cuenta carece del flag "ACTIVO".
+- **Cobertura obligatoria del enunciado (Think Deeper):** Debe registrar fecha/hora de inicio, fin, dispositivo y porcentaje de avance; para series y podcasts debe registrar episodio exacto reproducido.
+- **Roles y permisos asociados:** `ROL_ADMIN` para control operativo y `ROL_ANALISTA` para explotación analítica de consumo, sin privilegios de escritura operacional.
 
 ---
 
@@ -45,6 +51,8 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 - **Estimable:** Regla vital del +50% progreso visualizado previo a dejar la reseña lo hace muy auditable y con costo fijo en Triggers de validación.
 - **Small:** Contenido y reproducciones ya existen para cuando esto comience, agilizando su despliegue y concentrándose puramente en las tablas analíticas ligeras (`FAVORITOS`, `CALIFICACIONES`, `REPORTES`).
 - **Testable:** Fácil de atajar ejecutando una prueba unitaria (PL/SQL Trigger) al intentar puntuar una película sin vistas previas asociadas al perfil en acción.
+- **Cobertura obligatoria del enunciado (Think Deeper):** Debe incluir flujo completo de reportes de contenido, estados de moderación y resolución por equipo de soporte.
+- **Roles y permisos asociados:** `ROL_SOPORTE` para atención y cierre de reportes; `ROL_ADMIN` para supervisión y reasignación; usuarios finales sin privilegios de moderación.
 
 ---
 
@@ -56,6 +64,8 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 - **Estimable:** Transacción robusta con `SAVEPOINT`. Tiene el esfuerzo de modelar métodos, status históricos e integrar lógicas transaccionales ACID de base de datos.
 - **Small:** Solamente manipula dinero y estados de cuenta mes a mes, un alcance financiero acotado.
 - **Testable:** Ejecutando el batch (Stored Procedure / Transacción), comprobando Rollbacks si un pago falla a la mitad y comprobando cierres luego de mora de >30ds vía cursor PL/SQL.
+- **Cobertura obligatoria del enunciado (Think Deeper):** Debe contemplar métodos de pago, estado transaccional completo, reglas de suspensión por mora y descuentos acumulables por referidos/fidelidad.
+- **Roles y permisos asociados:** `ROL_ADMIN` para operación financiera y auditoría; acceso de lectura analítica para `ROL_ANALISTA` sobre datos consolidados.
 
 ---
 
@@ -67,3 +77,35 @@ Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sis
 - **Estimable:** Se ciñe a la estricta implementación de Núcleo 1 de la materia (Consultas OLAP, Vistas parametrizadas). 
 - **Small:** Aislado en scripts parametrizados de lectura. No interfiere con rutinas almacenadas. 
 - **Testable:** Perfectamente medible. Se comprueba comparando si la sumatoria global financiera de la cuenta matricial de CUBE y ROLLUP match con un select * de ingresos totales sin agrupaciones avanzadas.
+
+- **Cobertura obligatoria del enunciado (Think Deeper):** Debe cubrir consumo por ciudad/categoría/género/dispositivo/plan/tiempo, ingresos por ciudad/plan y productividad interna por empleado/moderador.
+- **Roles y permisos asociados:** `ROL_ANALISTA` como rol principal de consulta; sin privilegios DML sobre entidades transaccionales.
+
+---
+
+## Trazabilidad Transversal de Roles y Permisos (NT5)
+1. `ROL_ADMIN`:
+	- Gestion de usuarios, configuraciones globales y gobierno operativo.
+	- Acceso amplio controlado para auditoria, sin romper segregacion por funciones.
+2. `ROL_CONTENIDO`:
+	- Operaciones de catalogo y mantenimiento de estructuras de contenido.
+	- Sin permisos para procesos financieros o cierres de moderacion.
+3. `ROL_SOPORTE`:
+	- Gestion de reportes de contenido inapropiado y flujo de resolucion.
+	- Sin permisos de publicacion de catalogo o facturacion.
+4. `ROL_ANALISTA`:
+	- Consultas y reportes sobre datos consolidados (OLAP, vistas materializadas).
+	- Sin permisos de actualizacion de datos transaccionales.
+
+## Validacion de Cobertura frente al Enunciado (Think Deeper)
+1. Cobertura estructural de negocio por épicas: completa a nivel de alcance macro (1 a 6).
+2. Cobertura de roles y permisos explícitos (NT5): parcial, requiere aterrizaje en script y evidencias de GRANT/denegacion.
+3. Cobertura de organización interna (departamentos + jerarquia de supervision): parcial, requiere modelado detallado y pruebas.
+4. Cobertura de moderación y reportes de contenido: en ejecucion dentro de épica 4 (bloque pendiente).
+5. Cobertura de referidos y descuentos asociados: parcial, actualmente priorizado en épica 5 y cierre de épica 2.
+
+## Brechas Criticas Confirmadas
+1. Formalizar script de seguridad NT5 con `PROFILE`, roles requeridos y demostraciones de acceso no autorizado.
+2. Consolidar entidad y reglas de jerarquía de empleados (supervisor-subordinado) y su relación por departamento.
+3. Completar la parte de reportes/moderación de épica 4 y su integración por rol de soporte.
+4. Asegurar trazabilidad de entregables académicos 1..10 contra artefactos reales del repositorio.
