@@ -239,8 +239,23 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
    - Error de tipado en pruebas de backend corregido agregando tipos globales de Jest en tsconfig.
    - Pipeline de calidad basico operativo.
 2. Proximo paso inmediato:
-    - Continuar Epica 4 (comunidad), bloque 2: calificaciones por perfil y elegibilidad >50%.
-    - Documentar evidencia de ejecucion Oracle para favoritos y flujo UI de comunidad.
+    - Implementar Epica 6 (Analitica): consultas OLAP, ROLLUP, CUBE, GROUPING SETS y vistas materializadas.
+    - Documentar evidencia de ejecucion Oracle para Epicas 4 y 5.
+
+## 7.2 Avance sesion Dev/dan (Daniel)
+1. Epicas completadas a nivel de base de datos Oracle en esta sesion:
+   - Epica 4 completa: FAVORITOS (script 05), CALIFICACIONES y REPORTES (script 06).
+     - Trigger TRG_CALIFICACIONES_RETENSION_BI: valida 50% de reproduccion previa para calificar.
+     - Trigger TRG_FAVORITOS_REGLAS_BI: valida clasificacion permitida por tipo de perfil.
+   - Epica 5 completa: PAGOS, columnas de referidos y fechas en USUARIOS (script 07).
+     - Trigger TRG_PAGOS_ACTIVAR_CUENTA_AU: reactiva cuenta tras pago exitoso.
+     - Funcion FN_CALCULAR_MONTO: descuentos por antiguedad (10-15%) y referidos (5%).
+     - Procedimiento SP_FACTURACION_MENSUAL: batch mensual con SAVEPOINT por usuario.
+     - Procedimiento SP_SUSPENDER_CUENTAS_MOROSAS: cursor de cuentas con mora mayor a 30 dias.
+2. Entorno local configurado:
+   - Oracle 18c XE corriendo en Docker (puerto 1522, PDB XEPDB1).
+   - Scripts 01 al 07 ejecutados y validados en MINFLIX_APP.
+   - Backend NestJS y frontend React levantados y funcionales.
 
 ## 7.1 Avance Cuantificado (Think Deeper)
 1. Epica actual en ejecucion: Epica 4 (comunidad), bloque 1 completado y bloque 2 en preparacion.
