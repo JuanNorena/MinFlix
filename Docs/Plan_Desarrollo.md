@@ -212,22 +212,42 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
      - Tabla: REPRODUCCIONES.
      - Trigger: TRG_REPRODUCCIONES_REGLAS_BIU (VALID).
      - Vista: VW_CONTINUAR_VIENDO (VALID).
-    - Modulo backend de reproducciones implementado con endpoints protegidos por JWT:
-       - POST /api/v1/playback/start.
-       - POST /api/v1/playback/progress.
-       - GET /api/v1/playback/continue-watching.
-       - GET /api/v1/playback/history.
-    - Script Oracle de comunidad (favoritos) preparado para ejecucion:
-       - Script: database/05_comunidad_favoritos_iteracion3.sql.
-       - Objetos: FAVORITOS, IDX_FAVORITOS_PERFIL_FECHA, TRG_FAVORITOS_REGLAS_BI.
-    - Modulo backend de comunidad implementado para bloque 1 de Epica 4:
-       - POST /api/v1/community/favorites.
-       - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id.
-       - GET /api/v1/community/favorites?perfilId=:id.
-       - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id.
-    - Browse frontend conectado con la fila "Continua viendo" usando la vista Oracle VW_CONTINUAR_VIENDO.
-    - Acciones de reproduccion en browse integradas con backend para iniciar y retomar avances.
-    - Seccion "Actividad reciente" integrada en browse con consumo del endpoint de historial.
+   - Modulo backend de reproducciones implementado con endpoints protegidos por JWT:
+     - POST /api/v1/playback/start.
+     - POST /api/v1/playback/progress.
+     - GET /api/v1/playback/continue-watching.
+     - GET /api/v1/playback/history.
+   - Script Oracle de comunidad (favoritos) ejecutado con evidencia de objetos:
+     - Script: database/05_comunidad_favoritos_iteracion3.sql.
+     - Objetos: FAVORITOS, IDX_FAVORITOS_PERFIL_FECHA, TRG_FAVORITOS_REGLAS_BI (VALID).
+   - Modulo backend de comunidad implementado para bloque 1 de Epica 4:
+     - POST /api/v1/community/favorites.
+     - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id.
+     - GET /api/v1/community/favorites?perfilId=:id.
+     - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id.
+   - Browse frontend conectado con la fila "Continua viendo" usando la vista Oracle VW_CONTINUAR_VIENDO.
+   - Acciones de reproduccion en browse integradas con backend para iniciar y retomar avances.
+   - Seccion "Actividad reciente" integrada en browse con consumo del endpoint de historial.
+   - Epica 4 completada al 100% a nivel de base de datos Oracle:
+     - Script: database/06_comunidad_calificaciones_reportes_iteracion3.sql.
+     - Tabla CALIFICACIONES con constraint de puntuacion 1-5 y unicidad por perfil y contenido.
+     - Trigger TRG_CALIFICACIONES_RETENSION_BI: bloquea calificar si el perfil no supero el 50% de reproduccion.
+     - Tabla REPORTES con estados PENDIENTE, EN_REVISION, RESUELTO, DESCARTADO para gestion de soporte.
+     - Indices: IDX_CALIFICACIONES_CONTENIDO, IDX_CALIFICACIONES_PERFIL, IDX_REPORTES_ESTADO, IDX_REPORTES_CONTENIDO.
+   - Epica 5 completada al 100% a nivel de base de datos Oracle:
+     - Script: database/07_finanzas_epica5.sql.
+     - Columnas agregadas a USUARIOS: FECHA_SUSCRIPCION, ID_REFERIDOR (FK autorreferencial), FECHA_CORTE.
+     - Tabla PAGOS con metodos (TARJETA_CREDITO, TARJETA_DEBITO, PSE, NEQUI, DAVIPLATA) y estados.
+     - Trigger TRG_PAGOS_ACTIVAR_CUENTA_AU: reactiva cuenta SUSPENDIDA o INACTIVA tras pago exitoso.
+     - Funcion FN_CALCULAR_MONTO: aplica descuento 10% por mas de 12 meses, 15% por mas de 24 meses y 5% adicional por referido activo (maximo 20%).
+     - Procedimiento SP_FACTURACION_MENSUAL: batch mensual con cursor REF, SAVEPOINT por usuario y registro de pagos fallidos sin interrumpir el ciclo.
+     - Procedimiento SP_SUSPENDER_CUENTAS_MOROSAS: cursor de cuentas activas con FECHA_CORTE vencida y sin pago exitoso en los ultimos 30 dias.
+     - Todos los objetos en estado VALID verificado.
+2. Proximo paso inmediato (Epica 6 - Analitica):
+   - Crear consultas OLAP con ROLLUP, CUBE y GROUPING SETS sobre reproducciones y pagos.
+   - Crear vistas materializadas para ratings de contenido y metricas financieras.
+   - Crear consultas parametrizadas y tablas cruzadas PIVOT/UNPIVOT para reportes gerenciales.
+   - Implementar fragmentacion (particionamiento) de la tabla REPRODUCCIONES por ventana de tiempo.
       - Navegacion de detalle de contenido implementada (click en catalogo, continuar viendo e historial).
       - Integracion de favoritos en frontend:
          - Boton agregar/quitar favoritos en detalle de contenido.
@@ -242,20 +262,7 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
     - Implementar Epica 6 (Analitica): consultas OLAP, ROLLUP, CUBE, GROUPING SETS y vistas materializadas.
     - Documentar evidencia de ejecucion Oracle para Epicas 4 y 5.
 
-## 7.2 Avance sesion Dev/dan (Daniel)
-1. Epicas completadas a nivel de base de datos Oracle en esta sesion:
-   - Epica 4 completa: FAVORITOS (script 05), CALIFICACIONES y REPORTES (script 06).
-     - Trigger TRG_CALIFICACIONES_RETENSION_BI: valida 50% de reproduccion previa para calificar.
-     - Trigger TRG_FAVORITOS_REGLAS_BI: valida clasificacion permitida por tipo de perfil.
-   - Epica 5 completa: PAGOS, columnas de referidos y fechas en USUARIOS (script 07).
-     - Trigger TRG_PAGOS_ACTIVAR_CUENTA_AU: reactiva cuenta tras pago exitoso.
-     - Funcion FN_CALCULAR_MONTO: descuentos por antiguedad (10-15%) y referidos (5%).
-     - Procedimiento SP_FACTURACION_MENSUAL: batch mensual con SAVEPOINT por usuario.
-     - Procedimiento SP_SUSPENDER_CUENTAS_MOROSAS: cursor de cuentas con mora mayor a 30 dias.
-2. Entorno local configurado:
-   - Oracle 18c XE corriendo en Docker (puerto 1522, PDB XEPDB1).
-   - Scripts 01 al 07 ejecutados y validados en MINFLIX_APP.
-   - Backend NestJS y frontend React levantados y funcionales.
+
 
 ## 7.1 Avance Cuantificado (Think Deeper)
 1. Epica actual en ejecucion: Epica 4 (comunidad), bloque 1 completado y bloque 2 en preparacion.
