@@ -243,11 +243,17 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
      - Procedimiento SP_FACTURACION_MENSUAL: batch mensual con cursor REF, SAVEPOINT por usuario y registro de pagos fallidos sin interrumpir el ciclo.
      - Procedimiento SP_SUSPENDER_CUENTAS_MOROSAS: cursor de cuentas activas con FECHA_CORTE vencida y sin pago exitoso en los ultimos 30 dias.
      - Todos los objetos en estado VALID verificado.
-2. Proximo paso inmediato (Epica 6 - Analitica):
-   - Crear consultas OLAP con ROLLUP, CUBE y GROUPING SETS sobre reproducciones y pagos.
-   - Crear vistas materializadas para ratings de contenido y metricas financieras.
-   - Crear consultas parametrizadas y tablas cruzadas PIVOT/UNPIVOT para reportes gerenciales.
-   - Implementar fragmentacion (particionamiento) de la tabla REPRODUCCIONES por ventana de tiempo.
+2. Proximo paso inmediato:
+   - Epica 6 completada al 100% a nivel de base de datos Oracle:
+     - Script: database/08_datos_prueba.sql — 28 usuarios, 200 reproducciones, 80 pagos, 60 calificaciones, 40 favoritos.
+     - Script: database/09_analitica_epica6.sql con todos los requerimientos NT1:
+       - 3 consultas parametrizadas con DEFINE/&&.
+       - 2 PIVOT y 2 UNPIVOT sobre reproducciones y pagos.
+       - 4 agrupamientos: ROLLUP, CUBE, GROUPING SETS y ROLLUP con GROUPING().
+       - 2 vistas materializadas: MV_RATING_CONTENIDO y MV_METRICAS_FINANCIERAS (VALID).
+       - Tabla particionada REPRODUCCIONES_PART por rango de fecha con 5 particiones.
+   - Todos los scripts Oracle del 01 al 09 ejecutados y validados en MINFLIX_APP.
+   - Siguiente frente: nucleos academicos NT2 (PL/SQL avanzado), NT3 (transacciones), NT4 (indices) y NT5 (roles y seguridad).
       - Navegacion de detalle de contenido implementada (click en catalogo, continuar viendo e historial).
       - Integracion de favoritos en frontend:
          - Boton agregar/quitar favoritos en detalle de contenido.
