@@ -319,22 +319,14 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
        - POST /api/v1/playback/progress.
        - GET /api/v1/playback/continue-watching.
        - GET /api/v1/playback/history.
-    - Script Oracle de comunidad (favoritos) ejecutado en instancia activa:
+    - Script Oracle de comunidad (favoritos) preparado para ejecucion:
        - Script: database/05_comunidad_favoritos_iteracion3.sql.
-       - Objetos validados: FAVORITOS, IDX_FAVORITOS_PERFIL_FECHA, TRG_FAVORITOS_REGLAS_BI.
-    - Script Oracle de comunidad (calificaciones) ejecutado en instancia activa:
-       - Script: database/06_comunidad_calificaciones_iteracion3.sql.
-       - Objetos validados: CALIFICACIONES, IDX_CALIFICACIONES_PERFIL_FECHA, IDX_CALIFICACIONES_CONTENIDO_PUNTAJE, TRG_CALIFICACIONES_REGLAS_BIU.
+       - Objetos: FAVORITOS, IDX_FAVORITOS_PERFIL_FECHA, TRG_FAVORITOS_REGLAS_BI.
     - Modulo backend de comunidad implementado para bloque 1 de Epica 4:
        - POST /api/v1/community/favorites.
        - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id.
        - GET /api/v1/community/favorites?perfilId=:id.
        - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id.
-    - Modulo backend de comunidad implementado para bloque 2 de Epica 4:
-       - POST /api/v1/community/ratings.
-       - DELETE /api/v1/community/ratings/:contenidoId?perfilId=:id.
-       - GET /api/v1/community/ratings?perfilId=:id.
-       - GET /api/v1/community/ratings/status?perfilId=:id&contenidoId=:id.
     - Browse frontend conectado con la fila "Continua viendo" usando la vista Oracle VW_CONTINUAR_VIENDO.
     - Acciones de reproduccion en browse integradas con backend para iniciar y retomar avances.
     - Seccion "Actividad reciente" integrada en browse con consumo del endpoint de historial.
@@ -352,10 +344,8 @@ Este plan detalla paso a paso la evolucion del proyecto MinFlix con arquitectura
    - Error de tipado en pruebas de backend corregido agregando tipos globales de Jest en tsconfig.
    - Pipeline de calidad basico operativo.
 2. Proximo paso inmediato:
-   - Continuar Epica 4 (comunidad), bloque 3: reportes de contenido y moderacion.
-   - Exponer bandeja inicial para revision de reportes por rol de soporte.
-   - Implementar script NT5 de seguridad Oracle (`PROFILE`, roles, `GRANT` y pruebas de denegacion).
-   - Formalizar modelado de departamentos y jerarquia supervisor-subordinado en alcance de datos y reglas.
+    - Continuar Epica 4 (comunidad), bloque 2: calificaciones por perfil y elegibilidad >50%.
+    - Documentar evidencia de ejecucion Oracle para favoritos y flujo UI de comunidad.
 
 ## 7.1 Avance Cuantificado (Think Deeper)
 1. Epica actual en ejecucion: Epica 4 (comunidad), bloques 1 y 2 completados; bloque 3 en preparacion.
