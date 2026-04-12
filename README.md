@@ -3,7 +3,7 @@
 MinFlix es un proyecto academico y tecnico para construir una plataforma de streaming con arquitectura empresarial sobre Oracle, backend en NestJS y frontend en React. El objetivo es demostrar modelado de datos, reglas de negocio fuertes y una implementacion full stack trazable a epicas INVEST.
 
 ## Autor
-Juan Sebastian Norena Espinosa
+Juan Sebastian Norena Espinosa, Daniel Eduardo Jurado Celemin y Samuel Andres Castaño
 
 ## 1. Analisis Paso a Paso de la Aplicacion
 
