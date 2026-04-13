@@ -29,6 +29,7 @@ Fecha de corte: 2026-04-13
 1. Secuencia disponible hasta script 16.
 2. Finanzas operativa para consulta y soporte de checkout simulado.
 3. USUARIOS alineado con datos personales del enunciado.
+4. Ejecucion tecnica de base de datos realizada en este corte: scripts 00..16 aplicados por MCP SQL Developer (inline SQL).
 
 ### 3.2 Backend
 1. Modulos: auth, catalog, playback, community, finance.
@@ -39,6 +40,15 @@ Fecha de corte: 2026-04-13
 1. Vistas principales operativas con rutas protegidas.
 2. Billing incluye formulario de tarjeta y pago simulado.
 3. Menu hamburguesa alineado en vistas internas con topbar.
+
+### 3.4 Matriz operativa por rol (vistas + metodos)
+| Rol | Vistas habilitadas | Metodos/endpoints alineados | Cobertura de enunciado |
+| --- | --- | --- | --- |
+| usuario | `/profiles/select`, `/profiles/manage`, `/browse`, `/browse/content/:contentId`, `/account/billing` | `POST /api/v1/auth/login`, `POST /api/v1/auth/register`, `GET/POST/PATCH/DELETE /api/v1/auth/profiles`, `POST /api/v1/playback/start`, `POST /api/v1/playback/progress`, `GET /api/v1/playback/continue-watching`, `GET /api/v1/playback/history`, `POST/DELETE/GET /api/v1/community/favorites`, `POST/DELETE/GET /api/v1/community/ratings`, `POST/GET /api/v1/community/reports`, `GET /api/v1/finance/*`, `POST /api/v1/finance/payments/checkout` | 1.2, 1.3, 1.5 |
+| admin | todas las del usuario + `/moderation/reports` | endpoints de usuario + `POST /api/v1/catalog/categories`, `POST /api/v1/catalog/contents`, `PATCH /api/v1/catalog/contents/:contentId`, `GET /api/v1/community/reports/moderation`, `PATCH /api/v1/community/reports/:reporteId/moderation` | 1.1, 1.2, 1.3, 1.4, 1.5 |
+| soporte | vistas de usuario + `/moderation/reports` | endpoints de usuario + `GET /api/v1/community/reports/moderation`, `PATCH /api/v1/community/reports/:reporteId/moderation` | 1.3, 1.4 |
+| contenido | vistas de usuario y catalogo | endpoints de usuario + `POST /api/v1/catalog/categories`, `POST /api/v1/catalog/contents`, `PATCH /api/v1/catalog/contents/:contentId` | 1.1, 1.4 |
+| analista | vistas de usuario + (pendiente) dashboard analitico | endpoints de usuario + objetivo `GET /api/v1/analytics/consumption`, `GET /api/v1/analytics/finance`, `GET /api/v1/analytics/internal-performance` | 1.5, 1.6 |
 
 ## 4. Trazabilidad paso a paso contra enunciado
 
@@ -101,18 +111,19 @@ Fecha de corte: 2026-04-13
 
 ### I6.1 - Cierre catalogo extendido y comunidad
 1. Backend:
-   - exponer endpoints de generos/temporadas/episodios/relacionados.
+   - exponer endpoints de generos/temporadas/episodios/relacionados para rol contenido/admin.
+   - mantener publicos de lectura `GET /api/v1/catalog/categories`, `GET /api/v1/catalog/contents`, `GET /api/v1/catalog/contents/:contentId`.
 2. Frontend:
-   - render completo de metadatos extendidos en detalle.
+   - render completo de metadatos extendidos en `/browse/content/:contentId` para todos los roles con perfil.
 3. Oracle:
    - evidencia de consultas de 07 y 08.
 
 ### I6.2 - Finanzas simuladas y datos personales (cierre)
 1. Backend:
-   - GET finance summary/invoices/payments/referrals.
-   - POST finance/payments/checkout (simulacion sin pasarela).
+   - `GET /api/v1/finance/summary`, `GET /api/v1/finance/invoices`, `GET /api/v1/finance/payments`, `GET /api/v1/finance/referrals`.
+   - `POST /api/v1/finance/payments/checkout` (simulacion sin pasarela).
 2. Frontend:
-   - BillingPage con formulario de tarjeta y pago simulado.
+   - `/account/billing` con formulario de tarjeta, pago simulado y responsive consistente con vistas internas.
 3. Oracle:
    - vistas de soporte API (script 15).
    - columnas personales USUARIOS (script 16).
@@ -121,14 +132,18 @@ Fecha de corte: 2026-04-13
    - factura pendiente de prueba para checkout.
 
 ### I6.3 - Organizacion interna
-1. Backend de consulta organizacional.
-2. Vista frontend de lectura por rol.
-3. Validaciones de jerarquia y consistencia por departamento.
+1. Backend de consulta organizacional por rol interno (`admin`, `soporte`, `contenido`, `analista`).
+2. Vista frontend de lectura por rol con separacion de responsabilidades del bloque 1.4.
+3. Validaciones de jerarquia y consistencia por departamento (supervisor-subordinado).
+4. Trazabilidad de metodos y vistas por departamento para sustentacion.
 
 ### I6.4 - Analitica ejecutiva
 1. SQL NT1 completo.
-2. Endpoints analiticos.
-3. Dashboard analista/admin.
+2. Endpoints analiticos por dominio:
+   - `GET /api/v1/analytics/consumption`,
+   - `GET /api/v1/analytics/finance`,
+   - `GET /api/v1/analytics/internal-performance`.
+3. Dashboard analista/admin con filtros por ciudad, plan, genero, dispositivo y tiempo.
 
 ### I6.5 - Cierre academico NT2/NT3/NT4/NT5
 1. Completar y documentar evidencias faltantes.
@@ -193,12 +208,14 @@ Fecha de corte: 2026-04-13
 | 10. Sustentacion | Pendiente | iteracion I6.5 |
 
 ## 10. Proximo bloque inmediato
-1. Ejecutar 13, 14 y 16 en entorno Oracle activo para refrescar datos de prueba.
-2. Validar flujo completo:
+1. Validar flujo completo por rol en ambiente actual (scripts 00..16 ya ejecutados):
    - registro con datos personales,
    - login,
+   - seleccion de perfil,
+   - browse/detail,
    - billing,
    - checkout simulado exitoso,
    - factura actualizada.
-3. Cerrar brechas de catalogo extendido (I6.1).
+2. Cerrar brechas de catalogo extendido con evidencia por rol y endpoint (I6.1).
+3. Formalizar modulo de organizacion interna (I6.3).
 4. Iniciar implementacion de analitica (I6.4).

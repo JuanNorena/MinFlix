@@ -211,7 +211,7 @@ export function ReportsModerationPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <span className="nf-browse-brand">MINFLIX MODERACION</span>
+          <span className="nf-browse-brand">MINFLIX</span>
 
           <button
             type="button"

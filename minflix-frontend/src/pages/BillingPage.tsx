@@ -117,6 +117,25 @@ function formatDateTime(value: string): string {
   })
 }
 
+function formatCardNumberInput(value: string): string {
+  const digitsOnly = value.replace(/\D+/g, '').slice(0, 19)
+  return digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
+}
+
+function formatExpiryInput(value: string): string {
+  const digitsOnly = value.replace(/\D+/g, '').slice(0, 4)
+
+  if (digitsOnly.length <= 2) {
+    return digitsOnly
+  }
+
+  return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`
+}
+
+function formatCvvInput(value: string): string {
+  return value.replace(/\D+/g, '').slice(0, 4)
+}
+
 function prettifyInvoiceStatus(value: string): string {
   switch (value) {
     case 'PENDIENTE':
@@ -379,6 +398,7 @@ export function BillingPage() {
     }
 
     const normalizedCardNumber = checkoutCardNumber.replace(/\s+/g, '')
+    const normalizedExpiry = checkoutExpiry.trim()
     const normalizedHolder = checkoutCardHolder.trim()
 
     if (!/^[0-9]{12,19}$/.test(normalizedCardNumber)) {
@@ -386,7 +406,7 @@ export function BillingPage() {
       return
     }
 
-    if (!/^(0[1-9]|1[0-2])\/[0-9]{2}$/.test(checkoutExpiry)) {
+    if (!/^(0[1-9]|1[0-2])\/[0-9]{2}$/.test(normalizedExpiry)) {
       toast.error('Fecha de expiracion invalida. Usa el formato MM/AA.')
       return
     }
@@ -411,7 +431,7 @@ export function BillingPage() {
           metodoPago: checkoutMethod,
           titularTarjeta: normalizedHolder,
           numeroTarjeta: normalizedCardNumber,
-          fechaExpiracion: checkoutExpiry,
+          fechaExpiracion: normalizedExpiry,
           cvv: checkoutCvv,
         },
       )
@@ -447,7 +467,7 @@ export function BillingPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <span className="nf-browse-brand">MINFLIX FINANZAS</span>
+          <span className="nf-browse-brand">MINFLIX</span>
 
           <button
             type="button"
@@ -580,9 +600,10 @@ export function BillingPage() {
                   id="checkout-invoice"
                   className="nf-input"
                   value={checkoutInvoiceId ?? ''}
-                  onChange={(event) =>
-                    setCheckoutInvoiceId(Number(event.target.value))
-                  }
+                  onChange={(event) => {
+                    const nextInvoiceId = event.target.value
+                    setCheckoutInvoiceId(nextInvoiceId ? Number(nextInvoiceId) : null)
+                  }}
                   disabled={pendingInvoices.length === 0 || isSubmittingCheckout}
                 >
                   {pendingInvoices.length === 0 ? (
@@ -630,6 +651,7 @@ export function BillingPage() {
                   className="nf-input"
                   value={checkoutCardHolder}
                   onChange={(event) => setCheckoutCardHolder(event.target.value)}
+                  autoComplete="cc-name"
                   disabled={isSubmittingCheckout}
                   required
                 />
@@ -644,7 +666,12 @@ export function BillingPage() {
                   type="text"
                   className="nf-input"
                   value={checkoutCardNumber}
-                  onChange={(event) => setCheckoutCardNumber(event.target.value)}
+                  onChange={(event) =>
+                    setCheckoutCardNumber(formatCardNumberInput(event.target.value))
+                  }
+                  inputMode="numeric"
+                  autoComplete="cc-number"
+                  maxLength={23}
                   placeholder="4111111111111111"
                   disabled={isSubmittingCheckout}
                   required
@@ -660,7 +687,12 @@ export function BillingPage() {
                   type="text"
                   className="nf-input"
                   value={checkoutExpiry}
-                  onChange={(event) => setCheckoutExpiry(event.target.value)}
+                  onChange={(event) =>
+                    setCheckoutExpiry(formatExpiryInput(event.target.value))
+                  }
+                  inputMode="numeric"
+                  autoComplete="cc-exp"
+                  maxLength={5}
                   placeholder="11/29"
                   disabled={isSubmittingCheckout}
                   required
@@ -676,7 +708,10 @@ export function BillingPage() {
                   type="password"
                   className="nf-input"
                   value={checkoutCvv}
-                  onChange={(event) => setCheckoutCvv(event.target.value)}
+                  onChange={(event) => setCheckoutCvv(formatCvvInput(event.target.value))}
+                  inputMode="numeric"
+                  autoComplete="cc-csc"
+                  maxLength={4}
                   placeholder="123"
                   disabled={isSubmittingCheckout}
                   required
@@ -684,7 +719,7 @@ export function BillingPage() {
               </div>
             </div>
 
-            <div className="nf-content-tile-actions" style={{ marginTop: '0.8rem' }}>
+            <div className="nf-content-tile-actions nf-billing-checkout-actions">
               <button
                 type="submit"
                 className={buttonClassName('primary')}

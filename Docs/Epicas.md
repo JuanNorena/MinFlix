@@ -55,6 +55,26 @@ Fecha de corte: 2026-04-13
 2. Epica asociada principal: Epica 6 (Analitica y reporteria ejecutiva).
 3. Estado actual: Pendiente parcial (falta paquete NT1 final y dashboard).
 
+### 2.7 Bloque transversal - Roles, vistas y metodos de aplicacion
+1. Roles funcionales activos del sistema:
+   - usuario,
+   - admin,
+   - soporte,
+   - contenido,
+   - analista.
+2. Vistas frontend disponibles por rol:
+   - Publicas: `/`, `/login`, `/register`.
+   - Autenticadas: `/profiles/select`, `/profiles/manage`, `/account/billing`.
+   - Con perfil activo: `/browse`, `/browse/content/:contentId`.
+   - Moderacion (rol restringido): `/moderation/reports` para admin/soporte.
+3. Metodos/endpoints base alineados a la operacion del enunciado:
+   - Autenticacion y cuenta: `POST /api/v1/auth/login`, `POST /api/v1/auth/register`, `GET /api/v1/auth/profile`.
+   - Perfiles: `GET/POST/PATCH/DELETE /api/v1/auth/profiles`.
+   - Catalogo: `GET /api/v1/catalog/categories`, `GET /api/v1/catalog/contents`, `GET /api/v1/catalog/contents/:contentId`, `POST /api/v1/catalog/categories`, `POST /api/v1/catalog/contents`, `PATCH /api/v1/catalog/contents/:contentId`.
+   - Reproduccion: `POST /api/v1/playback/start`, `POST /api/v1/playback/progress`, `GET /api/v1/playback/continue-watching`, `GET /api/v1/playback/history`.
+   - Comunidad: `POST/DELETE/GET /api/v1/community/favorites`, `GET /api/v1/community/favorites/status`, `POST/DELETE/GET /api/v1/community/ratings`, `GET /api/v1/community/ratings/status`, `POST /api/v1/community/reports`, `GET /api/v1/community/reports`, `GET /api/v1/community/reports/moderation`, `PATCH /api/v1/community/reports/:reporteId/moderation`.
+   - Finanzas: `GET /api/v1/finance/summary`, `GET /api/v1/finance/invoices`, `GET /api/v1/finance/payments`, `GET /api/v1/finance/referrals`, `POST /api/v1/finance/payments/checkout`.
+
 ## 3. Epica 1 - Catalogo multiformato
 
 ### 3.1 INVEST
@@ -80,6 +100,21 @@ Fecha de corte: 2026-04-13
 1. Endpoints para generos, temporadas, episodios y relacionados.
 2. Vista de detalle con esos metadatos.
 3. Evidencia de validaciones de clasificacion por perfil.
+
+### 3.5 Roles, vistas y metodos cubiertos
+1. Roles primarios:
+   - contenido y admin: publicacion/actualizacion de catalogo.
+   - usuario, analista y soporte: consumo del catalogo.
+2. Vistas asociadas:
+   - `/browse`,
+   - `/browse/content/:contentId`.
+3. Metodos asociados:
+   - `GET /api/v1/catalog/categories`,
+   - `GET /api/v1/catalog/contents`,
+   - `GET /api/v1/catalog/contents/:contentId`,
+   - `POST /api/v1/catalog/categories` (admin/contenido),
+   - `POST /api/v1/catalog/contents` (admin/contenido),
+   - `PATCH /api/v1/catalog/contents/:contentId` (admin/contenido).
 
 ## 4. Epica 2 - Cuentas, planes y perfiles
 
@@ -108,6 +143,23 @@ Fecha de corte: 2026-04-13
 2. Seed de usuarios con datos personales para todos los roles.
 3. Evidencia de validaciones en API y DB.
 
+### 4.5 Roles, vistas y metodos cubiertos
+1. Roles primarios: todos (usuario/admin/soporte/contenido/analista).
+2. Vistas asociadas:
+   - `/login`,
+   - `/register`,
+   - `/profiles/select`,
+   - `/profiles/manage`.
+3. Metodos asociados:
+   - `POST /api/v1/auth/login`,
+   - `POST /api/v1/auth/register`,
+   - `GET /api/v1/auth/profile`,
+   - `GET /api/v1/auth/profiles`,
+   - `POST /api/v1/auth/profiles`,
+   - `PATCH /api/v1/auth/profiles/:profileId`,
+   - `DELETE /api/v1/auth/profiles/:profileId`,
+   - `POST /api/v1/auth/profiles/avatar`.
+
 ## 5. Epica 3 - Reproduccion y continuidad
 
 ### 5.1 INVEST
@@ -124,6 +176,17 @@ Fecha de corte: 2026-04-13
 3. Frontend: Avanzado.
 4. Brecha: episodio exacto en series/podcasts.
 
+### 5.3 Roles, vistas y metodos cubiertos
+1. Roles primarios: todos los roles con perfil activo.
+2. Vistas asociadas:
+   - `/browse` (fila de continuidad e historial reciente),
+   - `/browse/content/:contentId` (inicio/avance de reproduccion).
+3. Metodos asociados:
+   - `POST /api/v1/playback/start`,
+   - `POST /api/v1/playback/progress`,
+   - `GET /api/v1/playback/continue-watching`,
+   - `GET /api/v1/playback/history`.
+
 ## 6. Epica 4 - Comunidad y moderacion
 
 ### 6.1 INVEST
@@ -139,6 +202,23 @@ Fecha de corte: 2026-04-13
 2. Backend: Avanzado.
 3. Frontend: Avanzado.
 4. Mejora transversal incluida: consistencia de menu hamburguesa en vistas internas.
+
+### 6.3 Roles, vistas y metodos cubiertos
+1. Roles primarios:
+   - usuario/analista/contenido/admin: favoritos, calificaciones y reportes propios.
+   - soporte/admin: bandeja de moderacion y resolucion.
+2. Vistas asociadas:
+   - `/browse/content/:contentId` (favorito, rating, reporte),
+   - `/moderation/reports` (soporte/admin).
+3. Metodos asociados:
+   - `POST/DELETE/GET /api/v1/community/favorites`,
+   - `GET /api/v1/community/favorites/status`,
+   - `POST/DELETE/GET /api/v1/community/ratings`,
+   - `GET /api/v1/community/ratings/status`,
+   - `POST /api/v1/community/reports`,
+   - `GET /api/v1/community/reports`,
+   - `GET /api/v1/community/reports/moderation` (soporte/admin),
+   - `PATCH /api/v1/community/reports/:reporteId/moderation` (soporte/admin).
 
 ## 7. Epica 5 - Finanzas y facturacion simulada
 
@@ -167,6 +247,17 @@ Fecha de corte: 2026-04-13
 3. Mensaje explicito en UI/API de no cobro real.
 4. Seed con al menos una factura pendiente para probar checkout.
 
+### 7.5 Roles, vistas y metodos cubiertos
+1. Roles primarios: cuenta autenticada (usuario/admin/soporte/contenido/analista).
+2. Vistas asociadas:
+   - `/account/billing`.
+3. Metodos asociados:
+   - `GET /api/v1/finance/summary`,
+   - `GET /api/v1/finance/invoices`,
+   - `GET /api/v1/finance/payments`,
+   - `GET /api/v1/finance/referrals`,
+   - `POST /api/v1/finance/payments/checkout`.
+
 ## 8. Epica 6 - Reporteria ejecutiva y analitica
 
 ### 8.1 INVEST
@@ -187,16 +278,26 @@ Fecha de corte: 2026-04-13
 2. Endpoints analiticos por ciudad/categoria/genero/dispositivo/plan/tiempo.
 3. Dashboard para rol analista/admin.
 
+### 8.4 Roles, vistas y metodos objetivo
+1. Roles primarios: analista y admin.
+2. Vistas objetivo:
+   - dashboard ejecutivo por ciudad/plan,
+   - tablero de productividad interna por area.
+3. Metodos objetivo (pendientes de cierre):
+   - `GET /api/v1/analytics/consumption`,
+   - `GET /api/v1/analytics/finance`,
+   - `GET /api/v1/analytics/internal-performance`.
+
 ## 9. Matriz de trazabilidad epica -> artefactos
 
-| Epica | SQL | Backend | Frontend | Estado |
-| --- | --- | --- | --- | --- |
-| 1 | 02, 07 | catalog | browse + detail | Parcial |
-| 2 | 01, 03, 13, 16 | auth | login/register/profiles | Avanzado |
-| 3 | 04 | playback | browse continuidad/historial | Avanzado |
-| 4 | 05, 06, 08 | community | detail + moderation | Avanzado |
-| 5 | 09, 14, 15 | finance | billing + checkout simulado | Avanzado |
-| 6 | NT1 pendiente | pendiente | pendiente | Pendiente |
+| Epica | SQL | Roles principales | Vistas clave | Metodos API clave | Estado |
+| --- | --- | --- | --- | --- | --- |
+| 1 Catalogo | 02, 07 | admin, contenido, usuario, soporte, analista | `/browse`, `/browse/content/:contentId` | `GET /catalog/categories`, `GET /catalog/contents`, `GET /catalog/contents/:contentId`, `POST/PATCH /catalog/*` (admin/contenido) | Parcial |
+| 2 Cuentas | 01, 03, 13, 16 | todos los roles | `/login`, `/register`, `/profiles/select`, `/profiles/manage` | `POST /auth/login`, `POST /auth/register`, `GET /auth/profile`, `GET/POST/PATCH/DELETE /auth/profiles` | Avanzado |
+| 3 Reproduccion | 04 | todos con perfil activo | `/browse`, `/browse/content/:contentId` | `POST /playback/start`, `POST /playback/progress`, `GET /playback/continue-watching`, `GET /playback/history` | Avanzado |
+| 4 Comunidad | 05, 06, 08 | usuario, analista, contenido, admin, soporte | `/browse/content/:contentId`, `/moderation/reports` | `POST/DELETE/GET /community/favorites`, `POST/DELETE/GET /community/ratings`, `POST/GET /community/reports`, `GET/PATCH /community/reports/moderation` | Avanzado |
+| 5 Finanzas | 09, 14, 15 | todos autenticados | `/account/billing` | `GET /finance/summary`, `GET /finance/invoices`, `GET /finance/payments`, `GET /finance/referrals`, `POST /finance/payments/checkout` | Avanzado |
+| 6 Analitica | NT1 pendiente | analista, admin | dashboard analitico (pendiente) | `GET /analytics/*` (pendiente) | Pendiente |
 
 ## 10. Requisito transversal de UX
 1. El menu hamburguesa debe comportarse igual en vistas internas con topbar.
