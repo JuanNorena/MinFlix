@@ -9,6 +9,9 @@ DECLARE
   PROCEDURE UPSERT_USUARIO_ROL (
     P_NOMBRE         IN VARCHAR2,
     P_EMAIL          IN VARCHAR2,
+    P_TELEFONO       IN VARCHAR2,
+    P_FECHA_NAC      IN DATE,
+    P_CIUDAD         IN VARCHAR2,
     P_PASSWORD_HASH  IN VARCHAR2,
     P_ROL            IN VARCHAR2,
     P_PLAN_NOMBRE    IN VARCHAR2,
@@ -33,6 +36,9 @@ DECLARE
 
       UPDATE USUARIOS
          SET NOMBRE = P_NOMBRE,
+           TELEFONO = P_TELEFONO,
+           FECHA_NACIMIENTO = P_FECHA_NAC,
+           CIUDAD_RESIDENCIA = P_CIUDAD,
              PASSWORD_HASH = P_PASSWORD_HASH,
              ROL = LOWER(P_ROL),
              ESTADO_CUENTA = 'ACTIVO',
@@ -44,6 +50,9 @@ DECLARE
         INSERT INTO USUARIOS (
           NOMBRE,
           EMAIL,
+          TELEFONO,
+          FECHA_NACIMIENTO,
+          CIUDAD_RESIDENCIA,
           PASSWORD_HASH,
           ROL,
           ESTADO_CUENTA,
@@ -52,6 +61,9 @@ DECLARE
         VALUES (
           P_NOMBRE,
           LOWER(P_EMAIL),
+          P_TELEFONO,
+          P_FECHA_NAC,
+          P_CIUDAD,
           P_PASSWORD_HASH,
           LOWER(P_ROL),
           'ACTIVO',
@@ -83,6 +95,9 @@ BEGIN
   UPSERT_USUARIO_ROL(
     P_NOMBRE => 'Administrador Seed MinFlix',
     P_EMAIL => 'admin.seed@minflix.local',
+    P_TELEFONO => '3001001001',
+    P_FECHA_NAC => DATE '1988-02-14',
+    P_CIUDAD => 'Bogota',
     P_PASSWORD_HASH => '$2b$12$9YOyzR8lA5IpG7fXbnJbjus609kMoQcKlPhKWlIdTT9kaTyiEdyHO',
     P_ROL => 'admin',
     P_PLAN_NOMBRE => 'PREMIUM',
@@ -94,6 +109,9 @@ BEGIN
   UPSERT_USUARIO_ROL(
     P_NOMBRE => 'Soporte Seed MinFlix',
     P_EMAIL => 'soporte.seed@minflix.local',
+    P_TELEFONO => '3001001002',
+    P_FECHA_NAC => DATE '1990-06-21',
+    P_CIUDAD => 'Medellin',
     P_PASSWORD_HASH => '$2b$12$0OMoICYdJ2/AhFT1PSNth.wVG/CudeQo0e8SR2PFlHDu6ppPH4hR6',
     P_ROL => 'soporte',
     P_PLAN_NOMBRE => 'ESTANDAR',
@@ -105,6 +123,9 @@ BEGIN
   UPSERT_USUARIO_ROL(
     P_NOMBRE => 'Contenido Seed MinFlix',
     P_EMAIL => 'contenido.seed@minflix.local',
+    P_TELEFONO => '3001001003',
+    P_FECHA_NAC => DATE '1992-09-03',
+    P_CIUDAD => 'Cali',
     P_PASSWORD_HASH => '$2b$12$PCItDAzF3jT7.IV2IC2Fe.tCIJNs5YtJJ1YGCSpf/C94i3YEdHgSq',
     P_ROL => 'contenido',
     P_PLAN_NOMBRE => 'ESTANDAR',
@@ -116,6 +137,9 @@ BEGIN
   UPSERT_USUARIO_ROL(
     P_NOMBRE => 'Analista Seed MinFlix',
     P_EMAIL => 'analista.seed@minflix.local',
+    P_TELEFONO => '3001001004',
+    P_FECHA_NAC => DATE '1994-12-11',
+    P_CIUDAD => 'Barranquilla',
     P_PASSWORD_HASH => '$2b$12$dz33nUH5jjgTfKYIoprZUeiz27v4Dbuk2yG/djxcjGkVumzRN09.G',
     P_ROL => 'analista',
     P_PLAN_NOMBRE => 'ESTANDAR',
@@ -127,6 +151,9 @@ BEGIN
   UPSERT_USUARIO_ROL(
     P_NOMBRE => 'Usuario Seed MinFlix',
     P_EMAIL => 'usuario.seed@minflix.local',
+    P_TELEFONO => '3001001005',
+    P_FECHA_NAC => DATE '1998-04-19',
+    P_CIUDAD => 'Bucaramanga',
     P_PASSWORD_HASH => '$2b$12$d2eFssRciA2SIAxpDKqo.usdqL5Zvj9YlTPiXEXBywpo.ueOxqX2S',
     P_ROL => 'usuario',
     P_PLAN_NOMBRE => 'BASICO',

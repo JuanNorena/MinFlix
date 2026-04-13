@@ -47,6 +47,35 @@ export class UserEntity {
   email!: string;
 
   /**
+   * Telefono de contacto del titular de la cuenta.
+   */
+  @Column({
+    type: 'varchar2',
+    name: 'TELEFONO',
+    length: 30,
+  })
+  telefono!: string;
+
+  /**
+   * Fecha de nacimiento del titular de la cuenta.
+   */
+  @Column({
+    type: 'date',
+    name: 'FECHA_NACIMIENTO',
+  })
+  fechaNacimiento!: Date;
+
+  /**
+   * Ciudad de residencia declarada por el titular.
+   */
+  @Column({
+    type: 'varchar2',
+    name: 'CIUDAD_RESIDENCIA',
+    length: 120,
+  })
+  ciudadResidencia!: string;
+
+  /**
    * Hash seguro de la contrasena.
    */
   @Column({

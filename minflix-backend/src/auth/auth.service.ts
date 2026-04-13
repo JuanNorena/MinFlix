@@ -136,6 +136,9 @@ export class AuthService implements OnModuleInit {
       this.userRepository.create({
         nombre: payload.nombre,
         email: payload.email,
+        telefono: payload.telefono,
+        fechaNacimiento: new Date(payload.fechaNacimiento),
+        ciudadResidencia: payload.ciudadResidencia,
         passwordHash,
         rol: 'usuario',
         estadoCuenta: 'ACTIVO',
@@ -406,6 +409,9 @@ export class AuthService implements OnModuleInit {
         this.userRepository.create({
           nombre: 'Administrador MinFlix',
           email: adminEmail,
+          telefono: '3000000001',
+          fechaNacimiento: new Date('1985-01-01'),
+          ciudadResidencia: 'Bogota',
           passwordHash,
           rol: 'admin',
           estadoCuenta: 'ACTIVO',

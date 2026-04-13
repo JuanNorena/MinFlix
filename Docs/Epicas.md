@@ -1,111 +1,215 @@
-# Épicas del Proyecto MinFlix (Formato INVEST)
+# Epicas INVEST de MinFlix (Alineacion Detallada con Enunciado)
 
-Las siguientes Épicas desglosan a alto nivel las necesidades de negocio del sistema MinFlix. Se rigen bajo la metodología **INVEST** (Independent, Negotiable, Valuable, Estimable, Small/Sized appropriately, Testable).
+Fecha de corte: 2026-04-13
 
----
+## 1. Criterio de lectura
+1. Este documento usa el enunciado como fuente primaria y baja cada bloque a epicas ejecutables.
+2. Cada epica se describe con INVEST y con trazabilidad exacta a Oracle, backend y frontend.
+3. Estado por epica:
+   - Pendiente: sin cobertura funcional usable.
+   - Parcial: cobertura incompleta o sin evidencia en alguna capa.
+   - Avanzado: cobertura funcional con brechas menores.
+   - Completo: evidencia de cierre en SQL + API + UI + pruebas.
 
-## Épica 1: Gestión Central del Catálogo de Contenido Multiformato
-**Descripción:** Como empleado de Contenido, quiero poder registrar, estructurar y catalogar el contenido multimedia (películas, series, documentales, música y podcasts), para que la plataforma pueda ofrecer catálogo diverso y bien organizado a sus usuarios.
-- **Independent (Independiente):** La gestión de catálogo no depende directamente de los pagos ni de la creación de los clientes. Creada la base, todas las plataformas la consultarán.
-- **Negotiable (Negociable):** Los campos adicionales o tipos de categorización (géneros extras) pueden ajustarse, así como el nivel de profundidad de los spin-offs en un inicio.
-- **Valuable (Valiosa):** Es el corazón o 'Core' de MinFlix. Sin catálogo estructurado, no hay producto que ofrecer.
-- **Estimable (Estimable):** Las restricciones de jerarquía (Serie -> Temporada -> Episodio), películas unitarias, restricciones exclusivas y géneros múltiples son claramente medibles y modelables.
-- **Small (Dimensionada correctamente):** La épica se enfoca en el puro almacenamiento del catálogo, dejando reproducciones y búsquedas por fuera. Es lo suficientemente contenida para iterar sobre su modelo relacional.
-- **Testable (Comprobable):** Se puede probar verificando que un empleado de contenido tenga flujos válidos de inserción (CRUD de catálogo) y limitando que las películas no admitan temporadas temporalmente.
-- **Cobertura obligatoria del enunciado (Think Deeper):** Debe incluir géneros M:N, temporadas y episodios para series/podcasts, relaciones entre contenidos (secuela/precuela/remake/spin-off), y trazabilidad del empleado publicador bajo responsabilidad del departamento de contenido.
-- **Roles y permisos asociados:** `ROL_CONTENIDO` como rol operativo principal para publicación y mantenimiento del catálogo; `ROL_ADMIN` para auditoría y administración global.
+## 2. Alineacion paso a paso del enunciado
 
----
+### 2.1 Bloque 1.1 - Gestion de contenido
+1. Requisito: tipos de contenido, clasificacion por edad, generos M:N, temporadas/episodios, contenidos relacionados.
+2. Epica asociada principal: Epica 1 (Catalogo).
+3. Estado actual:
+   - Oracle: Avanzado (scripts 02 y 07).
+   - Backend: Parcial (catalogo base, falta exponer metadatos extendidos de 07).
+   - Frontend: Parcial (detalle sin cobertura completa de temporadas/episodios/relaciones).
 
-## Épica 2: Suscripciones, Cuentas de Usuario y Gestión de Perfiles
-**Descripción:** Como usuario principal del servicio, quiero registrarme, elegir un plan y generar múltiples perfiles bajo una sola cuenta principal, para organizar mis preferencias y permitir el acceso seguro de toda mi familia, incluyendo niños.
-- **Independent:** La jerarquía Usuario -> Plan -> Perfiles puede construirse e indexarse sin requerir que los usuarios reproduzcan contenido al instante.
-- **Negotiable:** El número final de perfiles por plan o el método matemático de límite pueden reajustarse durante desarrollo según cambios en la oferta comercial.
-- **Valuable:** Permite retener audiencias variadas y personalizar los accesos, garantizando el cumplimiento de la ley (restricciones de perfiles infantiles).
-- **Estimable:** Cada regla de negocio referida a "N perfiles máximos por plan" tiene una estimación puntual y medible.
-- **Small:** Se centra exclusivamente en el ingreso, la selección del plan y el despliegue del árbol familiar de perfiles (sin tocar facturación ni reproducciones cruzadas).
-- **Testable:** Evaluada fácilmente forzando la creación de N+1 perfiles para un plan Básico, con el trigger bloqueando la solicitud de inmediato.
-- **Cobertura obligatoria del enunciado (Think Deeper):** Debe cerrar captura completa de datos personales, límites por plan, perfiles infantiles y programa de referidos (quién refiere a quién) con evidencia de beneficio aplicado en el siguiente ciclo.
-- **Roles y permisos asociados:** `ROL_ADMIN` para administración de cuentas y soporte de operación; controles de acceso para evitar escalamiento no autorizado.
+### 2.2 Bloque 1.2 - Gestion de usuarios y cuentas
+1. Requisito: nombre, email, telefono, fecha de nacimiento, ciudad, plan y perfiles.
+2. Epica asociada principal: Epica 2 (Cuentas, planes y perfiles).
+3. Hallazgo clave corregido en esta iteracion:
+   - Brecha previa: telefono, fecha de nacimiento y ciudad no estaban modelados end-to-end.
+   - Alineacion aplicada: columnas en USUARIOS, seed por rol con esos datos, DTO y formulario de registro actualizados.
 
----
+### 2.3 Bloque 1.3 - Reproduccion e interaccion
+1. Requisito: historial por perfil con dispositivo y porcentaje; favoritos, ratings y reportes.
+2. Epicas asociadas: Epica 3 (Reproduccion) y Epica 4 (Comunidad).
+3. Estado actual:
+   - Reproduccion: Avanzado.
+   - Comunidad/moderacion: Avanzado.
+   - Brecha principal: episodio exacto en series/podcasts para trazabilidad fina.
 
-## Épica 3: Motor de Reproducción de Contenido (Tracking y Analítica Base)
-**Descripción:** Como gerente de operaciones, quiero que el sistema rastree minuciosamente el consumo de contenido por cada perfil (fechas, progreso y dispositivo), para alimentar motores de recomendación, reportes gerenciales y reanudaciones de streams.
-- **Independent:** Desempeña sus registros apoyándose en Cuentas y Catálogo, pero su lógica de interrupción o tracking opera independiente de facturación o roles de empleados.
-- **Negotiable:** La granularidad de los avances porcentuales por dispositivo (e.g. 52% reanudación) se puede abstraer a simples porcentajes redondeados en fases tempranas.
-- **Valuable:** Habilita a la gerencia comprender verdaderamente sobre qué contenidos focalizar nuevas compras o promociones y habilita la funcionalidad "seguir viendo".
-- **Estimable:** La complejidad viene del gran volumen de registros (200 mín). El esfuerzo en base de datos implica modelado transaccional e indexado para un entorno de alta fragmentación (+ partitioning).
-- **Small:** Solo abarca registros operacionales (`REPRODUCCIONES`). Calificación y listas irán en su propia épica de comunidad.
-- **Testable:** Probable inyectando reproducción y validando (mediante Trigger) que la reproducción sea frenada si la cuenta carece del flag "ACTIVO".
-- **Cobertura obligatoria del enunciado (Think Deeper):** Debe registrar fecha/hora de inicio, fin, dispositivo y porcentaje de avance; para series y podcasts debe registrar episodio exacto reproducido.
-- **Roles y permisos asociados:** `ROL_ADMIN` para control operativo y `ROL_ANALISTA` para explotación analítica de consumo, sin privilegios de escritura operacional.
+### 2.4 Bloque 1.4 - Organizacion del equipo
+1. Requisito: departamentos, jerarquia supervisor-subordinado, publicador de contenido, moderador de reportes.
+2. Epica asociada principal: Epica 6 (Reporteria/operacion interna) y soporte de Epica 1 y 4.
+3. Estado actual: Parcial (modelo Oracle existe, falta exposicion API/UI de consulta operacional).
 
----
+### 2.5 Bloque 1.5 - Pagos y facturacion
+1. Requisito del dominio academico: modelar ciclo financiero, estados y descuentos.
+2. Decision funcional de proyecto (alineada a tu instruccion):
+   - No se conecta ninguna pasarela de pagos real.
+   - El usuario ingresa datos de tarjeta en UI.
+   - Al hacer clic en pagar, la compra se marca exitosa de forma simulada.
+   - Se registra transaccion de prueba y se actualiza factura/cuenta.
+3. Epica asociada principal: Epica 5 (Finanzas).
 
-## Épica 4: Integración Comunitaria (Calificaciones, Favoritos y Moderación)
-**Descripción:** Como usuario final, quiero calificar contenido, agregarlo a favoritos y alertar irregularidades, para personalizar algoritmos y proteger el ecosistema de contenidos inadecuados; a la vez que soporte necesita revisar dichos reportes.
-- **Independent:** La interacción puramente comunitaria no limita la capacidad de reproducir streaming, por lo que es una evolución independiente.
-- **Negotiable:** Los estados de revisión o campos de las reseñas se pueden acortar o extender durante la fase de despliegue.
-- **Valuable:** Brinda información social de fidelización y métricas C-SAT (Customer Satisfaction) de títulos.
-- **Estimable:** Regla vital del +50% progreso visualizado previo a dejar la reseña lo hace muy auditable y con costo fijo en Triggers de validación.
-- **Small:** Contenido y reproducciones ya existen para cuando esto comience, agilizando su despliegue y concentrándose puramente en las tablas analíticas ligeras (`FAVORITOS`, `CALIFICACIONES`, `REPORTES`).
-- **Testable:** Fácil de atajar ejecutando una prueba unitaria (PL/SQL Trigger) al intentar puntuar una película sin vistas previas asociadas al perfil en acción.
-- **Cobertura obligatoria del enunciado (Think Deeper):** Debe incluir flujo completo de reportes de contenido, estados de moderación y resolución por equipo de soporte.
-- **Roles y permisos asociados:** `ROL_SOPORTE` para atención y cierre de reportes; `ROL_ADMIN` para supervisión y reasignación; usuarios finales sin privilegios de moderación.
+### 2.6 Bloque 1.6 - Reportes y analitica
+1. Requisito: consumo, finanzas por ciudad/plan y productividad interna.
+2. Epica asociada principal: Epica 6 (Analitica y reporteria ejecutiva).
+3. Estado actual: Pendiente parcial (falta paquete NT1 final y dashboard).
 
----
+## 3. Epica 1 - Catalogo multiformato
 
-## Épica 5: Orquestación Financiera: Facturación, Pagos y Beneficios Sociales
-**Descripción:** Como jefe de finanzas, quiero que el sistema aplique la facturación mensual en transacciones seguras, aplicando descuentos por antigüedad y referidos, suspendiendo así mismo cuentas morosas de forma desatendida.
-- **Independent:** Construida sobre los usuarios existentes, esta operativa transaccional mensual puede emularse por ventanas cerradas y aislarse de la reproducción.
-- **Negotiable:** Si las prioridades cambian, la escala exacta de los descuentos de referidos por antigüedad pueden ajustarse a nuevas reglas comerciales.
-- **Valuable:** Es el canal de inyección y saneamiento económico de la corporación y previene el desangre con cortes automáticos.
-- **Estimable:** Transacción robusta con `SAVEPOINT`. Tiene el esfuerzo de modelar métodos, status históricos e integrar lógicas transaccionales ACID de base de datos.
-- **Small:** Solamente manipula dinero y estados de cuenta mes a mes, un alcance financiero acotado.
-- **Testable:** Ejecutando el batch (Stored Procedure / Transacción), comprobando Rollbacks si un pago falla a la mitad y comprobando cierres luego de mora de >30ds vía cursor PL/SQL.
-- **Cobertura obligatoria del enunciado (Think Deeper):** Debe contemplar métodos de pago, estado transaccional completo, reglas de suspensión por mora y descuentos acumulables por referidos/fidelidad.
-- **Roles y permisos asociados:** `ROL_ADMIN` para operación financiera y auditoría; acceso de lectura analítica para `ROL_ANALISTA` sobre datos consolidados.
+### 3.1 INVEST
+1. Independent: evoluciona sin depender de pagos.
+2. Negotiable: taxonomia y metadatos extendibles.
+3. Valuable: base de valor de la plataforma.
+4. Estimable: entidades y reglas acotadas.
+5. Small: concentrada en dominio editorial.
+6. Testable: validable por consultas y navegacion de catalogo.
 
----
+### 3.2 Cobertura esperada del enunciado
+1. Tipos: pelicula, serie, documental, musica, podcast.
+2. Generos M:N.
+3. Temporadas y episodios en series/podcasts.
+4. Relaciones entre contenidos (secuela/precuela/remake/spin-off).
 
-## Épica 6: Analítica y Tomas de Decisiones Directivas e Inteligencia Empresarial
-**Descripción:** Como plana ejecutiva de MinFlix, requiero consultas pesadas dimensionales paramétricas y vistas materializadas cruzadas de facturación y reproducción; para detectar oportunidades accionables y direccionar el rumbo operacional de la base de datos empresarial.
-- **Independent:** No crea lógicas transaccionales; tan solo interroga y pre-calcula los inputs procesados de las otras Épicas. Nula intromisión en el core streaming.
-- **Negotiable:** Qué agrupamientos CUBE o PIVOT entregar se pueden recalibrar si finanzas solicita otros criterios pivotales base.
-- **Valuable:** Provee conocimiento masivo (Reports analíticos de ingresos y visionados para mercadeo). 
-- **Estimable:** Se ciñe a la estricta implementación de Núcleo 1 de la materia (Consultas OLAP, Vistas parametrizadas). 
-- **Small:** Aislado en scripts parametrizados de lectura. No interfiere con rutinas almacenadas. 
-- **Testable:** Perfectamente medible. Se comprueba comparando si la sumatoria global financiera de la cuenta matricial de CUBE y ROLLUP match con un select * de ingresos totales sin agrupaciones avanzadas.
+### 3.3 Estado por capa
+1. Oracle: Avanzado.
+2. Backend: Parcial.
+3. Frontend: Parcial.
 
-- **Cobertura obligatoria del enunciado (Think Deeper):** Debe cubrir consumo por ciudad/categoría/género/dispositivo/plan/tiempo, ingresos por ciudad/plan y productividad interna por empleado/moderador.
-- **Roles y permisos asociados:** `ROL_ANALISTA` como rol principal de consulta; sin privilegios DML sobre entidades transaccionales.
+### 3.4 Cierre de epica
+1. Endpoints para generos, temporadas, episodios y relacionados.
+2. Vista de detalle con esos metadatos.
+3. Evidencia de validaciones de clasificacion por perfil.
 
----
+## 4. Epica 2 - Cuentas, planes y perfiles
 
-## Trazabilidad Transversal de Roles y Permisos (NT5)
-1. `ROL_ADMIN`:
-	- Gestion de usuarios, configuraciones globales y gobierno operativo.
-	- Acceso amplio controlado para auditoria, sin romper segregacion por funciones.
-2. `ROL_CONTENIDO`:
-	- Operaciones de catalogo y mantenimiento de estructuras de contenido.
-	- Sin permisos para procesos financieros o cierres de moderacion.
-3. `ROL_SOPORTE`:
-	- Gestion de reportes de contenido inapropiado y flujo de resolucion.
-	- Sin permisos de publicacion de catalogo o facturacion.
-4. `ROL_ANALISTA`:
-	- Consultas y reportes sobre datos consolidados (OLAP, vistas materializadas).
-	- Sin permisos de actualizacion de datos transaccionales.
+### 4.1 INVEST
+1. Independent: puede cerrarse sin analitica final.
+2. Negotiable: limites/comportamientos ajustables por plan.
+3. Valuable: habilita personalizacion familiar.
+4. Estimable: reglas de ownership y limite son claras.
+5. Small: foco en registro y perfiles.
+6. Testable: validable con plan + restriccion infantil.
 
-## Validacion de Cobertura frente al Enunciado (Think Deeper)
-1. Cobertura estructural de negocio por épicas: completa a nivel de alcance macro (1 a 6).
-2. Cobertura de roles y permisos explícitos (NT5): parcial, requiere aterrizaje en script y evidencias de GRANT/denegacion.
-3. Cobertura de organización interna (departamentos + jerarquia de supervision): parcial, requiere modelado detallado y pruebas.
-4. Cobertura de moderación y reportes de contenido: en ejecucion dentro de épica 4 (bloque pendiente).
-5. Cobertura de referidos y descuentos asociados: parcial, actualmente priorizado en épica 5 y cierre de épica 2.
+### 4.2 Cobertura esperada del enunciado
+1. Datos personales completos de registro.
+2. Plan de suscripcion y limite de perfiles.
+3. Perfil infantil con restricciones.
+4. Base para referidos.
 
-## Brechas Criticas Confirmadas
-1. Formalizar script de seguridad NT5 con `PROFILE`, roles requeridos y demostraciones de acceso no autorizado.
-2. Consolidar entidad y reglas de jerarquía de empleados (supervisor-subordinado) y su relación por departamento.
-3. Completar la parte de reportes/moderación de épica 4 y su integración por rol de soporte.
-4. Asegurar trazabilidad de entregables académicos 1..10 contra artefactos reales del repositorio.
+### 4.3 Estado por capa
+1. Oracle: Avanzado.
+2. Backend: Avanzado.
+3. Frontend: Avanzado.
+4. Brecha cerrada hoy: telefono, fecha de nacimiento y ciudad en todo el flujo.
+
+### 4.4 Cierre de epica
+1. Registro obligatorio con nombre, email, telefono, fechaNacimiento, ciudadResidencia, plan y perfil inicial.
+2. Seed de usuarios con datos personales para todos los roles.
+3. Evidencia de validaciones en API y DB.
+
+## 5. Epica 3 - Reproduccion y continuidad
+
+### 5.1 INVEST
+1. Independent: no requiere pasarela de pagos real.
+2. Negotiable: granularidad de eventos escalable.
+3. Valuable: habilita continuar viendo e historial.
+4. Estimable: eventos y filtros acotados.
+5. Small: centrada en tracking por perfil.
+6. Testable: verificable por progreso y ownership.
+
+### 5.2 Estado por capa
+1. Oracle: Avanzado.
+2. Backend: Avanzado.
+3. Frontend: Avanzado.
+4. Brecha: episodio exacto en series/podcasts.
+
+## 6. Epica 4 - Comunidad y moderacion
+
+### 6.1 INVEST
+1. Independent: no bloquea reproduccion.
+2. Negotiable: motivos y estados ampliables.
+3. Valuable: mejora calidad de catalogo.
+4. Estimable: favoritos/ratings/reportes delimitados.
+5. Small: flujo social y de soporte.
+6. Testable: reglas de +50% y control por rol.
+
+### 6.2 Estado por capa
+1. Oracle: Avanzado.
+2. Backend: Avanzado.
+3. Frontend: Avanzado.
+4. Mejora transversal incluida: consistencia de menu hamburguesa en vistas internas.
+
+## 7. Epica 5 - Finanzas y facturacion simulada
+
+### 7.1 INVEST
+1. Independent: opera sobre usuarios y planes ya existentes.
+2. Negotiable: descuentos y reglas de negocio pueden ajustarse.
+3. Valuable: cierra ciclo de estado de cuenta.
+4. Estimable: entidades financieras y estados definidos.
+5. Small: ciclo de facturacion/pago/referidos.
+6. Testable: calculo de montos y transicion de estados.
+
+### 7.2 Regla funcional acordada para pagos
+1. El sistema NO recauda dinero real.
+2. Se solicita informacion completa de tarjeta para UX realista.
+3. El checkout siempre termina en EXITO simulado.
+4. No hay integracion con pasarela externa.
+
+### 7.3 Estado por capa
+1. Oracle: Avanzado (09, 14, 15 y 16).
+2. Backend: Avanzado (summary/invoices/payments/referrals + checkout simulado).
+3. Frontend: Avanzado (BillingPage con formulario de tarjeta y pago simulado).
+
+### 7.4 Cierre de epica
+1. POST de checkout simulado disponible y documentado.
+2. Registro de pago de prueba y actualizacion de factura.
+3. Mensaje explicito en UI/API de no cobro real.
+4. Seed con al menos una factura pendiente para probar checkout.
+
+## 8. Epica 6 - Reporteria ejecutiva y analitica
+
+### 8.1 INVEST
+1. Independent: solo lectura y consolidacion.
+2. Negotiable: dimensiones analiticas ajustables.
+3. Valuable: soporte a decisiones.
+4. Estimable: NT1 define volumen y tecnica.
+5. Small: enfoca lectura agregada.
+6. Testable: consistencia de agregados y planes de ejecucion.
+
+### 8.2 Estado por capa
+1. Oracle: Pendiente parcial.
+2. Backend: Pendiente.
+3. Frontend: Pendiente.
+
+### 8.3 Cierre de epica
+1. Script NT1 completo y validado.
+2. Endpoints analiticos por ciudad/categoria/genero/dispositivo/plan/tiempo.
+3. Dashboard para rol analista/admin.
+
+## 9. Matriz de trazabilidad epica -> artefactos
+
+| Epica | SQL | Backend | Frontend | Estado |
+| --- | --- | --- | --- | --- |
+| 1 | 02, 07 | catalog | browse + detail | Parcial |
+| 2 | 01, 03, 13, 16 | auth | login/register/profiles | Avanzado |
+| 3 | 04 | playback | browse continuidad/historial | Avanzado |
+| 4 | 05, 06, 08 | community | detail + moderation | Avanzado |
+| 5 | 09, 14, 15 | finance | billing + checkout simulado | Avanzado |
+| 6 | NT1 pendiente | pendiente | pendiente | Pendiente |
+
+## 10. Requisito transversal de UX
+1. El menu hamburguesa debe comportarse igual en vistas internas con topbar.
+2. Vistas alineadas: browse, content detail, moderacion, billing.
+3. En movil:
+   - acciones ocultas por defecto,
+   - apertura con boton menu,
+   - cierre al navegar o cerrar sesion.
+
+## 11. Requisito transversal de seeds
+1. Los seeds deben permitir demostrar flujos reales de sustentacion.
+2. Minimo para cierre actual:
+   - usuarios seed con telefono, fechaNacimiento y ciudad,
+   - facturas seed con al menos un caso pendiente,
+   - pagos seed historicos de referencia,
+   - referidos seed validados para descuento.

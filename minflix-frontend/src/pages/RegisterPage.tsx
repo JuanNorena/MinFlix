@@ -13,6 +13,11 @@ import { PasswordInput } from '../shared/ui/PasswordInput'
 const registerSchema = z.object({
   nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.email('Ingrese un correo valido'),
+  telefono: z
+    .string()
+    .regex(/^[0-9]{7,15}$/, 'El telefono debe tener entre 7 y 15 digitos'),
+  fechaNacimiento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Ingresa una fecha valida'),
+  ciudadResidencia: z.string().min(2, 'La ciudad debe tener al menos 2 caracteres'),
   password: z.string().min(8, 'La contrasena debe tener al menos 8 caracteres'),
   planNombre: z.enum(['BASICO', 'ESTANDAR', 'PREMIUM']),
   nombrePerfilInicial: z.string().min(2, 'El perfil inicial debe tener al menos 2 caracteres'),
@@ -36,6 +41,9 @@ export function RegisterPage() {
     defaultValues: {
       nombre: '',
       email: '',
+      telefono: '',
+      fechaNacimiento: '',
+      ciudadResidencia: '',
       password: '',
       planNombre: 'BASICO',
       nombrePerfilInicial: '',
@@ -75,6 +83,35 @@ export function RegisterPage() {
         <label htmlFor="email">Correo</label>
         <input id="email" type="email" className="nf-input" {...register('email')} />
         {errors.email ? <p className="nf-error">{errors.email.message}</p> : null}
+
+        <label htmlFor="telefono">Telefono</label>
+        <input id="telefono" type="tel" className="nf-input" {...register('telefono')} />
+        <p className="nf-helper-field">{authFieldHelp.registerPhone}</p>
+        {errors.telefono ? <p className="nf-error">{errors.telefono.message}</p> : null}
+
+        <label htmlFor="fechaNacimiento">Fecha de nacimiento</label>
+        <input
+          id="fechaNacimiento"
+          type="date"
+          className="nf-input"
+          {...register('fechaNacimiento')}
+        />
+        <p className="nf-helper-field">{authFieldHelp.registerBirthDate}</p>
+        {errors.fechaNacimiento ? (
+          <p className="nf-error">{errors.fechaNacimiento.message}</p>
+        ) : null}
+
+        <label htmlFor="ciudadResidencia">Ciudad de residencia</label>
+        <input
+          id="ciudadResidencia"
+          type="text"
+          className="nf-input"
+          {...register('ciudadResidencia')}
+        />
+        <p className="nf-helper-field">{authFieldHelp.registerCity}</p>
+        {errors.ciudadResidencia ? (
+          <p className="nf-error">{errors.ciudadResidencia.message}</p>
+        ) : null}
 
         <label htmlFor="password">Contrasena</label>
         <Controller

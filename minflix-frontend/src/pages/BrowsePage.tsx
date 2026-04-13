@@ -506,6 +506,13 @@ export function BrowsePage() {
             >
               Administrar
             </Link>
+            <Link
+              to="/account/billing"
+              className={buttonClassName('ghost')}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Facturacion
+            </Link>
             {canModerateReports ? (
               <Link
                 to="/moderation/reports"

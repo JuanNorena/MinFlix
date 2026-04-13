@@ -7,4 +7,10 @@ export const authFieldHelp = {
     'Este sera el primer perfil de tu cuenta para guardar recomendaciones e historial.',
   registerPassword:
     'Recomendado: minimo 8 caracteres con letras, numeros y simbolos.',
+  registerPhone:
+    'Usa un numero de contacto valido para soporte y recuperacion de cuenta.',
+  registerBirthDate:
+    'Esta fecha se utiliza para validaciones de edad y segmentacion responsable.',
+  registerCity:
+    'Tu ciudad ayuda a consolidar reportes de consumo e ingresos por territorio.',
 } as const

@@ -103,6 +103,7 @@ export function ReportsModerationPage() {
   const [isLoadingReports, setIsLoadingReports] = useState(true)
   const [updatingReportId, setUpdatingReportId] = useState<number | null>(null)
   const [resolutionDrafts, setResolutionDrafts] = useState<Record<number, string>>({})
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const fetchReports = useCallback(
     async (targetFilter: ModerationStatusFilter) => {
@@ -155,6 +156,7 @@ export function ReportsModerationPage() {
   }
 
   function handleSignOut() {
+    setIsMobileMenuOpen(false)
     window.localStorage.removeItem('minflix_access_token')
     clearActiveProfile()
     navigate('/login', { replace: true })
@@ -211,9 +213,31 @@ export function ReportsModerationPage() {
         >
           <span className="nf-browse-brand">MINFLIX MODERACION</span>
 
-          <div className="nf-detail-topbar-actions">
+          <button
+            type="button"
+            className={`nf-browse-menu-toggle ${isMobileMenuOpen ? 'is-open' : ''}`}
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="moderation-menu"
+          >
+            <span className="nf-browse-menu-bars" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span>{isMobileMenuOpen ? 'Cerrar' : 'Menu'}</span>
+          </button>
+
+          <div
+            id="moderation-menu"
+            className={`nf-detail-topbar-actions nf-topbar-collapsible ${isMobileMenuOpen ? 'is-open' : ''}`}
+          >
             <span className="nf-chip">Rol: {authSession.role}</span>
-            <Link to="/browse" className={buttonClassName('ghost')}>
+            <Link
+              to="/browse"
+              className={buttonClassName('ghost')}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               Ir a catalogo
             </Link>
             <button

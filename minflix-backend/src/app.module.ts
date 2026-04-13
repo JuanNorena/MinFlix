@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { PlaybackModule } from './playback/playback.module';
 import { CommunityModule } from './community/community.module';
+import { FinanceModule } from './finance/finance.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { CommunityModule } from './community/community.module';
     CatalogModule,
     PlaybackModule,
     CommunityModule,
+    FinanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,9 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsDateString,
   IsEmail,
   IsIn,
   IsOptional,
   IsString,
+  Matches,
   MinLength,
 } from 'class-validator';
 
@@ -25,6 +27,31 @@ export class RegisterDto {
   @ApiProperty({ example: 'laura@example.com' })
   @IsEmail()
   email!: string;
+
+  /**
+   * Telefono de contacto principal del usuario.
+   */
+  @ApiProperty({ example: '3001234567' })
+  @IsString()
+  @Matches(/^[0-9]{7,15}$/, {
+    message: 'El telefono debe tener entre 7 y 15 digitos numericos',
+  })
+  telefono!: string;
+
+  /**
+   * Fecha de nacimiento del titular de la cuenta.
+   */
+  @ApiProperty({ example: '1998-04-19' })
+  @IsDateString()
+  fechaNacimiento!: string;
+
+  /**
+   * Ciudad de residencia declarada para analitica territorial.
+   */
+  @ApiProperty({ example: 'Bogota' })
+  @IsString()
+  @MinLength(2)
+  ciudadResidencia!: string;
 
   /**
    * Contrasena en texto plano para generar hash seguro.

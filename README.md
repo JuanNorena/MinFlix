@@ -131,6 +131,7 @@ Detalle completo del plan:
 - [Plan de Desarrollo](./Docs/Plan_Desarrollo.md)
 - [Epicas INVEST](./Docs/Epicas.md)
 - [Enunciado](./Docs/Enunciado.md)
+- [Iteracion 6 Finanzas API](./Docs/Finanzas_Iteracion6_API.md)
 
 ## 5. Guia de Ejecucion Paso a Paso
 
@@ -165,6 +166,8 @@ Detalle completo del plan:
    - database/12_diccionario_comentarios_modelo_fisico.sql.
    - database/13_seed_usuarios_roles_login_iteracion5.sql.
    - database/14_seed_datos_funcionales_iteracion5.sql.
+   - database/15_finanzas_vistas_api_iteracion6.sql.
+   - database/16_usuarios_datos_personales_iteracion6.sql.
 2. Guardar evidencia de ejecucion y resultados de pruebas.
 
 ### 5.4 Ejecucion rapida desde raiz
@@ -192,6 +195,15 @@ Detalle completo del plan:
    - DELETE /api/v1/community/ratings/:contenidoId?perfilId=:id con JWT.
    - GET /api/v1/community/ratings?perfilId=:id con JWT.
    - GET /api/v1/community/ratings/status?perfilId=:id&contenidoId=:id con JWT.
+   - GET /api/v1/finance/summary con JWT.
+   - GET /api/v1/finance/invoices?estado=:estado&anio=:anio&mes=:mes&limit=:n con JWT.
+   - GET /api/v1/finance/payments?estadoTransaccion=:estado&limit=:n con JWT.
+   - POST /api/v1/finance/payments/checkout con JWT.
+   - GET /api/v1/finance/referrals?tipoRelacion=:tipo&estado=:estado&limit=:n con JWT.
+4. El flujo de pago de MinFlix en este proyecto es simulado para fines academicos:
+   - Se capturan datos de tarjeta en UI para validar experiencia end-to-end.
+   - La API registra pago exitoso de prueba.
+   - No existe integracion con pasarela externa ni cobro real de dinero.
 3. El login, registro, tracking de reproduccion, favoritos y calificaciones se validan contra Oracle usando bcrypt y reglas de negocio en triggers.
 
 ## 7. Guia Visual de Auth (Fase 1)

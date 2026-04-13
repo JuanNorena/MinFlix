@@ -26,6 +26,9 @@ COMMENT ON TABLE EMPLEADOS IS 'Plantilla de empleados y jerarquia supervisor-sub
 
 COMMENT ON COLUMN USUARIOS.ROL IS 'Rol funcional de cuenta: admin, soporte, contenido, analista, usuario.';
 COMMENT ON COLUMN USUARIOS.ESTADO_CUENTA IS 'Estado operativo para control de acceso y reproduccion.';
+COMMENT ON COLUMN USUARIOS.TELEFONO IS 'Telefono de contacto del titular de cuenta para soporte y recuperacion.';
+COMMENT ON COLUMN USUARIOS.FECHA_NACIMIENTO IS 'Fecha de nacimiento del titular para validaciones de negocio y segmentacion.';
+COMMENT ON COLUMN USUARIOS.CIUDAD_RESIDENCIA IS 'Ciudad de residencia para analitica de consumo e ingresos por territorio.';
 COMMENT ON COLUMN PERFILES.TIPO_PERFIL IS 'Tipo de perfil: adulto o infantil.';
 COMMENT ON COLUMN CONTENIDOS.TIPO_CONTENIDO IS 'Tipo principal de contenido multimedia.';
 COMMENT ON COLUMN CONTENIDOS.CLASIFICACION_EDAD IS 'Clasificacion de control parental (TP, +7, +13, +16, +18).';

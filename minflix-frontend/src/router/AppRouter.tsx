@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
+import { BillingPage } from '../pages/BillingPage'
 import { BrowsePage } from '../pages/BrowsePage'
 import { ContentDetailPage } from '../pages/ContentDetailPage'
 import { HomePage } from '../pages/HomePage'
@@ -41,6 +42,7 @@ export function AppRouter() {
       <Route element={<RequireAuth />}>
         <Route path="/profiles/select" element={<ProfileSelectorPage />} />
         <Route path="/profiles/manage" element={<ProfilesPage />} />
+        <Route path="/account/billing" element={<BillingPage />} />
         <Route path="/moderation/reports" element={<ReportsModerationPage />} />
 
         <Route element={<RequireProfileSelection />}>

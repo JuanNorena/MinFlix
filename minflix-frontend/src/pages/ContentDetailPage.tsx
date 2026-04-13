@@ -174,6 +174,7 @@ export function ContentDetailPage() {
   const [isSubmittingReport, setIsSubmittingReport] = useState(false)
   const [isLoadingRecentReports, setIsLoadingRecentReports] = useState(true)
   const [recentReports, setRecentReports] = useState<ReportItemResponse[]>([])
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   const avatarUrl = useMemo(
     () => resolveAvatarUrl(activeProfile?.avatar ?? null),
@@ -398,6 +399,7 @@ export function ContentDetailPage() {
    * Cierra sesion y limpia contexto de perfil activo.
    */
   function handleSignOut() {
+    setIsMobileMenuOpen(false)
     window.localStorage.removeItem('minflix_access_token')
     clearActiveProfile()
     navigate('/login', { replace: true })
@@ -612,7 +614,25 @@ export function ContentDetailPage() {
             MINFLIX
           </button>
 
-          <div className="nf-detail-topbar-actions">
+          <button
+            type="button"
+            className={`nf-browse-menu-toggle ${isMobileMenuOpen ? 'is-open' : ''}`}
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="content-detail-menu"
+          >
+            <span className="nf-browse-menu-bars" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+            <span>{isMobileMenuOpen ? 'Cerrar' : 'Menu'}</span>
+          </button>
+
+          <div
+            id="content-detail-menu"
+            className={`nf-detail-topbar-actions nf-topbar-collapsible ${isMobileMenuOpen ? 'is-open' : ''}`}
+          >
             <span className="nf-browse-profile-pill">
               <span className="nf-browse-avatar">
                 {avatarUrl ? (
@@ -631,15 +651,26 @@ export function ContentDetailPage() {
             <button
               type="button"
               className={buttonClassName('ghost')}
-              onClick={() => navigate('/browse')}
+              onClick={() => {
+                setIsMobileMenuOpen(false)
+                navigate('/browse')
+              }}
             >
               Volver al catalogo
             </button>
-            <Link to="/profiles/select" className={buttonClassName('ghost')}>
+            <Link
+              to="/profiles/select"
+              className={buttonClassName('ghost')}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
               Cambiar perfil
             </Link>
             {canModerateReports ? (
-              <Link to="/moderation/reports" className={buttonClassName('ghost')}>
+              <Link
+                to="/moderation/reports"
+                className={buttonClassName('ghost')}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 Moderacion
               </Link>
             ) : null}
