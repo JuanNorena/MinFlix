@@ -9,6 +9,7 @@ import { CatalogModule } from './catalog/catalog.module';
 import { PlaybackModule } from './playback/playback.module';
 import { CommunityModule } from './community/community.module';
 import { FinanceModule } from './finance/finance.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { FinanceModule } from './finance/finance.module';
     PlaybackModule,
     CommunityModule,
     FinanceModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

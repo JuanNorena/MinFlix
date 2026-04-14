@@ -522,6 +522,15 @@ export function BrowsePage() {
                 Moderacion
               </Link>
             ) : null}
+            {(authSession?.role === 'admin' || authSession?.role === 'analista') ? (
+              <Link
+                to="/analytics/dashboard"
+                className={buttonClassName('ghost')}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Analitica
+              </Link>
+            ) : null}
             <button
               type="button"
               className={buttonClassName('primary')}
