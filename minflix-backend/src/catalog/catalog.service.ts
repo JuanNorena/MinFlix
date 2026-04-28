@@ -17,7 +17,62 @@ import {
 } from './contracts/catalog-view.types';
 
 /**
- * Servicio de catalogo base para la iteracion inicial de contenidos.
+ * Servicio de catálogo para la gestión de contenidos multimedia y categorías.
+ *
+ * Este servicio implementa la lógica de negocio para administrar el catálogo
+ * completo de MinFlix, incluyendo la creación, actualización, búsqueda y
+ * clasificación de contenidos multimedia.
+ *
+ * @remarks
+ * **Responsabilidades principales:**
+ *
+ * 1. **Gestión de Categorías:**
+ *    - Listar todas las categorías disponibles
+ *    - Crear nuevas categorías validando unicidad de nombre
+ *
+ * 2. **Gestión de Contenidos:**
+ *    - Listar contenidos con filtros opcionales (búsqueda, tipo, categoría, edad)
+ *    - Consultar detalle de contenido individual
+ *    - Crear nuevos contenidos con validación de categoría y publicador
+ *    - Actualizar contenidos existentes de forma parcial
+ *
+ * 3. **Búsqueda y Filtrado:**
+ *    - Búsqueda por texto en título (case-insensitive)
+ *    - Filtrado por tipo de contenido (película, serie, documental, música, podcast)
+ *    - Filtrado por clasificación de edad (Todos, +7, +13, +16, +18)
+ *    - Filtrado por categoría específica
+ *    - Filtrado por contenido exclusivo de MinFlix
+ *
+ * 4. **Normalización de Datos:**
+ *    - Mapeo de entidades TypeORM a contratos de API limpios
+ *    - Transformación de campos booleanos numéricos de Oracle (0/1) a boolean
+ *
+ * @example
+ * ```typescript
+ * // Listar contenidos con filtros
+ * const contenidos = await catalogService.listContents({
+ *   search: 'Star Wars',
+ *   tipoContenido: 'PELICULA',
+ *   clasificacionEdad: '+13',
+ *   limit: 24
+ * });
+ *
+ * // Crear nuevo contenido
+ * const nuevoContenido = await catalogService.createContent({
+ *   titulo: 'El Padrino',
+ *   tipoContenido: 'PELICULA',
+ *   clasificacionEdad: '+16',
+ *   categoriaId: 5,
+ *   anioLanzamiento: 1972,
+ *   duracionMinutos: 175,
+ *   sinopsis: 'La historia de una familia mafiosa...',
+ *   esExclusivo: false
+ * }, usuarioPublicadorId);
+ * ```
+ *
+ * @see {@link ContentEntity} para la estructura de contenidos en Oracle
+ * @see {@link CategoryEntity} para la estructura de categorías en Oracle
+ * @see {@link CatalogController} para los endpoints que exponen esta funcionalidad
  */
 @Injectable()
 export class CatalogService {

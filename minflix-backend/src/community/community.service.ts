@@ -29,7 +29,94 @@ import { FavoriteEntity, RatingEntity } from './entities';
 import { ReportEntity } from './entities/report.entity';
 
 /**
- * Servicio de comunidad para favoritos por perfil.
+ * Servicio de comunidad para funcionalidades sociales e interacción de usuarios.
+ *
+ * Este servicio implementa la lógica completa de interacción social en MinFlix,
+ * gestionando favoritos, calificaciones y reportes de contenido, con validaciones
+ * de restricciones de edad y control de acceso por perfil.
+ *
+ * @remarks
+ * **Responsabilidades principales:**
+ *
+ * **1. Gestión de Favoritos:**
+ * - Agregar contenido a favoritos validando ownership del perfil
+ * - Verificar restricciones de edad (infantil no puede +16/+18)
+ * - Operaciones idempotentes (no error si ya existe)
+ * - Eliminar favoritos de forma segura
+ * - Consultar lista de favoritos ordenada por fecha
+ * - Verificar estado de favorito para un contenido específico
+ *
+ * **2. Gestión de Calificaciones:**
+ * - Crear o actualizar calificación (upsert pattern)
+ * - Validar regla de negocio: >50% de reproducción para calificar (trigger Oracle ORA-20041)
+ * - Soportar puntaje 1-5 estrellas con reseña textual opcional
+ * - Eliminar calificaciones propias
+ * - Listar calificaciones por perfil
+ * - Consultar estado y puntaje de calificación existente
+ *
+ * **3. Sistema de Reportes:**
+ * - Crear reportes de contenido inapropiado por perfil
+ * - Motivos: contenido ofensivo, error técnico, derechos de autor, otro
+ * - Estados: ABIERTO → EN_REVISION → RESUELTO/DESCARTADO
+ * - Listar reportes propios del perfil autenticado
+ * - Bandeja de moderación para roles soporte/admin
+ * - Actualizar estado y asignar moderador
+ * - Validar resolución obligatoria al cerrar reporte
+ * - Prevenir reapertura de reportes cerrados (trigger Oracle ORA-20064)
+ *
+ * **4. Validaciones y Seguridad:**
+ * - Verificar ownership de perfil en cada operación
+ * - Validar restricciones de edad para perfiles infantiles
+ * - Control de acceso por rol para moderación (solo soporte/admin)
+ * - Captura y traducción de errores Oracle ORA-20xxx
+ *
+ * **5. Captura de Errores Oracle:**
+ * - ORA-20031: Perfil no puede agregar contenido a favoritos por edad
+ * - ORA-20032: Perfil o contenido no existe para favorito
+ * - ORA-20041: Requiere >50% reproducción para calificar
+ * - ORA-20042: Perfil o contenido no existe para calificación
+ * - ORA-20061: Perfil reportador no existe
+ * - ORA-20062: Contenido reportado no existe
+ * - ORA-20063: Solo soporte/admin pueden moderar
+ * - ORA-20064: No se pueden reabrir reportes cerrados
+ * - ORA-20065: Requiere moderador asignado para cerrar
+ * - ORA-20066: Moderador asignado no existe
+ *
+ * @example
+ * ```typescript
+ * // Agregar contenido a favoritos
+ * const favorito = await communityService.addFavorite(userId, {
+ *   perfilId: 10,
+ *   contenidoId: 250
+ * });
+ *
+ * // Calificar contenido (solo si se ha visto >50%)
+ * const calificacion = await communityService.upsertRating(userId, {
+ *   perfilId: 10,
+ *   contenidoId: 250,
+ *   puntaje: 5,
+ *   resena: '¡Excelente película! Me encantó la trama.'
+ * });
+ *
+ * // Crear reporte de contenido
+ * const reporte = await communityService.createReport(userId, {
+ *   perfilId: 10,
+ *   contenidoId: 300,
+ *   motivo: 'CONTENIDO_OFENSIVO',
+ *   detalle: 'Contiene lenguaje inapropiado no señalado en la clasificación'
+ * });
+ *
+ * // Moderar reporte (solo soporte/admin)
+ * await communityService.moderateReport(moderadorId, 'admin', reporteId, {
+ *   estado: 'RESUELTO',
+ *   resolucion: 'Se actualizó la clasificación del contenido a +16'
+ * });
+ * ```
+ *
+ * @see {@link FavoriteEntity} para la estructura de favoritos en Oracle
+ * @see {@link RatingEntity} para la estructura de calificaciones en Oracle
+ * @see {@link ReportEntity} para la estructura de reportes en Oracle
+ * @see {@link CommunityController} para los endpoints REST expuestos
  */
 @Injectable()
 export class CommunityService {

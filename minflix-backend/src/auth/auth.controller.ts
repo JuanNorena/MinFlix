@@ -42,11 +42,70 @@ const avatarUploadStorage = diskStorage({
 });
 
 /**
- * Controlador de autenticacion con Passport.js.
+ * Controlador REST para autenticación y gestión de perfiles de usuario.
+ *
+ * Este controlador expone los endpoints públicos y privados para:
+ * - Registro de nuevas cuentas (`POST /api/v1/auth/register`)
+ * - Inicio de sesión con email y contraseña (`POST /api/v1/auth/login`)
+ * - Consulta de identidad autenticada (`GET /api/v1/auth/profile`)
+ * - Gestión completa de perfiles de reproducción (CRUD)
+ * - Carga de avatares de perfil desde archivos locales
+ *
+ * @remarks
+ * **Rutas públicas (sin autenticación):**
+ * - `POST /login` - Inicia sesión y genera JWT
+ * - `POST /register` - Registra nueva cuenta con perfil inicial
+ *
+ * **Rutas privadas (requieren JWT válido):**
+ * - `GET /profile` - Retorna datos del usuario autenticado
+ * - `GET /profiles` - Lista perfiles de la cuenta
+ * - `POST /profiles` - Crea nuevo perfil de reproducción
+ * - `POST /profiles/avatar` - Sube imagen de avatar
+ * - `PATCH /profiles/:id` - Actualiza datos de un perfil
+ * - `DELETE /profiles/:id` - Elimina un perfil
+ *
+ * **Documentación Swagger:**
+ * Todos los endpoints están documentados en Swagger UI,
+ * disponible en `/api/docs` cuando el servidor está corriendo.
+ *
+ * @example
+ * ```typescript
+ * // Registro de nueva cuenta
+ * POST /api/v1/auth/register
+ * Content-Type: application/json
+ *
+ * {
+ *   "email": "usuario@minflix.com",
+ *   "password": "Segura123*",
+ *   "nombre": "María López",
+ *   "telefono": "3001234567",
+ *   "fechaNacimiento": "1995-08-20",
+ *   "ciudadResidencia": "Medellín",
+ *   "planNombre": "PREMIUM",
+ *   "nombrePerfilInicial": "María"
+ * }
+ *
+ * // Respuesta exitosa (HTTP 201)
+ * {
+ *   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+ *   "user": {
+ *     "id": 42,
+ *     "email": "usuario@minflix.com",
+ *     "role": "usuario"
+ *   }
+ * }
+ * ```
+ *
+ * @see {@link AuthService} para la lógica de negocio implementada
  */
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  /**
+   * Constructor del controlador de autenticación.
+   *
+   * @param authService - Servicio inyectado que implementa la lógica de autenticación y perfiles
+   */
   constructor(private readonly authService: AuthService) {}
 
   /**

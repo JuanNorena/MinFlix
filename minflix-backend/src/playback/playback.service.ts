@@ -20,7 +20,73 @@ import { StartPlaybackDto } from './dto/start-playback.dto';
 import { ContinueWatchingEntity, PlaybackEntity } from './entities';
 
 /**
- * Servicio de reproducciones para tracking de avance y continuidad.
+ * Servicio de tracking de reproducciones y gestión de continuidad de visualización.
+ *
+ * Este servicio implementa la lógica completa de seguimiento de reproducciones
+ * en MinFlix, permitiendo registrar eventos de inicio, progreso y finalización,
+ * así como gestionar la funcionalidad de "Continuar viendo" y el historial.
+ *
+ * @remarks
+ * **Responsabilidades principales:**
+ *
+ * 1. **Registro de Eventos de Reproducción:**
+ *    - Iniciar reproducción (progreso en 0%)
+ *    - Reportar progreso durante la reproducción
+ *    - Registrar finalización (progreso 100%)
+ *    - Validar ownership del perfil por la cuenta autenticada
+ *
+ * 2. **Validaciones de Negocio:**
+ *    - Verificar que el perfil pertenezca al usuario autenticado
+ *    - Validar restricciones de edad (perfiles infantiles vs contenido +16/+18)
+ *    - Asegurar que la cuenta esté activa para reproducir
+ *    - Validar que el progreso no supere la duración total
+ *
+ * 3. **Continuar Viendo:**
+ *    - Consultar vista materializada de Oracle con contenidos en progreso
+ *    - Ordenar por fecha del último evento (más reciente primero)
+ *    - Excluir contenidos completados al 100%
+ *
+ * 4. **Historial de Reproducciones:**
+ *    - Listar todos los eventos de reproducción de un perfil
+ *    - Filtrar opcionalmente por estado (EN_PROGRESO, COMPLETADO, PAUSADO)
+ *    - Incluir información completa del contenido reproducido
+ *
+ * 5. **Captura de Errores Oracle:**
+ *    - Traducir códigos ORA-20xxx de triggers PL/SQL a excepciones HTTP
+ *    - ORA-20021: Cuenta inactiva no puede reproducir
+ *    - ORA-20022: Restricción de edad no cumplida
+ *    - ORA-20023: Progreso supera duración total
+ *    - ORA-20024: Perfil o contenido no existe
+ *
+ * @example
+ * ```typescript
+ * // Iniciar reproducción de una película
+ * const evento = await playbackService.startPlayback(userId, {
+ *   perfilId: 5,
+ *   contenidoId: 120,
+ *   duracionTotalSegundos: 7200, // 2 horas
+ *   ultimoDispositivo: 'Smart TV Samsung'
+ * });
+ *
+ * // Reportar progreso durante la reproducción
+ * await playbackService.reportProgress(userId, {
+ *   perfilId: 5,
+ *   contenidoId: 120,
+ *   progresoSegundos: 3600, // 1 hora = 50%
+ *   duracionTotalSegundos: 7200,
+ *   estadoReproduccion: 'EN_PROGRESO'
+ * });
+ *
+ * // Listar contenidos para continuar viendo
+ * const continuar = await playbackService.listContinueWatching(userId, {
+ *   perfilId: 5,
+ *   limit: 12
+ * });
+ * ```
+ *
+ * @see {@link PlaybackEntity} para la estructura de eventos en Oracle
+ * @see {@link ContinueWatchingEntity} para la vista materializada
+ * @see {@link PlaybackController} para los endpoints REST expuestos
  */
 @Injectable()
 export class PlaybackService {

@@ -17,7 +17,53 @@ import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 /**
- * Servicio de autenticacion base para el arranque del proyecto.
+ * Servicio de autenticación y gestión de perfiles de usuario para MinFlix.
+ *
+ * Este servicio centraliza toda la lógica de negocio relacionada con:
+ * - Registro de nuevas cuentas de usuario
+ * - Validación de credenciales para inicio de sesión
+ * - Generación de tokens JWT
+ * - Creación, actualización y eliminación de perfiles de reproducción
+ * - Gestión de avatares de perfil
+ * - Seed automático de usuario administrador
+ *
+ * @remarks
+ * **Responsabilidades clave:**
+ *
+ * 1. **Autenticación:** Valida email y contraseña contra la tabla `USUARIOS` en Oracle,
+ *    comparando hashes bcrypt de forma segura.
+ *
+ * 2. **Registro:** Crea nuevas cuentas validando que el email no exista,
+ *    hashea contraseñas con bcrypt y crea el perfil inicial automáticamente.
+ *
+ * 3. **Perfiles:** Gestiona los perfiles de reproducción de cada cuenta,
+ *    respetando el límite de perfiles según el plan de suscripción.
+ *
+ * 4. **Validaciones Oracle:** Captura y traduce errores de triggers PL/SQL
+ *    (códigos ORA-20xxx) a excepciones HTTP comprensibles.
+ *
+ * @example
+ * ```typescript
+ * // Inyectar el servicio en un controlador
+ * constructor(private readonly authService: AuthService) {}
+ *
+ * // Registrar un nuevo usuario
+ * const resultado = await this.authService.register({
+ *   email: 'nuevo@minflix.com',
+ *   password: 'MiClave123*',
+ *   nombre: 'Juan Pérez',
+ *   telefono: '3001234567',
+ *   fechaNacimiento: '1990-05-15',
+ *   ciudadResidencia: 'Bogotá',
+ *   planNombre: 'ESTANDAR',
+ *   nombrePerfilInicial: 'Juan'
+ * });
+ * // Retorna: { accessToken: '...', user: { id, email, role } }
+ * ```
+ *
+ * @see {@link AuthController} para los endpoints que exponen esta funcionalidad
+ * @see {@link UserEntity} para la estructura de la tabla USUARIOS
+ * @see {@link ProfileEntity} para la estructura de la tabla PERFILES
  */
 @Injectable()
 export class AuthService implements OnModuleInit {

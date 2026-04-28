@@ -32,11 +32,65 @@ interface AuthenticatedRequest {
 }
 
 /**
- * Controlador del catalogo base para contenidos y categorias.
+ * Controlador REST para la gestión del catálogo de contenidos multimedia.
+ *
+ * Este controlador expone los endpoints para administrar el catálogo completo
+ * de MinFlix, incluyendo contenidos (películas, series, documentales, música,
+ * podcasts) y sus categorías de clasificación.
+ *
+ * @remarks
+ * **Endpoints públicos (sin autenticación):**
+ * - `GET /categories` - Listar todas las categorías
+ * - `GET /contents` - Listar contenidos con filtros opcionales
+ * - `GET /contents/:id` - Consultar detalle de un contenido específico
+ *
+ * **Endpoints privados (requieren JWT + rol admin/contenido):**
+ * - `POST /categories` - Crear nueva categoría
+ * - `POST /contents` - Crear nuevo contenido
+ * - `PATCH /contents/:id` - Actualizar contenido existente
+ *
+ * **Control de acceso:**
+ * - Las operaciones de escritura (POST, PATCH) requieren rol `admin` o `contenido`
+ * - Las operaciones de lectura (GET) son públicas para todos los usuarios
+ *
+ * **Filtros de búsqueda disponibles:**
+ * - `search`: Buscar por texto en título (case-insensitive)
+ * - `tipoContenido`: Filtrar por PELICULA, SERIE, DOCUMENTAL, MUSICA, PODCAST
+ * - `clasificacionEdad`: Filtrar por Todos, +7, +13, +16, +18
+ * - `categoriaId`: Filtrar por categoría específica
+ * - `exclusivo`: Filtrar contenidos exclusivos de MinFlix (true/false)
+ * - `limit`: Limitar número de resultados (por defecto 24)
+ *
+ * @example
+ * ```typescript
+ * // Listar contenidos con filtros
+ * GET /api/v1/catalog/contents?search=star&tipoContenido=PELICULA&limit=10
+ *
+ * // Crear nuevo contenido (requiere autenticación y rol admin/contenido)
+ * POST /api/v1/catalog/contents
+ * Authorization: Bearer <token>
+ * {
+ *   "titulo": "Inception",
+ *   "tipoContenido": "PELICULA",
+ *   "clasificacionEdad": "+13",
+ *   "categoriaId": 3,
+ *   "anioLanzamiento": 2010,
+ *   "duracionMinutos": 148,
+ *   "sinopsis": "Un ladrón que roba secretos...",
+ *   "esExclusivo": true
+ * }
+ * ```
+ *
+ * @see {@link CatalogService} para la implementación de la lógica de negocio
  */
 @ApiTags('catalog')
 @Controller('catalog')
 export class CatalogController {
+  /**
+   * Constructor del controlador de catálogo.
+   *
+   * @param catalogService - Servicio inyectado con la lógica de negocio del catálogo
+   */
   constructor(private readonly catalogService: CatalogService) {}
 
   /**
