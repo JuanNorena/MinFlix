@@ -48,7 +48,7 @@ import { ReportEntity } from './entities/report.entity';
  *
  * **2. Gestión de Calificaciones:**
  * - Crear o actualizar calificación (upsert pattern)
- * - Validar regla de negocio: >50% de reproducción para calificar (trigger Oracle ORA-20041)
+ * - Validar regla de negocio: 50% de reproducción para calificar (trigger Oracle ORA-20041)
  * - Soportar puntaje 1-5 estrellas con reseña textual opcional
  * - Eliminar calificaciones propias
  * - Listar calificaciones por perfil
@@ -73,7 +73,7 @@ import { ReportEntity } from './entities/report.entity';
  * **5. Captura de Errores Oracle:**
  * - ORA-20031: Perfil no puede agregar contenido a favoritos por edad
  * - ORA-20032: Perfil o contenido no existe para favorito
- * - ORA-20041: Requiere >50% reproducción para calificar
+ * - ORA-20041: Requiere 50% reproducción para calificar
  * - ORA-20042: Perfil o contenido no existe para calificación
  * - ORA-20061: Perfil reportador no existe
  * - ORA-20062: Contenido reportado no existe
