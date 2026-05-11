@@ -64,7 +64,10 @@ export class AnalyticsConsumptionQueryDto {
   /**
    * Nombre del plan de suscripcion para filtrar.
    */
-  @ApiPropertyOptional({ example: 'PREMIUM', enum: ['BASICO', 'ESTANDAR', 'PREMIUM'] })
+  @ApiPropertyOptional({
+    example: 'PREMIUM',
+    enum: ['BASICO', 'ESTANDAR', 'PREMIUM'],
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)

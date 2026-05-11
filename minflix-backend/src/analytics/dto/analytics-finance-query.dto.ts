@@ -28,7 +28,10 @@ export class AnalyticsFinanceQueryDto {
   /**
    * Nombre del plan de suscripcion para segmentar los ingresos.
    */
-  @ApiPropertyOptional({ example: 'ESTANDAR', enum: ['BASICO', 'ESTANDAR', 'PREMIUM'] })
+  @ApiPropertyOptional({
+    example: 'ESTANDAR',
+    enum: ['BASICO', 'ESTANDAR', 'PREMIUM'],
+  })
   @IsOptional()
   @IsString()
   @MaxLength(40)

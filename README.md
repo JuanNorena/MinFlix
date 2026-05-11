@@ -168,7 +168,16 @@ Detalle completo del plan:
    - database/14_seed_datos_funcionales_iteracion5.sql.
    - database/15_finanzas_vistas_api_iteracion6.sql.
    - database/16_usuarios_datos_personales_iteracion6.sql.
+   - database/17_analitica_nt1.sql.
+   - database/18_plsql_nt2_completo.sql.
+   - database/19_transacciones_nt3.sql.
+   - database/20_indices_nt4.sql.
+   - database/21_validacion_cierre.sql.
 2. Guardar evidencia de ejecucion y resultados de pruebas.
+3. Para SQLcl o SQL*Plus, desde la carpeta database tambien se puede usar:
+   - database/run_all.sql.
+4. database/00_drop_all.sql es destructivo y solo debe ejecutarse manualmente
+   cuando se quiera reiniciar el esquema.
 
 ### 5.4 Ejecucion rapida desde raiz
 1. Desde la raiz del workspace, ejecutar el script PowerShell start-dev.ps1.
@@ -249,3 +258,29 @@ Si al iniciar backend aparece ORA-00942 sobre USUARIOS, valide en este orden:
 2. Ajustar DB_SCHEMA en minflix-backend/.env al owner real detectado.
 3. Reiniciar backend y validar que mapea rutas sin excepcion en onModuleInit.
 4. Si las tablas no existen en ningun owner esperado, reejecutar database/01_bootstrap_oracle_iteracion1.sql con el usuario correcto.
+
+## 12. Estado de Cierre y Validacion Final
+1. Frontend:
+   - `npm run lint` pasa.
+   - `npm run build` pasa.
+   - Vite puede emitir una advertencia de chunk mayor a 500 kB; no bloquea build.
+2. Backend:
+   - `npm run lint` pasa.
+   - `npm run build` pasa.
+3. Integracion frontend/backend validada:
+   - Catalogo base y extendido.
+   - Reproduccion e historial.
+   - Favoritos, calificaciones y reportes.
+   - Moderacion.
+   - Finanzas.
+   - Analitica.
+4. Cierre Oracle preparado:
+   - database/run_all.sql ejecuta scripts 01..21 en orden.
+   - database/21_validacion_cierre.sql valida objetos, errores de compilacion,
+     vistas, MVs, datos seed, catalogo extendido, permisos por rol e indices NT4.
+5. Nota MCP Oracle:
+   - En la sesion de cierre se intento localizar el MCP Oracle con nombres
+     `oracle`, `Oracle`, `oracle-sql`, `oracle_sql`, `oracledb` y `sql`.
+   - Todos respondieron como servidor no registrado en la sesion.
+   - La maquina local si expone `sqlplus.exe` y `sql.exe`, pero la ejecucion por
+     terminal debe hacerse solo si se decide reemplazar el mecanismo MCP Oracle.

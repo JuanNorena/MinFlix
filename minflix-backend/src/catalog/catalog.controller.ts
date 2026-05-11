@@ -21,6 +21,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   CatalogCategoryView,
   CatalogContentView,
+  CatalogEpisodeView,
+  CatalogGenreView,
+  CatalogRelatedContentView,
+  CatalogSeasonView,
 } from './contracts/catalog-view.types';
 
 interface AuthenticatedRequest {
@@ -186,6 +190,68 @@ export class CatalogController {
   ): Promise<CatalogContentView> {
     this.assertCatalogEditorRole(req.user.role);
     return this.catalogService.updateContent(contentId, payload);
+  }
+
+  /**
+   * Lista generos disponibles del catalogo.
+   * @returns Coleccion de generos.
+   */
+  @ApiOperation({ summary: 'Listar generos de catalogo' })
+  @Get('genres')
+  listGenres(): Promise<CatalogGenreView[]> {
+    return this.catalogService.listGenres();
+  }
+
+  /**
+   * Consulta generos asignados a un contenido.
+   * @param contentId - Identificador del contenido.
+   * @returns Coleccion de generos.
+   */
+  @ApiOperation({ summary: 'Consultar generos de un contenido' })
+  @Get('contents/:contentId/genres')
+  getContentGenres(
+    @Param('contentId', ParseIntPipe) contentId: number,
+  ): Promise<CatalogGenreView[]> {
+    return this.catalogService.getContentGenres(contentId);
+  }
+
+  /**
+   * Consulta temporadas de un contenido.
+   * @param contentId - Identificador del contenido.
+   * @returns Coleccion de temporadas.
+   */
+  @ApiOperation({ summary: 'Consultar temporadas de un contenido' })
+  @Get('contents/:contentId/seasons')
+  getContentSeasons(
+    @Param('contentId', ParseIntPipe) contentId: number,
+  ): Promise<CatalogSeasonView[]> {
+    return this.catalogService.getContentSeasons(contentId);
+  }
+
+  /**
+   * Consulta episodios de una temporada.
+   * @param seasonId - Identificador de la temporada.
+   * @returns Coleccion de episodios.
+   */
+  @ApiOperation({ summary: 'Consultar episodios de una temporada' })
+  @Get('seasons/:seasonId/episodes')
+  getSeasonEpisodes(
+    @Param('seasonId', ParseIntPipe) seasonId: number,
+  ): Promise<CatalogEpisodeView[]> {
+    return this.catalogService.getSeasonEpisodes(seasonId);
+  }
+
+  /**
+   * Consulta contenidos relacionados a un contenido.
+   * @param contentId - Identificador del contenido.
+   * @returns Coleccion de contenidos relacionados.
+   */
+  @ApiOperation({ summary: 'Consultar contenidos relacionados' })
+  @Get('contents/:contentId/related')
+  getRelatedContents(
+    @Param('contentId', ParseIntPipe) contentId: number,
+  ): Promise<CatalogRelatedContentView[]> {
+    return this.catalogService.getRelatedContents(contentId);
   }
 
   /**

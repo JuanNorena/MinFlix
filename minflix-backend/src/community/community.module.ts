@@ -39,7 +39,7 @@ import { ReportEntity } from './entities/report.entity';
  * - Actualizar calificación existente (upsert)
  * - Eliminar calificaciones propias
  * - Listar calificaciones de un perfil
- * - Regla: Solo se puede calificar si se ha visto >50% del contenido
+ * - Regla: Solo se puede calificar si se ha visto \>50% del contenido
  *
  * **3. Reportes y Moderación:**
  * - Crear reportes de contenido inapropiado por perfil

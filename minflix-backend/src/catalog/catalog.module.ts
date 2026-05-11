@@ -3,7 +3,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../auth/entities/user.entity';
 import { CatalogController } from './catalog.controller';
 import { CatalogService } from './catalog.service';
-import { CategoryEntity, ContentEntity } from './entities';
+import {
+  CategoryEntity,
+  ContentEntity,
+  ContentGenreEntity,
+  EpisodeEntity,
+  GenreEntity,
+  RelatedContentEntity,
+  SeasonEntity,
+} from './entities';
 
 /**
  * Módulo de catálogo para la gestión de contenidos multimedia.
@@ -46,7 +54,16 @@ import { CategoryEntity, ContentEntity } from './entities';
  */
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CategoryEntity, ContentEntity, UserEntity]),
+    TypeOrmModule.forFeature([
+      CategoryEntity,
+      ContentEntity,
+      UserEntity,
+      GenreEntity,
+      ContentGenreEntity,
+      SeasonEntity,
+      EpisodeEntity,
+      RelatedContentEntity,
+    ]),
   ],
   controllers: [CatalogController],
   providers: [CatalogService],

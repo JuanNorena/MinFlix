@@ -6,7 +6,15 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserEntity } from '../auth/entities/user.entity';
-import { CategoryEntity, ContentEntity } from './entities';
+import {
+  CategoryEntity,
+  ContentEntity,
+  ContentGenreEntity,
+  EpisodeEntity,
+  GenreEntity,
+  RelatedContentEntity,
+  SeasonEntity,
+} from './entities';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { CreateContentDto } from './dto/create-content.dto';
 import { ListContentQueryDto } from './dto/list-content-query.dto';
@@ -14,6 +22,10 @@ import { UpdateContentDto } from './dto/update-content.dto';
 import {
   CatalogCategoryView,
   CatalogContentView,
+  CatalogEpisodeView,
+  CatalogGenreView,
+  CatalogRelatedContentView,
+  CatalogSeasonView,
 } from './contracts/catalog-view.types';
 
 /**
@@ -83,6 +95,16 @@ export class CatalogService {
     private readonly contentRepository: Repository<ContentEntity>,
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(GenreEntity)
+    private readonly genreRepository: Repository<GenreEntity>,
+    @InjectRepository(ContentGenreEntity)
+    private readonly contentGenreRepository: Repository<ContentGenreEntity>,
+    @InjectRepository(SeasonEntity)
+    private readonly seasonRepository: Repository<SeasonEntity>,
+    @InjectRepository(EpisodeEntity)
+    private readonly episodeRepository: Repository<EpisodeEntity>,
+    @InjectRepository(RelatedContentEntity)
+    private readonly relatedContentRepository: Repository<RelatedContentEntity>,
   ) {}
 
   /**
@@ -346,6 +368,94 @@ export class CatalogService {
   }
 
   /**
+   * Lista generos disponibles del catalogo.
+   * @returns Coleccion de generos ordenados por nombre.
+   */
+  async listGenres(): Promise<CatalogGenreView[]> {
+    const genres = await this.genreRepository
+      .createQueryBuilder('genero')
+      .orderBy('genero.nombre', 'ASC')
+      .getMany();
+
+    return genres.map((genre) => this.mapGenre(genre));
+  }
+
+  /**
+   * Consulta generos asignados a un contenido.
+   * @param contentId - Identificador del contenido.
+   * @returns Coleccion de generos asociados.
+   */
+  async getContentGenres(contentId: number): Promise<CatalogGenreView[]> {
+    const contentGenres = await this.contentGenreRepository
+      .createQueryBuilder('cg')
+      .innerJoinAndSelect('cg.genero', 'genero')
+      .where('cg.idContenido = :contentId', { contentId })
+      .orderBy('genero.nombre', 'ASC')
+      .getMany();
+
+    return contentGenres.map((cg) => this.mapGenre(cg.genero));
+  }
+
+  /**
+   * Consulta temporadas de un contenido (series y podcasts).
+   * @param contentId - Identificador del contenido.
+   * @returns Coleccion de temporadas ordenadas por numero.
+   */
+  async getContentSeasons(contentId: number): Promise<CatalogSeasonView[]> {
+    const seasons = await this.seasonRepository
+      .createQueryBuilder('temporada')
+      .innerJoin('temporada.contenido', 'contenido')
+      .where('contenido.id = :contentId', { contentId })
+      .orderBy('temporada.numeroTemporada', 'ASC')
+      .getMany();
+
+    return seasons.map((season) => this.mapSeason(season));
+  }
+
+  /**
+   * Consulta episodios de una temporada.
+   * @param seasonId - Identificador de la temporada.
+   * @returns Coleccion de episodios ordenados por numero.
+   */
+  async getSeasonEpisodes(seasonId: number): Promise<CatalogEpisodeView[]> {
+    const episodes = await this.episodeRepository
+      .createQueryBuilder('episodio')
+      .innerJoin('episodio.temporada', 'temporada')
+      .where('temporada.id = :seasonId', { seasonId })
+      .orderBy('episodio.numeroEpisodio', 'ASC')
+      .getMany();
+
+    return episodes.map((episode) => this.mapEpisode(episode));
+  }
+
+  /**
+   * Consulta contenidos relacionados a un contenido.
+   * @param contentId - Identificador del contenido origen.
+   * @returns Coleccion de relaciones con contenido destino.
+   */
+  async getRelatedContents(
+    contentId: number,
+  ): Promise<CatalogRelatedContentView[]> {
+    const related = await this.relatedContentRepository
+      .createQueryBuilder('relacion')
+      .innerJoinAndSelect(
+        'relacion.contenidoRelacionado',
+        'contenidoRelacionado',
+      )
+      .innerJoinAndSelect('contenidoRelacionado.categoria', 'categoria')
+      .where('relacion.contenidoOrigen.id = :contentId', { contentId })
+      .orderBy('relacion.tipoRelacion', 'ASC')
+      .getMany();
+
+    return related.map((rel) => ({
+      id: rel.id,
+      tipoRelacion: rel.tipoRelacion,
+      descripcion: rel.descripcion ?? null,
+      contenidoRelacionado: this.mapContent(rel.contenidoRelacionado),
+    }));
+  }
+
+  /**
    * Normaliza entidad de categoria para contrato de API.
    * @param category - Entidad de categoria.
    * @returns Vista de categoria.
@@ -376,6 +486,39 @@ export class CatalogService {
       esExclusivo: content.esExclusivo === 1,
       empleadoPublicadorId: content.empleadoPublicador?.id ?? null,
       categoria: this.mapCategory(content.categoria),
+    };
+  }
+
+  private mapGenre(genre: GenreEntity): CatalogGenreView {
+    return {
+      id: genre.id,
+      nombre: genre.nombre,
+      descripcion: genre.descripcion ?? null,
+    };
+  }
+
+  private mapSeason(season: SeasonEntity): CatalogSeasonView {
+    return {
+      id: season.id,
+      numeroTemporada: season.numeroTemporada,
+      titulo: season.titulo ?? null,
+      descripcion: season.descripcion ?? null,
+      fechaEstreno: season.fechaEstreno
+        ? season.fechaEstreno.toISOString().split('T')[0]
+        : null,
+    };
+  }
+
+  private mapEpisode(episode: EpisodeEntity): CatalogEpisodeView {
+    return {
+      id: episode.id,
+      numeroEpisodio: episode.numeroEpisodio,
+      titulo: episode.titulo,
+      duracionMinutos: episode.duracionMinutos ?? null,
+      sinopsis: episode.sinopsis ?? null,
+      fechaEstreno: episode.fechaEstreno
+        ? episode.fechaEstreno.toISOString().split('T')[0]
+        : null,
     };
   }
 }

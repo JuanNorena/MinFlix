@@ -4,10 +4,14 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { CategoryEntity } from './category.entity';
 import { UserEntity } from '../../auth/entities/user.entity';
+import { ContentGenreEntity } from './content-genre.entity';
+import { SeasonEntity } from './season.entity';
+import { RelatedContentEntity } from './related-content.entity';
 
 /**
  * Entidad de contenidos multimedia del catalogo principal de MinFlix.
@@ -125,4 +129,28 @@ export class ContentEntity {
   @ManyToOne(() => UserEntity, { nullable: true })
   @JoinColumn({ name: 'ID_EMPLEADO_PUBLICADOR' })
   empleadoPublicador?: UserEntity;
+
+  /**
+   * Generos asignados al contenido.
+   */
+  @OneToMany(() => ContentGenreEntity, (cg) => cg.contenido)
+  generos!: ContentGenreEntity[];
+
+  /**
+   * Temporadas del contenido (series y podcasts).
+   */
+  @OneToMany(() => SeasonEntity, (season) => season.contenido)
+  temporadas!: SeasonEntity[];
+
+  /**
+   * Relaciones de contenido origen.
+   */
+  @OneToMany(() => RelatedContentEntity, (rc) => rc.contenidoOrigen)
+  relacionadosOrigen!: RelatedContentEntity[];
+
+  /**
+   * Relaciones de contenido destino.
+   */
+  @OneToMany(() => RelatedContentEntity, (rc) => rc.contenidoRelacionado)
+  relacionadosDestino!: RelatedContentEntity[];
 }

@@ -59,9 +59,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * que usan los controladores de MinFlix (con `userId`).
    *
    * @param payload - Carga útil del token JWT decodificado
-   * @param payload.sub - ID del usuario (estándar JWT para subject)
-   * @param payload.email - Email del usuario autenticado
-   * @param payload.role - Rol del usuario (usuario, admin, soporte, analista)
+   * `payload.sub`: ID del usuario (estándar JWT para subject).
+   * `payload.email`: Email del usuario autenticado.
+   * `payload.role`: Rol del usuario (usuario, admin, soporte, analista).
    *
    * @returns Objeto de usuario normalizado que se inyecta en `req.user`
    *

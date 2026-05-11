@@ -33,6 +33,36 @@ interface CatalogContent {
   categoria: CatalogCategory
 }
 
+interface CatalogGenre {
+  id: number
+  nombre: string
+  descripcion: string | null
+}
+
+interface CatalogSeason {
+  id: number
+  numeroTemporada: number
+  titulo: string | null
+  descripcion: string | null
+  fechaEstreno: string | null
+}
+
+interface CatalogEpisode {
+  id: number
+  numeroEpisodio: number
+  titulo: string
+  duracionMinutos: number | null
+  sinopsis: string | null
+  fechaEstreno: string | null
+}
+
+interface CatalogRelatedItem {
+  id: number
+  tipoRelacion: string
+  descripcion: string | null
+  contenidoRelacionado: CatalogContent
+}
+
 interface FavoriteStatusResponse {
   perfilId: number
   contenidoId: number
@@ -155,9 +185,14 @@ export function ContentDetailPage() {
   const isContentIdValid = Number.isInteger(numericContentId) && numericContentId > 0
 
   const [content, setContent] = useState<CatalogContent | null>(null)
-  const [relatedContents, setRelatedContents] = useState<CatalogContent[]>([])
+  const [relatedContents, setRelatedContents] = useState<CatalogRelatedItem[]>([])
+  const [genres, setGenres] = useState<CatalogGenre[]>([])
+  const [seasons, setSeasons] = useState<CatalogSeason[]>([])
+  const [episodesBySeason, setEpisodesBySeason] = useState<Record<number, CatalogEpisode[]>>({})
   const [isLoadingContent, setIsLoadingContent] = useState(true)
   const [isLoadingRelated, setIsLoadingRelated] = useState(true)
+  const [isLoadingGenres, setIsLoadingGenres] = useState(true)
+  const [isLoadingSeasons, setIsLoadingSeasons] = useState(true)
   const [isStartingPlayback, setIsStartingPlayback] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const [isCheckingFavoriteStatus, setIsCheckingFavoriteStatus] = useState(true)
@@ -182,29 +217,88 @@ export function ContentDetailPage() {
   )
 
   /**
-   * Carga contenidos relacionados para reforzar exploracion del catalogo.
-   * @param sourceContent - Contenido base de la pantalla actual.
+   * Carga contenidos relacionados reales desde el endpoint de catalogo extendido.
+   * @param sourceContentId - Contenido base de la pantalla actual.
    */
-  const fetchRelatedContents = useCallback(async (sourceContent: CatalogContent) => {
+  const fetchRelatedContents = useCallback(async (sourceContentId: number) => {
     try {
       setIsLoadingRelated(true)
 
-      const response = await apiClient.get<CatalogContent[]>('/catalog/contents', {
-        params: {
-          categoriaId: sourceContent.categoria.id,
-          limit: 18,
-        },
-      })
+      const response = await apiClient.get<CatalogRelatedItem[]>(
+        `/catalog/contents/${sourceContentId}/related`,
+      )
 
-      const filteredRelated = response.data
-        .filter((item) => item.id !== sourceContent.id)
-        .slice(0, 8)
-
-      setRelatedContents(filteredRelated)
+      setRelatedContents(response.data)
     } catch {
       setRelatedContents([])
     } finally {
       setIsLoadingRelated(false)
+    }
+  }, [])
+
+  /**
+   * Carga generos asignados al contenido.
+   * @param targetContentId - Contenido evaluado.
+   */
+  const fetchGenres = useCallback(async (targetContentId: number) => {
+    try {
+      setIsLoadingGenres(true)
+      const response = await apiClient.get<CatalogGenre[]>(
+        `/catalog/contents/${targetContentId}/genres`,
+      )
+      setGenres(response.data)
+    } catch {
+      setGenres([])
+    } finally {
+      setIsLoadingGenres(false)
+    }
+  }, [])
+
+  /**
+   * Carga temporadas de un contenido y opcionalmente sus episodios.
+   * @param targetContentId - Contenido evaluado.
+   */
+  const fetchSeasons = useCallback(async (targetContentId: number) => {
+    try {
+      setIsLoadingSeasons(true)
+      const response = await apiClient.get<CatalogSeason[]>(
+        `/catalog/contents/${targetContentId}/seasons`,
+      )
+      setSeasons(response.data)
+
+      // Cargar episodios de la primera temporada automaticamente
+      if (response.data.length > 0) {
+        const firstSeason = response.data[0]
+        const episodesResponse = await apiClient.get<CatalogEpisode[]>(
+          `/catalog/seasons/${firstSeason.id}/episodes`,
+        )
+        setEpisodesBySeason((prev) => ({
+          ...prev,
+          [firstSeason.id]: episodesResponse.data,
+        }))
+      }
+    } catch {
+      setSeasons([])
+    } finally {
+      setIsLoadingSeasons(false)
+    }
+  }, [])
+
+  /**
+   * Carga episodios de una temporada especifica.
+   * @param seasonId - Identificador de la temporada.
+   */
+  const fetchSeasonEpisodes = useCallback(async (seasonId: number) => {
+    try {
+      const response = await apiClient.get<CatalogEpisode[]>(
+        `/catalog/seasons/${seasonId}/episodes`,
+      )
+      setEpisodesBySeason((prev) => ({
+        ...prev,
+        [seasonId]: response.data,
+      }))
+    } catch {
+      setEpisodesBySeason((prev) => ({ ...prev, [seasonId]: [] }))
     }
   }, [])
 
@@ -341,8 +435,11 @@ export function ContentDetailPage() {
         )
 
         setContent(response.data)
+        setEpisodesBySeason({})
         await Promise.all([
-          fetchRelatedContents(response.data),
+          fetchRelatedContents(response.data.id),
+          fetchGenres(response.data.id),
+          fetchSeasons(response.data.id),
           fetchFavoriteStatus(response.data.id),
           fetchRatingStatus(response.data.id),
           fetchRecentReports(response.data.id),
@@ -350,6 +447,9 @@ export function ContentDetailPage() {
       } catch {
         setContent(null)
         setRelatedContents([])
+        setGenres([])
+        setSeasons([])
+        setEpisodesBySeason({})
         setIsFavorite(false)
         setIsCheckingFavoriteStatus(false)
         setHasRating(false)
@@ -357,6 +457,8 @@ export function ContentDetailPage() {
         setRatingReview('')
         setIsCheckingRatingStatus(false)
         setRecentReports([])
+        setIsLoadingGenres(false)
+        setIsLoadingSeasons(false)
         setIsLoadingRecentReports(false)
         toast.error('No pudimos cargar este titulo. Intenta de nuevo.')
       } finally {
@@ -365,9 +467,11 @@ export function ContentDetailPage() {
     },
     [
       fetchFavoriteStatus,
+      fetchGenres,
       fetchRatingStatus,
       fetchRecentReports,
       fetchRelatedContents,
+      fetchSeasons,
     ],
   )
 
@@ -375,8 +479,13 @@ export function ContentDetailPage() {
     if (!isContentIdValid) {
       setContent(null)
       setRelatedContents([])
+      setGenres([])
+      setSeasons([])
+      setEpisodesBySeason({})
       setIsLoadingContent(false)
       setIsLoadingRelated(false)
+      setIsLoadingGenres(false)
+      setIsLoadingSeasons(false)
       setIsFavorite(false)
       setIsCheckingFavoriteStatus(false)
       setHasRating(false)
@@ -771,6 +880,129 @@ export function ContentDetailPage() {
             </motion.section>
 
             <motion.section
+              className="nf-content-detail-related"
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.07, duration: 0.32 }}
+            >
+              <header className="nf-catalog-row-header">
+                <h2 className="nf-browse-section-title">Catalogo extendido</h2>
+                <span>
+                  {genres.length} generos · {seasons.length} temporadas
+                </span>
+              </header>
+
+              <article className="nf-content-detail-rating-card">
+                <header className="nf-catalog-row-header">
+                  <h3>Generos</h3>
+                  <span>{isLoadingGenres ? 'Consultando...' : `${genres.length}`}</span>
+                </header>
+
+                {isLoadingGenres ? (
+                  <p className="nf-rating-helper">Cargando generos del titulo...</p>
+                ) : genres.length === 0 ? (
+                  <p className="nf-rating-helper">
+                    Este titulo aun no tiene generos secundarios registrados.
+                  </p>
+                ) : (
+                  <div className="nf-catalog-badges">
+                    {genres.map((genre) => (
+                      <span key={genre.id} className="nf-catalog-badge">
+                        {genre.nombre}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </article>
+
+              <article className="nf-content-detail-rating-card">
+                <header className="nf-catalog-row-header">
+                  <h3>Temporadas y episodios</h3>
+                  <span>
+                    {isLoadingSeasons ? 'Consultando...' : `${seasons.length}`}
+                  </span>
+                </header>
+
+                {isLoadingSeasons ? (
+                  <p className="nf-rating-helper">Cargando temporadas disponibles...</p>
+                ) : seasons.length === 0 ? (
+                  <p className="nf-rating-helper">
+                    Este titulo no tiene temporadas registradas.
+                  </p>
+                ) : (
+                  <div className="nf-content-detail-grid">
+                    {seasons.map((season) => {
+                      const episodes = episodesBySeason[season.id]
+
+                      return (
+                        <article key={season.id} className="nf-content-tile">
+                          <h4>
+                            Temporada {season.numeroTemporada}
+                            {season.titulo ? ` · ${season.titulo}` : ''}
+                          </h4>
+                          <p className="nf-catalog-meta">
+                            {season.fechaEstreno
+                              ? `Estreno: ${season.fechaEstreno}`
+                              : 'Sin fecha de estreno'}
+                          </p>
+                          <p className="nf-content-tile-description">
+                            {season.descripcion ??
+                              'Sin descripcion de temporada disponible.'}
+                          </p>
+
+                          <div className="nf-content-tile-actions">
+                            <button
+                              type="button"
+                              className={buttonClassName('ghost')}
+                              onClick={() => void fetchSeasonEpisodes(season.id)}
+                            >
+                              {episodes ? 'Actualizar episodios' : 'Cargar episodios'}
+                            </button>
+                          </div>
+
+                          {episodes === undefined ? (
+                            <p className="nf-catalog-meta">
+                              Selecciona cargar episodios para consultar el detalle.
+                            </p>
+                          ) : episodes.length === 0 ? (
+                            <p className="nf-catalog-meta">
+                              No hay episodios registrados en esta temporada.
+                            </p>
+                          ) : (
+                            <ul className="nf-report-recent-list">
+                              {episodes.map((episode) => (
+                                <li
+                                  key={episode.id}
+                                  className="nf-report-recent-item"
+                                >
+                                  <h4>
+                                    Episodio {episode.numeroEpisodio}: {episode.titulo}
+                                  </h4>
+                                  <p className="nf-catalog-meta">
+                                    {episode.duracionMinutos
+                                      ? `${episode.duracionMinutos} min`
+                                      : 'Sin duracion'}
+                                    {episode.fechaEstreno
+                                      ? ` · Estreno: ${episode.fechaEstreno}`
+                                      : ''}
+                                  </p>
+                                  <p className="nf-content-tile-description">
+                                    {episode.sinopsis ??
+                                      'Sin sinopsis de episodio disponible.'}
+                                  </p>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+              </article>
+            </motion.section>
+
+            <motion.section
               className="nf-content-detail-rating"
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
@@ -987,43 +1219,58 @@ export function ContentDetailPage() {
                 </article>
               ) : (
                 <div className="nf-content-detail-grid">
-                  {relatedContents.map((item) => (
-                    <article
-                      key={item.id}
-                      className="nf-content-tile nf-content-tile-clickable"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => openRelatedDetail(item.id)}
-                      onKeyDown={(event) => handleTileKeyDown(event, item.id)}
-                    >
-                      <h4>{item.titulo}</h4>
-                      <div className="nf-catalog-badges">
-                        <span className="nf-catalog-badge">
-                          {prettifyContentType(item.tipoContenido)}
-                        </span>
-                        <span className="nf-catalog-badge">{item.clasificacionEdad}</span>
-                      </div>
-                      <p className="nf-catalog-meta">
-                        {item.anioLanzamiento ? `${item.anioLanzamiento}` : 'Sin anio'}
-                        {item.duracionMinutos ? ` · ${item.duracionMinutos} min` : ''}
-                      </p>
-                      <p className="nf-content-tile-description">
-                        {item.sinopsis ?? 'Sin descripcion disponible por ahora.'}
-                      </p>
-                      <div className="nf-content-tile-actions">
-                        <button
-                          type="button"
-                          className={buttonClassName('ghost')}
-                          onClick={(event) => {
-                            event.stopPropagation()
-                            openRelatedDetail(item.id)
-                          }}
-                        >
-                          Ver detalle
-                        </button>
-                      </div>
-                    </article>
-                  ))}
+                  {relatedContents.map((item) => {
+                    const relatedContent = item.contenidoRelacionado
+
+                    return (
+                      <article
+                        key={item.id}
+                        className="nf-content-tile nf-content-tile-clickable"
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openRelatedDetail(relatedContent.id)}
+                        onKeyDown={(event) =>
+                          handleTileKeyDown(event, relatedContent.id)
+                        }
+                      >
+                        <h4>{relatedContent.titulo}</h4>
+                        <div className="nf-catalog-badges">
+                          <span className="nf-catalog-badge">
+                            {prettifyContentType(relatedContent.tipoContenido)}
+                          </span>
+                          <span className="nf-catalog-badge">
+                            {relatedContent.clasificacionEdad}
+                          </span>
+                          <span className="nf-catalog-badge">{item.tipoRelacion}</span>
+                        </div>
+                        <p className="nf-catalog-meta">
+                          {relatedContent.anioLanzamiento
+                            ? `${relatedContent.anioLanzamiento}`
+                            : 'Sin anio'}
+                          {relatedContent.duracionMinutos
+                            ? ` · ${relatedContent.duracionMinutos} min`
+                            : ''}
+                        </p>
+                        <p className="nf-content-tile-description">
+                          {item.descripcion ??
+                            relatedContent.sinopsis ??
+                            'Sin descripcion disponible por ahora.'}
+                        </p>
+                        <div className="nf-content-tile-actions">
+                          <button
+                            type="button"
+                            className={buttonClassName('ghost')}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              openRelatedDetail(relatedContent.id)
+                            }}
+                          >
+                            Ver detalle
+                          </button>
+                        </div>
+                      </article>
+                    )
+                  })}
                 </div>
               )}
             </motion.section>

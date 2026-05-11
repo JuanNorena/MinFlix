@@ -43,6 +43,21 @@ export class AnalyticsService {
     return Number.isNaN(parsed) ? 0 : parsed;
   }
 
+  private toText(value: unknown): string {
+    if (value === null || value === undefined) return '';
+    if (typeof value === 'string') return value;
+    if (typeof value === 'number') return value.toString();
+    if (typeof value === 'boolean') return value.toString();
+    if (typeof value === 'bigint') return value.toString();
+    if (value instanceof Date) return value.toISOString();
+    return '';
+  }
+
+  private toNullableText(value: unknown): string | null {
+    const text = this.toText(value);
+    return text.length > 0 ? text : null;
+  }
+
   /**
    * Retorna datos de consumo de contenido desde VW_ANALITICA_CONSUMO.
    * Aplica filtros opcionales de ciudad, categoria, genero, dispositivo y plan.
@@ -111,15 +126,17 @@ export class AnalyticsService {
       WHERE ROWNUM <= :${paramIndex}
     `;
 
-    const rows = await this.dataSource.query(sql, params);
-    return (rows as Record<string, unknown>[]).map((r) => ({
-      ciudadResidencia: String(r['ciudadResidencia'] ?? ''),
-      categoria: String(r['categoria'] ?? ''),
-      genero: r['genero'] != null ? String(r['genero']) : null,
-      ultimoDispositivo:
-        r['ultimoDispositivo'] != null ? String(r['ultimoDispositivo']) : null,
-      plan: String(r['plan'] ?? ''),
-      periodoMes: new Date(r['periodoMes'] as string),
+    const rows = await this.dataSource.query<Record<string, unknown>[]>(
+      sql,
+      params,
+    );
+    return rows.map((r) => ({
+      ciudadResidencia: this.toText(r['ciudadResidencia']),
+      categoria: this.toText(r['categoria']),
+      genero: this.toNullableText(r['genero']),
+      ultimoDispositivo: this.toNullableText(r['ultimoDispositivo']),
+      plan: this.toText(r['plan']),
+      periodoMes: new Date(this.toText(r['periodoMes'])),
       totalReproducciones: this.toNumber(r['totalReproducciones']),
       perfilesUnicos: this.toNumber(r['perfilesUnicos']),
       promedioAvance: this.toNumber(r['promedioAvance']),
@@ -189,10 +206,13 @@ export class AnalyticsService {
       WHERE ROWNUM <= :${paramIndex}
     `;
 
-    const rows = await this.dataSource.query(sql, params);
-    return (rows as Record<string, unknown>[]).map((r) => ({
-      ciudadResidencia: String(r['ciudadResidencia'] ?? ''),
-      plan: String(r['plan'] ?? ''),
+    const rows = await this.dataSource.query<Record<string, unknown>[]>(
+      sql,
+      params,
+    );
+    return rows.map((r) => ({
+      ciudadResidencia: this.toText(r['ciudadResidencia']),
+      plan: this.toText(r['plan']),
       periodoAnio: this.toNumber(r['periodoAnio']),
       periodoMes: this.toNumber(r['periodoMes']),
       totalFacturas: this.toNumber(r['totalFacturas']),
@@ -253,9 +273,12 @@ export class AnalyticsService {
       WHERE ROWNUM <= :${paramIndex}
     `;
 
-    const rows = await this.dataSource.query(sql, params);
-    return (rows as Record<string, unknown>[]).map((r) => ({
-      departamento: String(r['departamento'] ?? ''),
+    const rows = await this.dataSource.query<Record<string, unknown>[]>(
+      sql,
+      params,
+    );
+    return rows.map((r) => ({
+      departamento: this.toText(r['departamento']),
       totalEmpleados: this.toNumber(r['totalEmpleados']),
       totalJefes: this.toNumber(r['totalJefes']),
       empleadosActivos: this.toNumber(r['empleadosActivos']),

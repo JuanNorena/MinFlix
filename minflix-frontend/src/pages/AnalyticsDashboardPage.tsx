@@ -121,10 +121,6 @@ export function AnalyticsDashboardPage() {
   const [isLoadingPerformance, setIsLoadingPerformance] = useState(false)
   const [performanceQueried, setPerformanceQueried] = useState(false)
 
-  if (!authSession) {
-    return <Navigate to="/login" replace />
-  }
-
   function handleSignOut() {
     setIsMobileMenuOpen(false)
     window.localStorage.removeItem('minflix_access_token')
@@ -132,7 +128,6 @@ export function AnalyticsDashboardPage() {
     navigate('/login', { replace: true })
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchConsumption = useCallback(async () => {
     try {
       setIsLoadingConsumption(true)
@@ -154,7 +149,6 @@ export function AnalyticsDashboardPage() {
     }
   }, [consumptionFilters])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchFinance = useCallback(async () => {
     try {
       setIsLoadingFinance(true)
@@ -175,7 +169,6 @@ export function AnalyticsDashboardPage() {
     }
   }, [financeFilters])
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fetchPerformance = useCallback(async () => {
     try {
       setIsLoadingPerformance(true)
@@ -193,6 +186,10 @@ export function AnalyticsDashboardPage() {
       setIsLoadingPerformance(false)
     }
   }, [performanceFilters])
+
+  if (!authSession) {
+    return <Navigate to="/login" replace />
+  }
 
   return (
     <main className="nf-shell nf-moderation-shell">
