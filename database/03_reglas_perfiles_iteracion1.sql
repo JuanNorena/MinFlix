@@ -6,25 +6,34 @@
 
 -- --------------------------------------------------------------------------
 -- Regla 1: limite de perfiles por plan en base de datos.
+-- Aplica antes de insertar un perfil y evita superar el limite del plan.
+-- Errores:
+--   -20011: exceso de perfiles para el plan.
+--   -20012: la cuenta no existe.
 -- --------------------------------------------------------------------------
 CREATE OR REPLACE TRIGGER TRG_PERFILES_LIMITE_PLAN_BI
 BEFORE INSERT ON PERFILES
 FOR EACH ROW
 DECLARE
+  -- Limite permitido segun plan.
   V_LIMITE PLANES.LIMITE_PERFILES%TYPE;
+  -- Conteo de perfiles actuales del usuario.
   V_ACTUALES NUMBER;
 BEGIN
+  -- Obtener el limite del plan asociado a la cuenta.
   SELECT NVL(P.LIMITE_PERFILES, 1)
     INTO V_LIMITE
     FROM USUARIOS U
     LEFT JOIN PLANES P ON P.ID_PLAN = U.ID_PLAN
    WHERE U.ID_USUARIO = :NEW.ID_USUARIO;
 
+  -- Contar perfiles actuales de la cuenta.
   SELECT COUNT(*)
     INTO V_ACTUALES
     FROM PERFILES PR
    WHERE PR.ID_USUARIO = :NEW.ID_USUARIO;
 
+  -- Validar que la nueva insercion no supere el limite.
   IF V_ACTUALES >= V_LIMITE THEN
     RAISE_APPLICATION_ERROR(
       -20011,
@@ -43,6 +52,7 @@ END;
 -- --------------------------------------------------------------------------
 -- Regla 2: clasificacion permitida para perfil infantil (regla reutilizable).
 -- Devuelve 1 cuando el perfil puede consumir la clasificacion recibida.
+-- Se normalizan valores para evitar fallos por mayusculas/espacios.
 -- --------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION FN_CLASIFICACION_PERMITIDA_PARA_PERFIL (
   P_TIPO_PERFIL IN VARCHAR2,
@@ -52,6 +62,7 @@ IS
   V_TIPO_PERFIL VARCHAR2(20) := LOWER(TRIM(NVL(P_TIPO_PERFIL, 'adulto')));
   V_CLASIFICACION VARCHAR2(10) := UPPER(TRIM(NVL(P_CLASIFICACION_EDAD, 'TP')));
 BEGIN
+  -- Bloqueo infantil para clasificaciones +16 y +18.
   IF V_TIPO_PERFIL = 'infantil' AND V_CLASIFICACION IN ('+16', '+18') THEN
     RETURN 0;
   END IF;
@@ -62,7 +73,12 @@ END;
 
 -- --------------------------------------------------------------------------
 -- Vista de apoyo para listar contenido visible por perfil segun clasificacion.
+-- Usa la funcion anterior para filtrar automaticamente el catalogo visible.
 -- --------------------------------------------------------------------------
+-- Campos principales:
+--   ID_PERFIL/ID_USUARIO: ownership del contenido visible.
+--   CLASIFICACION_EDAD: usada para el filtro infantil.
+--   TIPO_CONTENIDO/ID_CATEGORIA: soporte a browse y filtros.
 CREATE OR REPLACE VIEW VW_CONTENIDO_VISIBLE_POR_PERFIL AS
 SELECT
   P.ID_PERFIL,

@@ -7,6 +7,12 @@
 --   2) Mantener compatibilidad con datos existentes mediante backfill idempotente.
 -- ============================================================================
 
+-- --------------------------------------------------------------------------
+-- Bloque idempotente de evolucion de esquema:
+--   - agrega columnas si no existen,
+--   - rellena valores nulos (backfill),
+--   - agrega constraints y marca NOT NULL.
+-- --------------------------------------------------------------------------
 DECLARE
   V_EXISTE NUMBER := 0;
 BEGIN
@@ -40,6 +46,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS ADD (CIUDAD_RESIDENCIA VARCHAR2(120))';
   END IF;
 
+  -- Backfill controlado para registros existentes.
   EXECUTE IMMEDIATE q'[
     UPDATE USUARIOS
        SET TELEFONO = '3000000000'
@@ -58,6 +65,7 @@ BEGIN
      WHERE CIUDAD_RESIDENCIA IS NULL
   ]';
 
+  -- Constraints de validacion (solo si no existen).
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_CONSTRAINTS
@@ -84,6 +92,7 @@ BEGIN
     ]';
   END IF;
 
+  -- Finalmente, marcar columnas como obligatorias.
   EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS MODIFY (TELEFONO NOT NULL)';
   EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS MODIFY (FECHA_NACIMIENTO NOT NULL)';
   EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS MODIFY (CIUDAD_RESIDENCIA NOT NULL)';

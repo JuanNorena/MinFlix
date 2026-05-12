@@ -10,6 +10,7 @@
 -- ============================================================================
 
 SET SERVEROUTPUT ON;
+-- Este script ejecuta operaciones con COMMIT/ROLLBACK y requiere datos seed.
 
 -- ============================================================================
 -- SECCION A: Transaccion 1 — Registro atomico de Cliente + Plan + Perfil
@@ -38,6 +39,7 @@ DECLARE
   V_PERFIL_ID        PERFILES.ID_PERFIL%TYPE;
 BEGIN
   DBMS_OUTPUT.PUT_LINE('--- TRANSACCION 1: Registro atomico de cliente ---');
+  -- Consejo: si ya existe el email de prueba, cambie V_EMAIL.
 
   -- Paso 1: obtener datos del plan (lectura previa, no modifica datos)
   SELECT ID_PLAN, PRECIO_MENSUAL
@@ -191,6 +193,7 @@ END;
 --   - Uso de ROLLBACK en caso de error para no dejar datos inconsistentes.
 --   - Soft-delete alternativo: UPDATE de estado en vez de DELETE.
 -- ============================================================================
+-- Advertencia: esta seccion elimina datos de forma permanente.
 
 DECLARE
   V_ID_USUARIO NUMBER := -1; -- cambiar por un ID real para prueba

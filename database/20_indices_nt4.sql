@@ -11,6 +11,7 @@
 -- ============================================================================
 
 SET SERVEROUTPUT ON;
+-- DBMS_XPLAN muestra el plan de ejecucion de cada consulta evaluada.
 
 -- ============================================================================
 -- SECCION A: Consulta pesada seleccionada
@@ -88,6 +89,7 @@ FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 DECLARE
   V_EXISTE NUMBER := 0;
 BEGIN
+  -- Bloque idempotente: crear indice solo si no existe.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
@@ -160,6 +162,7 @@ FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 DECLARE
   V_EXISTE NUMBER := 0;
 BEGIN
+  -- Bloque idempotente para indice de categoria/anio.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
@@ -215,6 +218,7 @@ FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 DECLARE
   V_EXISTE NUMBER := 0;
 BEGIN
+  -- Bloque idempotente para indice de ciudad/estado.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
@@ -266,6 +270,7 @@ FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 DECLARE
   V_EXISTE NUMBER := 0;
 BEGIN
+  -- Bloque idempotente para indice de calificaciones.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES

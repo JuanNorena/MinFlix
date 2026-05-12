@@ -4,6 +4,9 @@
 -- Requiere: scripts 01..11 aplicados
 -- ============================================================================
 
+-- --------------------------------------------------------------------------
+-- Comentarios a nivel de tabla: describen el proposito de cada entidad.
+-- --------------------------------------------------------------------------
 COMMENT ON TABLE PLANES IS 'Catalogo de planes de suscripcion con limites de perfiles y precio mensual.';
 COMMENT ON TABLE USUARIOS IS 'Cuentas principales de acceso de la plataforma MinFlix.';
 COMMENT ON TABLE PERFILES IS 'Perfiles de reproduccion dependientes de una cuenta principal.';
@@ -24,6 +27,9 @@ COMMENT ON TABLE PAGOS IS 'Transacciones de pago asociadas a facturaciones.';
 COMMENT ON TABLE DEPARTAMENTOS IS 'Estructura organizacional interna de MinFlix.';
 COMMENT ON TABLE EMPLEADOS IS 'Plantilla de empleados y jerarquia supervisor-subordinado.';
 
+-- --------------------------------------------------------------------------
+-- Comentarios a nivel de columna: explican campos sensibles o de negocio.
+-- --------------------------------------------------------------------------
 COMMENT ON COLUMN USUARIOS.ROL IS 'Rol funcional de cuenta: admin, soporte, contenido, analista, usuario.';
 COMMENT ON COLUMN USUARIOS.ESTADO_CUENTA IS 'Estado operativo para control de acceso y reproduccion.';
 COMMENT ON COLUMN USUARIOS.TELEFONO IS 'Telefono de contacto del titular de cuenta para soporte y recuperacion.';

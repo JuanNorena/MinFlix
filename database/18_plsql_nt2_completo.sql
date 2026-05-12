@@ -13,6 +13,7 @@
 -- ============================================================================
 
 SET SERVEROUTPUT ON;
+-- DBMS_OUTPUT muestra resultados de cursores y procedimientos en consola.
 
 -- ============================================================================
 -- SECCION A: Cursores (2 requeridos por NT2)
@@ -176,6 +177,7 @@ END;
 -- Salida:
 --   P_ID_USUARIO generado.
 -- --------------------------------------------------------------------------
+-- Nota: el procedimiento maneja COMMIT/ROLLBACK internamente.
 CREATE OR REPLACE PROCEDURE SP_REGISTRAR_USUARIO (
   P_NOMBRE           IN  VARCHAR2,
   P_EMAIL            IN  VARCHAR2,
@@ -403,6 +405,7 @@ END;
 -- Parametro: P_ID_PERFIL
 -- Retorno: ID_CONTENIDO recomendado (NULL si no hay recomendacion).
 -- --------------------------------------------------------------------------
+-- Fallback incluido: si no hay favoritos, se usa popularidad global.
 CREATE OR REPLACE FUNCTION FN_CONTENIDO_RECOMENDADO (
   P_ID_PERFIL IN NUMBER
 ) RETURN NUMBER
@@ -463,6 +466,7 @@ END;
 
 COMMIT;
 
+-- Grants de ejecucion para roles autorizados.
 GRANT EXECUTE ON SP_REGISTRAR_USUARIO TO ROL_ADMIN;
 GRANT EXECUTE ON SP_CAMBIAR_PLAN TO ROL_ADMIN;
 GRANT EXECUTE ON FN_CALCULAR_MONTO TO ROL_ADMIN;

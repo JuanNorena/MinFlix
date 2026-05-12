@@ -7,6 +7,10 @@
 --   2) Agregar indice por periodo para acelerar historial de facturas.
 -- ============================================================================
 
+-- --------------------------------------------------------------------------
+-- Bloque idempotente: crea el indice solo si no existe.
+-- Mejora filtros por usuario y periodos (anio/mes/corte).
+-- --------------------------------------------------------------------------
 DECLARE
   V_EXISTE NUMBER := 0;
 BEGIN
@@ -28,6 +32,12 @@ BEGIN
 END;
 /
 
+-- --------------------------------------------------------------------------
+-- Vista VW_FIN_RESUMEN_USUARIO
+-- Resume estado financiero por usuario: total facturas, pendientes/vencidas,
+-- pagos exitosos y descuento activo por referidos.
+-- ID_FACTURA_VIGENTE usa DENSE_RANK para obtener la ultima factura del periodo.
+-- --------------------------------------------------------------------------
 CREATE OR REPLACE VIEW VW_FIN_RESUMEN_USUARIO AS
 SELECT
   U.ID_USUARIO,
@@ -65,6 +75,10 @@ SELECT
   ) AS ID_FACTURA_VIGENTE
 FROM USUARIOS U;
 
+-- --------------------------------------------------------------------------
+-- Vista VW_FIN_FACTURAS_DETALLE
+-- Lista facturas con datos del usuario para el endpoint de historial.
+-- --------------------------------------------------------------------------
 CREATE OR REPLACE VIEW VW_FIN_FACTURAS_DETALLE AS
 SELECT
   F.ID_FACTURACION,
@@ -84,6 +98,10 @@ FROM FACTURACIONES F
 JOIN USUARIOS U
   ON U.ID_USUARIO = F.ID_USUARIO;
 
+-- --------------------------------------------------------------------------
+-- Vista VW_FIN_PAGOS_DETALLE
+-- Detalla pagos y referencia a periodo facturado.
+-- --------------------------------------------------------------------------
 CREATE OR REPLACE VIEW VW_FIN_PAGOS_DETALLE AS
 SELECT
   P.ID_PAGO,
@@ -103,6 +121,10 @@ JOIN USUARIOS U
 JOIN FACTURACIONES F
   ON F.ID_FACTURACION = P.ID_FACTURACION;
 
+-- --------------------------------------------------------------------------
+-- Vista VW_FIN_REFERIDOS_DETALLE
+-- Muestra relaciones de referido con emails para consumo en UI.
+-- --------------------------------------------------------------------------
 CREATE OR REPLACE VIEW VW_FIN_REFERIDOS_DETALLE AS
 SELECT
   R.ID_REFERIDO,
@@ -131,6 +153,7 @@ COMMENT ON TABLE VW_FIN_PAGOS_DETALLE IS
 COMMENT ON TABLE VW_FIN_REFERIDOS_DETALLE IS
   'Vista de relaciones de referidos para endpoint /finance/referrals.';
 
+-- Grants para roles con acceso a finanzas (admin/analista).
 GRANT SELECT ON VW_FIN_RESUMEN_USUARIO TO ROL_ADMIN;
 GRANT SELECT ON VW_FIN_FACTURAS_DETALLE TO ROL_ADMIN;
 GRANT SELECT ON VW_FIN_PAGOS_DETALLE TO ROL_ADMIN;

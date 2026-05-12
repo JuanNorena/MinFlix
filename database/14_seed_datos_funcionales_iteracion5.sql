@@ -7,26 +7,34 @@
 --   2) Mantener idempotencia para permitir re-ejecucion sin duplicados logicos.
 -- ============================================================================
 
+-- Habilita salida de mensajes para evidencias y conteos finales.
 SET SERVEROUTPUT ON;
 
 DECLARE
-  C_EMAIL_ADMIN      CONSTANT VARCHAR2(180) := 'admin.seed@minflix.local';
-  C_EMAIL_SOPORTE    CONSTANT VARCHAR2(180) := 'soporte.seed@minflix.local';
-  C_EMAIL_CONTENIDO  CONSTANT VARCHAR2(180) := 'contenido.seed@minflix.local';
-  C_EMAIL_ANALISTA   CONSTANT VARCHAR2(180) := 'analista.seed@minflix.local';
-  C_EMAIL_USUARIO    CONSTANT VARCHAR2(180) := 'usuario.seed@minflix.local';
+  -- Constantes de emails de seed para identificar el origen de datos
+  C_EMAIL_ADMIN      CONSTANT VARCHAR2(180) := 'admin.seed@minflix.local';        -- Email del admin
+  C_EMAIL_SOPORTE    CONSTANT VARCHAR2(180) := 'soporte.seed@minflix.local';      -- Email del soporte
+  C_EMAIL_CONTENIDO  CONSTANT VARCHAR2(180) := 'contenido.seed@minflix.local';    -- Email del editor
+  C_EMAIL_ANALISTA   CONSTANT VARCHAR2(180) := 'analista.seed@minflix.local';     -- Email del analista
+  C_EMAIL_USUARIO    CONSTANT VARCHAR2(180) := 'usuario.seed@minflix.local';      -- Email del usuario regular
 
-  C_PREFIJO_SEED     CONSTANT VARCHAR2(20) := 'SEED14';
+  -- Prefijo para identificar objetos creados por este seed script en auditorias y busquedas
+  C_PREFIJO_SEED     CONSTANT VARCHAR2(20) := 'SEED14';                          -- Marca de origen
 
-  V_CNT_CONTENIDOS_SEED NUMBER;
-  V_CNT_REPORTE_SEED    NUMBER;
-  V_CNT_PAGO_SEED       NUMBER;
+  -- Contadores de validacion al finalizar
+  V_CNT_CONTENIDOS_SEED NUMBER;                                                   -- Cantidad de contenidos creados
+  V_CNT_REPORTE_SEED    NUMBER;                                                   -- Cantidad de reportes de seed
+  V_CNT_PAGO_SEED       NUMBER;                                                   -- Cantidad de pagos procesados
 
+  -- ------------------------------------------------------------------------
+  -- Funcion GET_USUARIO_ID
+  -- Devuelve el ID de usuario por email; falla si no existe.
+  -- ------------------------------------------------------------------------
   FUNCTION GET_USUARIO_ID (
-    P_EMAIL IN VARCHAR2
+    P_EMAIL IN VARCHAR2                           -- Email del usuario a buscar (case-insensitive)
   ) RETURN NUMBER
   IS
-    V_ID USUARIOS.ID_USUARIO%TYPE;
+    V_ID USUARIOS.ID_USUARIO%TYPE;                -- ID del usuario encontrado
   BEGIN
     SELECT U.ID_USUARIO
       INTO V_ID
@@ -42,13 +50,17 @@ DECLARE
       );
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Funcion GET_PERFIL_ID
+  -- Devuelve el perfil por email + nombre; si no existe, toma el primer perfil.
+  -- ------------------------------------------------------------------------
   FUNCTION GET_PERFIL_ID (
-    P_EMAIL IN VARCHAR2,
-    P_NOMBRE_PERFIL IN VARCHAR2
+    P_EMAIL IN VARCHAR2,                          -- Email del usuario propietario del perfil
+    P_NOMBRE_PERFIL IN VARCHAR2                   -- Nombre descriptivo del perfil
   ) RETURN NUMBER
   IS
-    V_ID_USUARIO USUARIOS.ID_USUARIO%TYPE;
-    V_ID_PERFIL  PERFILES.ID_PERFIL%TYPE;
+    V_ID_USUARIO USUARIOS.ID_USUARIO%TYPE;        -- ID del usuario resuelto
+    V_ID_PERFIL  PERFILES.ID_PERFIL%TYPE;         -- ID del perfil encontrado o primero por defecto
   BEGIN
     V_ID_USUARIO := GET_USUARIO_ID(P_EMAIL);
 
@@ -76,11 +88,15 @@ DECLARE
     RETURN V_ID_PERFIL;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Funcion GET_CATEGORIA_ID
+  -- Devuelve el ID de categoria por nombre (case-insensitive).
+  -- ------------------------------------------------------------------------
   FUNCTION GET_CATEGORIA_ID (
-    P_NOMBRE IN VARCHAR2
+    P_NOMBRE IN VARCHAR2                          -- Nombre de la categoria (case-insensitive)
   ) RETURN NUMBER
   IS
-    V_ID CATEGORIAS.ID_CATEGORIA%TYPE;
+    V_ID CATEGORIAS.ID_CATEGORIA%TYPE;            -- ID de la categoria encontrada
   BEGIN
     SELECT C.ID_CATEGORIA
       INTO V_ID
@@ -96,11 +112,15 @@ DECLARE
       );
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Funcion GET_CONTENIDO_ID
+  -- Devuelve el ID del contenido por titulo; falla si no existe.
+  -- ------------------------------------------------------------------------
   FUNCTION GET_CONTENIDO_ID (
-    P_TITULO IN VARCHAR2
+    P_TITULO IN VARCHAR2                          -- Titulo del contenido a buscar (case-insensitive)
   ) RETURN NUMBER
   IS
-    V_ID CONTENIDOS.ID_CONTENIDO%TYPE;
+    V_ID CONTENIDOS.ID_CONTENIDO%TYPE;            -- ID del contenido encontrado
   BEGIN
     SELECT MIN(C.ID_CONTENIDO)
       INTO V_ID
@@ -117,11 +137,15 @@ DECLARE
     RETURN V_ID;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Funcion GET_GENERO_ID
+  -- Devuelve el ID del genero por nombre (case-insensitive).
+  -- ------------------------------------------------------------------------
   FUNCTION GET_GENERO_ID (
-    P_NOMBRE IN VARCHAR2
+    P_NOMBRE IN VARCHAR2                          -- Nombre del genero (case-insensitive)
   ) RETURN NUMBER
   IS
-    V_ID GENEROS.ID_GENERO%TYPE;
+    V_ID GENEROS.ID_GENERO%TYPE;                  -- ID del genero encontrado
   BEGIN
     SELECT G.ID_GENERO
       INTO V_ID
@@ -137,11 +161,15 @@ DECLARE
       );
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Funcion GET_DEPARTAMENTO_ID
+  -- Devuelve el ID de departamento por nombre.
+  -- ------------------------------------------------------------------------
   FUNCTION GET_DEPARTAMENTO_ID (
-    P_NOMBRE IN VARCHAR2
+    P_NOMBRE IN VARCHAR2                          -- Nombre del departamento
   ) RETURN NUMBER
   IS
-    V_ID DEPARTAMENTOS.ID_DEPARTAMENTO%TYPE;
+    V_ID DEPARTAMENTOS.ID_DEPARTAMENTO%TYPE;      -- ID del departamento encontrado
   BEGIN
     SELECT D.ID_DEPARTAMENTO
       INTO V_ID
@@ -157,6 +185,10 @@ DECLARE
       );
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_PERFIL
+  -- Inserta el perfil si no existe para el usuario.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_PERFIL (
     P_EMAIL       IN VARCHAR2,
     P_NOMBRE      IN VARCHAR2,
@@ -187,12 +219,21 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_GENERO
+  -- Crea o actualiza la descripcion de un genero.
+  -- Parametros:
+  --   P_NOMBRE: Nombre del genero
+  --   P_DESCRIPCION: Descripcion detallada del genero
+  -- Logica:
+  --   Si existe el genero, actualiza descripcion. Si no existe, lo inserta.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_GENERO (
-    P_NOMBRE      IN VARCHAR2,
-    P_DESCRIPCION IN VARCHAR2
+    P_NOMBRE      IN VARCHAR2,                    -- Nombre del genero
+    P_DESCRIPCION IN VARCHAR2                     -- Descripcion detallada
   )
   IS
-    V_ID GENEROS.ID_GENERO%TYPE;
+    V_ID GENEROS.ID_GENERO%TYPE;                  -- ID del genero encontrado
   BEGIN
     BEGIN
       SELECT G.ID_GENERO
@@ -215,21 +256,37 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_CONTENIDO
+  -- Inserta o actualiza un contenido y su publicador en el catalogo.
+  -- Parametros:
+  --   P_TITULO: Titulo del contenido
+  --   P_TIPO: Tipo (pelicula|serie|documental|musica|podcast)
+  --   P_ANIO: Anio de lanzamiento
+  --   P_DURACION_MIN: Duracion en minutos
+  --   P_SINOPSIS: Descripcion de la trama
+  --   P_CLASIFICACION: Clasificacion de edad (G|PG|PG-13|R|NC-17)
+  --   P_ES_EXCLUSIVO: 1 si es exclusivo de MinFlix, 0 si es contenido con licencia
+  --   P_CATEGORIA: Nombre de la categoria para clasificar
+  --   P_PUBLICADOR_MAIL: Email del usuario que publica/edita el contenido
+  -- Logica:
+  --   Valida categoria y publicador. Si existe el contenido, actualiza. Si no, inserta.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_CONTENIDO (
-    P_TITULO          IN VARCHAR2,
-    P_TIPO            IN VARCHAR2,
-    P_ANIO            IN NUMBER,
-    P_DURACION_MIN    IN NUMBER,
-    P_SINOPSIS        IN VARCHAR2,
-    P_CLASIFICACION   IN VARCHAR2,
-    P_ES_EXCLUSIVO    IN NUMBER,
-    P_CATEGORIA       IN VARCHAR2,
-    P_PUBLICADOR_MAIL IN VARCHAR2
+    P_TITULO          IN VARCHAR2,                -- Titulo del contenido
+    P_TIPO            IN VARCHAR2,                -- Tipo: pelicula|serie|documental|musica|podcast
+    P_ANIO            IN NUMBER,                  -- Anio de lanzamiento
+    P_DURACION_MIN    IN NUMBER,                  -- Duracion en minutos
+    P_SINOPSIS        IN VARCHAR2,                -- Descripcion de la trama
+    P_CLASIFICACION   IN VARCHAR2,                -- Clasificacion de edad: G|PG|PG-13|R|NC-17
+    P_ES_EXCLUSIVO    IN NUMBER,                  -- 1 si exclusivo de MinFlix, 0 si no
+    P_CATEGORIA       IN VARCHAR2,                -- Nombre de la categoria
+    P_PUBLICADOR_MAIL IN VARCHAR2                 -- Email del usuario publicador
   )
   IS
-    V_ID_CONTENIDO   CONTENIDOS.ID_CONTENIDO%TYPE;
-    V_ID_CATEGORIA   CATEGORIAS.ID_CATEGORIA%TYPE;
-    V_ID_PUBLICADOR  USUARIOS.ID_USUARIO%TYPE;
+    V_ID_CONTENIDO   CONTENIDOS.ID_CONTENIDO%TYPE;   -- ID del contenido encontrado o creado
+    V_ID_CATEGORIA   CATEGORIAS.ID_CATEGORIA%TYPE;   -- ID de la categoria validada
+    V_ID_PUBLICADOR  USUARIOS.ID_USUARIO%TYPE;       -- ID del usuario publicador validado
   BEGIN
     V_ID_CATEGORIA := GET_CATEGORIA_ID(P_CATEGORIA);
     V_ID_PUBLICADOR := GET_USUARIO_ID(P_PUBLICADOR_MAIL);
@@ -275,14 +332,23 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_CONTENIDO_GENERO
+  -- Asegura la relacion M:N entre contenido y genero (sin duplicados logicos).
+  -- Parametros:
+  --   P_TITULO_CONTENIDO: Titulo del contenido
+  --   P_NOMBRE_GENERO: Nombre del genero a asociar
+  -- Logica:
+  --   Si la relacion ya existe, no hace nada. Si no existe, la inserta.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_CONTENIDO_GENERO (
-    P_TITULO_CONTENIDO IN VARCHAR2,
-    P_NOMBRE_GENERO    IN VARCHAR2
+    P_TITULO_CONTENIDO IN VARCHAR2,                -- Titulo del contenido
+    P_NOMBRE_GENERO    IN VARCHAR2                 -- Nombre del genero
   )
   IS
-    V_ID_CONTENIDO CONTENIDOS.ID_CONTENIDO%TYPE;
-    V_ID_GENERO    GENEROS.ID_GENERO%TYPE;
-    V_EXISTE       NUMBER;
+    V_ID_CONTENIDO CONTENIDOS.ID_CONTENIDO%TYPE;  -- ID del contenido validado
+    V_ID_GENERO    GENEROS.ID_GENERO%TYPE;        -- ID del genero validado
+    V_EXISTE       NUMBER;                        -- Contador de existencia de relacion
   BEGIN
     V_ID_CONTENIDO := GET_CONTENIDO_ID(P_TITULO_CONTENIDO);
     V_ID_GENERO := GET_GENERO_ID(P_NOMBRE_GENERO);
@@ -304,16 +370,28 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_TEMPORADA
+  -- Crea o actualiza la temporada de un contenido tipo serie/podcast.
+  -- Parametros:
+  --   P_TITULO_CONTENIDO: Titulo del contenido padre (serie/podcast)
+  --   P_NUM_TEMPORADA: Numero de temporada (1, 2, 3...)
+  --   P_TITULO_TEMP: Titulo descriptivo de la temporada
+  --   P_DESCRIPCION: Descripcion de la temporada
+  --   P_FECHA_ESTRENO: Fecha de estreno de la temporada
+  -- Logica:
+  --   Si existe la temporada, actualiza. Si no existe, la inserta.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_TEMPORADA (
-    P_TITULO_CONTENIDO IN VARCHAR2,
-    P_NUM_TEMPORADA    IN NUMBER,
-    P_TITULO_TEMP      IN VARCHAR2,
-    P_DESCRIPCION      IN VARCHAR2,
-    P_FECHA_ESTRENO    IN DATE
+    P_TITULO_CONTENIDO IN VARCHAR2,                -- Titulo del contenido padre
+    P_NUM_TEMPORADA    IN NUMBER,                  -- Numero de temporada
+    P_TITULO_TEMP      IN VARCHAR2,                -- Titulo descriptivo
+    P_DESCRIPCION      IN VARCHAR2,                -- Descripcion de la temporada
+    P_FECHA_ESTRENO    IN DATE                     -- Fecha de estreno
   )
   IS
-    V_ID_CONTENIDO CONTENIDOS.ID_CONTENIDO%TYPE;
-    V_ID_TEMPORADA TEMPORADAS.ID_TEMPORADA%TYPE;
+    V_ID_CONTENIDO CONTENIDOS.ID_CONTENIDO%TYPE;  -- ID del contenido validado
+    V_ID_TEMPORADA TEMPORADAS.ID_TEMPORADA%TYPE;  -- ID de la temporada
   BEGIN
     V_ID_CONTENIDO := GET_CONTENIDO_ID(P_TITULO_CONTENIDO);
 
@@ -347,19 +425,33 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_EPISODIO
+  -- Crea o actualiza episodios dentro de una temporada de serie/podcast.
+  -- Parametros:
+  --   P_TITULO_CONTENIDO: Titulo del contenido padre
+  --   P_NUM_TEMPORADA: Numero de temporada
+  --   P_NUM_EPISODIO: Numero de episodio dentro de la temporada
+  --   P_TITULO_EPISODIO: Titulo del episodio
+  --   P_DURACION_MIN: Duracion en minutos
+  --   P_SINOPSIS: Descripcion de la trama del episodio
+  --   P_FECHA_ESTRENO: Fecha de estreno del episodio
+  -- Logica:
+  --   Si existe el episodio, actualiza. Si no existe, lo inserta.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_EPISODIO (
-    P_TITULO_CONTENIDO IN VARCHAR2,
-    P_NUM_TEMPORADA    IN NUMBER,
-    P_NUM_EPISODIO     IN NUMBER,
-    P_TITULO_EPISODIO  IN VARCHAR2,
-    P_DURACION_MIN     IN NUMBER,
-    P_SINOPSIS         IN VARCHAR2,
-    P_FECHA_ESTRENO    IN DATE
+    P_TITULO_CONTENIDO IN VARCHAR2,                -- Titulo del contenido padre
+    P_NUM_TEMPORADA    IN NUMBER,                  -- Numero de temporada
+    P_NUM_EPISODIO     IN NUMBER,                  -- Numero de episodio
+    P_TITULO_EPISODIO  IN VARCHAR2,                -- Titulo del episodio
+    P_DURACION_MIN     IN NUMBER,                  -- Duracion en minutos
+    P_SINOPSIS         IN VARCHAR2,                -- Descripcion del episodio
+    P_FECHA_ESTRENO    IN DATE                     -- Fecha de estreno
   )
   IS
-    V_ID_CONTENIDO CONTENIDOS.ID_CONTENIDO%TYPE;
-    V_ID_TEMPORADA TEMPORADAS.ID_TEMPORADA%TYPE;
-    V_ID_EPISODIO  EPISODIOS.ID_EPISODIO%TYPE;
+    V_ID_CONTENIDO CONTENIDOS.ID_CONTENIDO%TYPE;  -- ID del contenido validado
+    V_ID_TEMPORADA TEMPORADAS.ID_TEMPORADA%TYPE;  -- ID de la temporada validada
+    V_ID_EPISODIO  EPISODIOS.ID_EPISODIO%TYPE;    -- ID del episodio
   BEGIN
     V_ID_CONTENIDO := GET_CONTENIDO_ID(P_TITULO_CONTENIDO);
 
@@ -402,6 +494,10 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_RELACION_CONTENIDOS
+  -- Vincula contenidos con un tipo de relacion, evitando duplicados inversos.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_RELACION_CONTENIDOS (
     P_TITULO_ORIGEN     IN VARCHAR2,
     P_TITULO_RELACION   IN VARCHAR2,
@@ -448,6 +544,10 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_DEPARTAMENTO
+  -- Crea o actualiza un departamento interno.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_DEPARTAMENTO (
     P_NOMBRE      IN VARCHAR2,
     P_DESCRIPCION IN VARCHAR2
@@ -470,6 +570,10 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_EMPLEADO
+  -- Crea o actualiza un empleado y su supervisor (si aplica).
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_EMPLEADO (
     P_EMAIL            IN VARCHAR2,
     P_DEPARTAMENTO     IN VARCHAR2,
@@ -531,6 +635,10 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_REPRODUCCION
+  -- Inserta o actualiza eventos de reproduccion por perfil y contenido.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_REPRODUCCION (
     P_EMAIL            IN VARCHAR2,
     P_NOMBRE_PERFIL    IN VARCHAR2,
@@ -581,6 +689,10 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_FAVORITO
+  -- Inserta favorito si no existe para el perfil.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_FAVORITO (
     P_EMAIL            IN VARCHAR2,
     P_NOMBRE_PERFIL    IN VARCHAR2,
@@ -611,6 +723,10 @@ DECLARE
     END IF;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_CALIFICACION
+  -- Inserta o actualiza una calificacion por perfil y contenido.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_CALIFICACION (
     P_EMAIL            IN VARCHAR2,
     P_NOMBRE_PERFIL    IN VARCHAR2,
@@ -653,6 +769,10 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_REPORTE
+  -- Crea o actualiza reportes, asignando moderador si aplica.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_REPORTE (
     P_EMAIL_REPORTADOR IN VARCHAR2,
     P_NOMBRE_PERFIL    IN VARCHAR2,
@@ -715,6 +835,10 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_REFERIDO
+  -- Crea o actualiza relacion de referido y su descuento.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_REFERIDO (
     P_EMAIL_REFERENTE IN VARCHAR2,
     P_EMAIL_REFERIDO  IN VARCHAR2,
@@ -761,6 +885,10 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_FACTURA
+  -- Inserta o actualiza facturacion mensual por usuario.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_FACTURA (
     P_EMAIL          IN VARCHAR2,
     P_ANIO           IN NUMBER,
@@ -822,6 +950,10 @@ DECLARE
     END;
   END;
 
+  -- ------------------------------------------------------------------------
+  -- Procedimiento UPSERT_PAGO
+  -- Inserta o actualiza pago y sincroniza estado de factura/cuenta si es exitoso.
+  -- ------------------------------------------------------------------------
   PROCEDURE UPSERT_PAGO (
     P_REFERENCIA   IN VARCHAR2,
     P_EMAIL        IN VARCHAR2,
@@ -891,9 +1023,11 @@ DECLARE
 
 BEGIN
   -- 1) Perfiles extra para pruebas de clasificacion infantil.
+  --    Permite validar reglas de restriccion por tipo de perfil.
   UPSERT_PERFIL(C_EMAIL_USUARIO, 'Usuario Infantil', 'infantil');
 
   -- 2) Generos base para cobertura de catalogo extendido.
+  --    Asegura el uso del catalogo M:N de generos.
   UPSERT_GENERO('Accion', 'Genero con ritmo alto y conflictos constantes.');
   UPSERT_GENERO('Drama', 'Historias emocionales centradas en personajes.');
   UPSERT_GENERO('Suspenso', 'Narrativas de tension, misterio y riesgo.');
@@ -904,6 +1038,7 @@ BEGIN
   UPSERT_GENERO('Ciencia Ficcion', 'Narrativas especulativas sobre ciencia y futuro.');
 
   -- 3) Contenidos nuevos para seed funcional.
+  --    Se incluyen varios tipos (documental, serie, podcast).
   UPSERT_CONTENIDO(
     P_TITULO => 'SEED14 - Horizonte Andino',
     P_TIPO => 'documental',
@@ -941,6 +1076,7 @@ BEGIN
   );
 
   -- 4) Relacion N:M de contenidos con generos.
+  --    Cubre multiples generos por contenido.
   UPSERT_CONTENIDO_GENERO('SEED14 - Horizonte Andino', 'Investigacion');
   UPSERT_CONTENIDO_GENERO('SEED14 - Horizonte Andino', 'Educativo');
   UPSERT_CONTENIDO_GENERO('SEED14 - Norte Incierto Cero', 'Drama');
@@ -948,6 +1084,7 @@ BEGIN
   UPSERT_CONTENIDO_GENERO('SEED14 - Codigo en Conversacion IA', 'Tecnologia');
 
   -- 5) Temporadas y episodios para serie/podcast.
+  --    Simula estructura episodica para pruebas de detalle.
   UPSERT_TEMPORADA(
     P_TITULO_CONTENIDO => 'SEED14 - Norte Incierto Cero',
     P_NUM_TEMPORADA => 1,
@@ -1005,6 +1142,7 @@ BEGIN
   );
 
   -- 6) Relacion de contenidos para navegacion editorial.
+  --    Se crea una precuela relacionada a una serie existente.
   UPSERT_RELACION_CONTENIDOS(
     P_TITULO_ORIGEN => 'Norte Incierto',
     P_TITULO_RELACION => 'SEED14 - Norte Incierto Cero',
@@ -1013,6 +1151,7 @@ BEGIN
   );
 
   -- 7) Estructura organizacional y empleados.
+  --    Cubre jerarquia basica en Tecnologia, Contenido y Soporte.
   UPSERT_DEPARTAMENTO('Tecnologia', 'Desarrollo de plataforma y operacion tecnica.');
   UPSERT_DEPARTAMENTO('Contenido', 'Curaduria y publicacion del catalogo multimedia.');
   UPSERT_DEPARTAMENTO('Soporte', 'Atencion al usuario y moderacion de reportes.');
@@ -1050,6 +1189,7 @@ BEGIN
   );
 
   -- 8) Reproducciones con avance > 50% para habilitar calificaciones.
+  --    Necesario para que la regla 50% permita calificar.
   UPSERT_REPRODUCCION(
     P_EMAIL => C_EMAIL_USUARIO,
     P_NOMBRE_PERFIL => 'Usuario Demo',
@@ -1081,6 +1221,7 @@ BEGIN
   );
 
   -- 9) Favoritos por perfil.
+  --    Crea listas personales de prueba.
   UPSERT_FAVORITO(
     P_EMAIL => C_EMAIL_USUARIO,
     P_NOMBRE_PERFIL => 'Usuario Demo',
@@ -1100,6 +1241,7 @@ BEGIN
   );
 
   -- 10) Calificaciones con regla de retencion cumplida.
+  --     Incluye reseñas para validar contenido generado por usuarios.
   UPSERT_CALIFICACION(
     P_EMAIL => C_EMAIL_USUARIO,
     P_NOMBRE_PERFIL => 'Usuario Demo',
@@ -1125,6 +1267,7 @@ BEGIN
   );
 
   -- 11) Reportes y moderacion.
+  --     Incluye un reporte abierto y otro resuelto.
   UPSERT_REPORTE(
     P_EMAIL_REPORTADOR => C_EMAIL_USUARIO,
     P_NOMBRE_PERFIL => 'Usuario Demo',
@@ -1148,6 +1291,7 @@ BEGIN
   );
 
   -- 12) Referidos y facturacion.
+  --     Crea descuentos, facturas y pagos para flujos financieros.
   UPSERT_REFERIDO(
     P_EMAIL_REFERENTE => C_EMAIL_ADMIN,
     P_EMAIL_REFERIDO => C_EMAIL_USUARIO,

@@ -11,8 +11,10 @@
 -- - El script 11 crea roles/usuarios de BD; requiere privilegios administrativos.
 -- ============================================================================
 
+-- Detener el runner si ocurre cualquier error SQL.
 WHENEVER SQLERROR EXIT SQL.SQLCODE;
 
+-- Configuracion basica para ejecucion con SQLcl/SQL*Plus.
 SET SERVEROUTPUT ON;
 SET DEFINE ON;
 
@@ -21,6 +23,7 @@ PROMPT MinFlix - Inicio runner completo 01..21
 PROMPT ========================================================================
 
 PROMPT Ejecutando 01_bootstrap_oracle_iteracion1.sql
+-- @@ ejecuta el archivo relativo a la ruta actual (database/).
 @@01_bootstrap_oracle_iteracion1.sql
 
 PROMPT Ejecutando 02_catalogo_base_iteracion2.sql

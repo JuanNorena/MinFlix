@@ -11,10 +11,12 @@
 -- ============================================================================
 
 SET SERVEROUTPUT ON;
+-- Este script es de solo lectura y sirve como checklist final.
 
 PROMPT ========================================================================
 PROMPT 1. CONTEXTO DE CONEXION
 PROMPT ========================================================================
+-- Verifica usuario, contenedor y esquema actual para evitar ejecuciones erradas.
 
 SELECT USER AS USUARIO_CONECTADO FROM DUAL;
 
@@ -27,6 +29,7 @@ SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS ESQUEMA_ACTUAL
 PROMPT ========================================================================
 PROMPT 2. ESTADO DE OBJETOS PRINCIPALES
 PROMPT ========================================================================
+-- Esperado: STATUS = VALID para tablas, vistas, MVs y programas.
 
 SELECT OBJECT_TYPE, OBJECT_NAME, STATUS
   FROM USER_OBJECTS
@@ -74,6 +77,7 @@ SELECT OBJECT_TYPE, OBJECT_NAME, STATUS
 PROMPT ========================================================================
 PROMPT 3. ERRORES DE COMPILACION
 PROMPT ========================================================================
+-- Esperado: cero filas en USER_ERRORS.
 
 SELECT NAME, TYPE, LINE, POSITION, TEXT
   FROM USER_ERRORS
@@ -82,6 +86,7 @@ SELECT NAME, TYPE, LINE, POSITION, TEXT
 PROMPT ========================================================================
 PROMPT 4. CONTEO DE DATOS OPERATIVOS
 PROMPT ========================================================================
+-- Esperado: conteos > 0 para tablas base y seeds.
 
 SELECT 'USUARIOS' AS OBJETO, COUNT(*) AS FILAS FROM USUARIOS
 UNION ALL SELECT 'PERFILES', COUNT(*) FROM PERFILES
@@ -107,6 +112,7 @@ ORDER BY OBJETO;
 PROMPT ========================================================================
 PROMPT 5. VALIDACION DE VISTAS API Y ANALITICAS
 PROMPT ========================================================================
+-- Esperado: COUNT(*) sin ORA-00942/ORA-04063.
 
 SELECT 'VW_CONTINUAR_VIENDO' AS VISTA, COUNT(*) AS FILAS FROM VW_CONTINUAR_VIENDO
 UNION ALL SELECT 'VW_REPORTES_PENDIENTES_SOPORTE', COUNT(*) FROM VW_REPORTES_PENDIENTES_SOPORTE
@@ -124,6 +130,7 @@ ORDER BY VISTA;
 PROMPT ========================================================================
 PROMPT 6. VALIDACION DE USUARIOS SEMILLA DE APLICACION
 PROMPT ========================================================================
+-- Esperado: 5 cuentas seed con roles distintos y perfiles asociados.
 
 SELECT EMAIL, ROL, ESTADO_CUENTA, ID_PLAN
   FROM USUARIOS
@@ -152,6 +159,7 @@ SELECT U.EMAIL, P.ID_PERFIL, P.NOMBRE, P.TIPO_PERFIL
 PROMPT ========================================================================
 PROMPT 7. VALIDACION DE CATALOGO EXTENDIDO PARA FRONTEND
 PROMPT ========================================================================
+-- Esperado: registros de generos, temporadas, episodios y relaciones.
 
 SELECT C.TITULO, G.NOMBRE AS GENERO
   FROM CONTENIDOS C
@@ -188,6 +196,7 @@ SELECT CO.TITULO AS CONTENIDO_ORIGEN,
 PROMPT ========================================================================
 PROMPT 8. VALIDACION DE GRANTS A ROLES FUNCIONALES
 PROMPT ========================================================================
+-- Esperado: privilegios asignados a roles segun NT5.
 
 SELECT GRANTEE, TABLE_NAME, PRIVILEGE
   FROM USER_TAB_PRIVS_MADE
@@ -224,6 +233,7 @@ SELECT GRANTEE, TABLE_NAME, PRIVILEGE
 PROMPT ========================================================================
 PROMPT 9. VALIDACION DE INDICES NT4
 PROMPT ========================================================================
+-- Esperado: indices NT4 en estado VALID.
 
 SELECT I.INDEX_NAME,
        I.TABLE_NAME,

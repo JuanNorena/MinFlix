@@ -12,6 +12,8 @@
 -- ============================================================================
 
 SET SERVEROUTPUT ON;
+-- Nota: este script puede tardar por recreacion de tabla particionada y MVs.
+-- Recomendado ejecutarlo en ventana de mantenimiento.
 
 -- ============================================================================
 -- SECCION A: Fragmentacion (Particionamiento por rango de FECHA_INICIO)
@@ -21,6 +23,7 @@ SET SERVEROUTPUT ON;
 -- Se usan cinco particiones por ventanas de tiempo para optimizar consultas
 -- analiticas que filtran por periodo (WHERE FECHA_INICIO BETWEEN ...).
 -- ============================================================================
+-- Importante: el backup REPRODUCCIONES_BKP permite rollback manual si falla.
 
 -- Paso A.1: Guardar datos existentes en tabla temporal de respaldo
 CREATE TABLE REPRODUCCIONES_BKP AS
@@ -72,6 +75,7 @@ PARTITION BY RANGE (FECHA_INICIO) (
 );
 
 -- Paso A.4: Reinsertar datos del respaldo en la tabla particionada
+-- Mantiene IDs originales para no romper referencias en historiales.
 INSERT INTO REPRODUCCIONES (
   ID_REPRODUCCION, ID_PERFIL, ID_CONTENIDO,
   PROGRESO_SEGUNDOS, DURACION_TOTAL_SEGUNDOS, PORCENTAJE_AVANCE,
@@ -181,6 +185,7 @@ SELECT TABLE_NAME, PARTITION_NAME, HIGH_VALUE
 -- Se usan para pre-calcular agregaciones costosas y acelerar consultas analiticas.
 -- REFRESH ON DEMAND: se actualizan manualmente con DBMS_MVIEW.REFRESH.
 -- ============================================================================
+-- Nota: estas MVs pueden refrescarse al finalizar cargas o seeds.
 
 -- MV 1: Promedio de calificaciones por contenido y genero
 --   Permite obtener rapidamente el rating de cualquier contenido sin recalcular.
@@ -253,6 +258,7 @@ SELECT MVIEW_NAME, LAST_REFRESH_DATE, STALENESS
 -- El usuario puede cambiar el valor antes de ejecutar cada bloque.
 -- Util para reportes ad-hoc en SQL Developer o SQL*Plus.
 -- ============================================================================
+-- Consejo: usar UNDEFINE ciudad/limite/fecha_inicio/fecha_fin al terminar.
 
 -- Consulta C.1: Top N contenidos mas reproducidos por ciudad de residencia
 -- Parametros: &&ciudad (ciudad del usuario), &&limite (cantidad maxima de resultados)
@@ -523,6 +529,7 @@ ORDER BY
 -- Nota: VW_ANALITICA_CONSUMO puede producir multiples filas por reproduccion
 --       cuando el contenido tiene varios generos (comportamiento esperado).
 -- ============================================================================
+-- Las vistas consolidan datos para filtros en API sin recalcular joins complejos.
 
 -- Vista F.1: Consumo de contenido por dimension geografica, dispositivo y plan
 CREATE OR REPLACE VIEW VW_ANALITICA_CONSUMO AS
