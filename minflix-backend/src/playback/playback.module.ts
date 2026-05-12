@@ -1,9 +1,22 @@
+/** Decorador que define un módulo de NestJS */
 import { Module } from '@nestjs/common';
+
+/** Módulo de TypeORM para registrar entidades en el contexto de persistencia */
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+/** Entidad de perfiles de usuario que reproducen contenido */
 import { ProfileEntity } from '../auth/entities';
+
+/** Entidad de contenidos multimedia reproducidos */
 import { ContentEntity } from '../catalog/entities';
+
+/** Controlador REST de reproducción y continuidad */
 import { PlaybackController } from './playback.controller';
+
+/** Servicio de lógica de negocio de reproducción y continuidad */
 import { PlaybackService } from './playback.service';
+
+/** Entidades del dominio de reproducción */
 import { ContinueWatchingEntity, PlaybackEntity } from './entities';
 
 /**

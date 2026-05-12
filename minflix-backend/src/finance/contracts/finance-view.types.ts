@@ -1,4 +1,14 @@
 /**
+ * Contratos de vistas (types/interfaces) para respuestas del módulo financiero.
+ *
+ * Define las estructuras de datos que retornan los servicios financieros
+ * al frontend: facturas, pagos, referidos, resumen y resultado de checkout.
+ *
+ * @see {@link FinanceService} para los métodos que retornan estas vistas
+ * @see {@link FinanceController} para los endpoints que exponen estas vistas
+ */
+
+/**
  * Vista de una factura individual para respuestas de API financiera.
  */
 export interface InvoiceItemView {

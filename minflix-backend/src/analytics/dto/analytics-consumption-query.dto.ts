@@ -1,5 +1,20 @@
+/**
+ * DTO de filtros para el endpoint de analítica de consumo de contenido.
+ *
+ * Define los parámetros de consulta para filtrar la vista `VW_ANALITICA_CONSUMO`
+ * por ciudad, categoría, género, dispositivo, plan y límite de filas.
+ *
+ * @see {@link AnalyticsController.getConsumption} para el endpoint que consume este DTO
+ * @see {@link AnalyticsService.getConsumption} para la lógica de consulta
+ */
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsInt,
   IsOptional,
@@ -10,7 +25,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO de filtros para el endpoint de analitica de consumo de contenido.
+ * DTO de filtros para el endpoint de analítica de consumo de contenido.
  */
 export class AnalyticsConsumptionQueryDto {
   /**

@@ -1,15 +1,59 @@
+/**
+ * Página de registro de cuenta de MinFlix.
+ *
+ * Formulario de registro completo que recopila los datos personales del usuario,
+ * el plan de suscripción y el perfil inicial. Valida los campos con Zod y
+ * consume el endpoint `POST /auth/register` del backend.
+ *
+ * @see {@link AuthService} para la lógica de registro del backend
+ * @see {@link AuthController} para el endpoint de registro
+ * @see {@link AuthSplitLayout} para el layout visual dividido
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de formularios
+// --------------------------------------------------------------------------
+
+/** Resolver de Zod para React Hook Form */
 import { zodResolver } from '@hookform/resolvers/zod'
+
+/** Hooks y componentes de React Hook Form para gestión de formularios */
 import { Controller, useForm } from 'react-hook-form'
+
+/** Componentes de navegación y enrutamiento de React Router */
 import { Link, useNavigate } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+/** Librería de validación de esquemas */
 import { z } from 'zod'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Textos de ayuda para los campos del formulario */
 import { authFieldHelp } from '../shared/helpers/authFieldHelp'
+
+/** Helper para limpiar el perfil activo al registrarse */
 import { clearActiveProfile } from '../shared/session/profileSession'
+
+/** Layout dividido para vistas de autenticación */
 import { AuthSplitLayout } from '../shared/ui/AuthSplitLayout'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
+
+/** Componente de input de contraseña con toggle de visibilidad */
 import { PasswordInput } from '../shared/ui/PasswordInput'
 
+/**
+ * Esquema de validación Zod para el formulario de registro de cuenta.
+ */
 const registerSchema = z.object({
   nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   email: z.email('Ingrese un correo valido'),

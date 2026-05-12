@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// Importaciones de decoradores y utilidades de NestJS
+// --------------------------------------------------------------------------
+
+/** Decoradores de controladores, métodos HTTP, guardas y excepciones */
 import {
   Body,
   Controller,
@@ -7,8 +12,18 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+
+/** Decoradores de documentación de Swagger para endpoints REST */
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+/** Guarda que protege endpoints requiriendo un token JWT válido */
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y servicios del módulo financiero
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas financieras */
 import {
   FinanceSummaryView,
   InvoiceItemView,
@@ -16,12 +31,28 @@ import {
   PaymentItemView,
   ReferralItemView,
 } from './contracts/finance-view.types';
+
+/** DTO para simular pago de factura */
 import { CheckoutPaymentDto } from './dto/checkout-payment.dto';
+
+/** DTO de consulta para listar facturas */
 import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
+
+/** DTO de consulta para listar pagos */
 import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
+
+/** DTO de consulta para listar referidos */
 import { ListReferralsQueryDto } from './dto/list-referrals-query.dto';
+
+/** Servicio de lógica de negocio financiera */
 import { FinanceService } from './finance.service';
 
+/**
+ * Tipo auxiliar para el objeto de petición autenticada.
+ *
+ * Extiende la petición de Express con los datos del usuario
+ * extraídos del token JWT por Passport.
+ */
 interface AuthenticatedRequest {
   user: {
     userId: number;

@@ -1,15 +1,53 @@
+/**
+ * Página de selección de perfil posterior al inicio de sesión.
+ *
+ * Muestra los perfiles asociados a la cuenta autenticada, permitiendo
+ * al usuario seleccionar uno para continuar a la experiencia de reproducción.
+ * Inspirada en el flujo de selección de perfiles de Netflix.
+ *
+ * @see {@link AuthService} para la lógica de perfiles del backend
+ * @see {@link saveActiveProfile} para guardar el perfil seleccionado en sesión
+ * @see {@link getActiveProfile} para obtener el perfil activo
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado y efectos */
 import { useEffect, useState } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componentes de navegación y enrutamiento de React Router */
 import { Link, useNavigate } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helpers para resolver URLs de avatares y generar iniciales */
 import { profileInitials, resolveAvatarUrl } from '../shared/helpers/avatarUrl'
+
+/** Helpers para gestionar el perfil activo de la sesión */
 import {
   clearActiveProfile,
   saveActiveProfile,
 } from '../shared/session/profileSession'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
+/**
+ * Perfil de cuenta devuelto por la API.
+ */
 interface AccountProfile {
   id: number
   nombre: string

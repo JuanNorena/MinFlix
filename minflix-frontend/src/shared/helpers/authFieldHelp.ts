@@ -1,3 +1,12 @@
+/**
+ * Textos de ayuda reutilizables para los campos de los formularios de autenticación.
+ *
+ * Proporciona descripciones explicativas para cada campo del flujo de login y registro,
+ * mejorando la experiencia de usuario al completar los formularios.
+ *
+ * @see {@link LoginPage} para el formulario de inicio de sesión
+ * @see {@link RegisterPage} para el formulario de registro de cuenta
+ */
 export const authFieldHelp = {
   loginEmail: 'Ingresa el correo con el que te registraste en MinFlix.',
   loginPassword: 'Tu contrasena mantiene tu cuenta y tus perfiles protegidos.',

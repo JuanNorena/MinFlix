@@ -1,3 +1,19 @@
+/**
+ * Gestión de sesión de perfil activo del frontend.
+ *
+ * Proporciona funciones para guardar, recuperar y limpiar el perfil seleccionado
+ * por el usuario en `localStorage`. El perfil activo determina el contexto de
+ * reproducción, favoritos, calificaciones y reportes.
+ *
+ * @see {@link saveActiveProfile} para guardar el perfil seleccionado
+ * @see {@link getActiveProfile} para obtener el perfil activo
+ * @see {@link clearActiveProfile} para limpiar el perfil al cerrar sesión
+ * @see {@link RequireProfileSelection} para la guarda de rutas que requiere perfil
+ */
+
+/**
+ * Datos del perfil activo almacenados en la sesión del navegador.
+ */
 export interface ActiveProfileSession {
   id: number
   nombre: string

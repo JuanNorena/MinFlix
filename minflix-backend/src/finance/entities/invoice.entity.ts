@@ -1,3 +1,17 @@
+/**
+ * Entidad de facturación mensual (`FACTURACIONES`) por cuenta de usuario.
+ *
+ * Representa una factura generada automáticamente por Oracle cada mes
+ * para una cuenta de usuario. Incluye el periodo, fechas de corte y vencimiento,
+ * montos base y finales, descuentos por referidos y fidelidad, estado de pago
+ * y la relación con los pagos asociados.
+ *
+ * @see {@link UserEntity} para el usuario propietario de la factura
+ * @see {@link PaymentEntity} para los pagos asociados a la factura
+ * @see {@link FinanceService} para la lógica de consulta de facturación
+ */
+
+/** Decoradores de columnas, relaciones y claves primarias de TypeORM */
 import {
   Column,
   Entity,
@@ -6,11 +20,15 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de usuario propietario de la factura */
 import { UserEntity } from '../../auth/entities';
+
+/** Entidad de pagos asociados a la factura */
 import { PaymentEntity } from './payment.entity';
 
 /**
- * Entidad de facturacion mensual por cuenta de usuario.
+ * Entidad de facturación mensual por cuenta de usuario.
  */
 @Entity({ name: 'FACTURACIONES' })
 export class InvoiceEntity {

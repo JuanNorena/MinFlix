@@ -1,13 +1,51 @@
+/**
+ * Página de facturación y pagos de la cuenta autenticada.
+ *
+ * Muestra el resumen financiero, historial de facturas, historial de pagos
+ * y permite realizar un checkout simulado de tarjeta para pagar facturas pendientes.
+ *
+ * @see {@link FinanceService} para la lógica de negocio financiera
+ * @see {@link FinanceController} para los endpoints de facturación y pagos
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado, efectos y memorización */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componentes de navegación y enrutamiento de React Router */
 import { Link, Navigate, useNavigate } from 'react-router-dom'
+
+/** Librería HTTP para manejo de errores de Axios */
 import axios from 'axios'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helpers para sesión de autenticación y verificación de rol moderador */
 import { getAuthSession, hasModeratorRole } from '../shared/session/authSession'
+
+/** Helper para limpiar el perfil activo al cerrar sesión */
 import { clearActiveProfile } from '../shared/session/profileSession'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
+/**
+ * Vista de una factura individual para la interfaz de facturación.
+ */
 interface InvoiceItemView {
   idFacturacion: number
   periodoAnio: number

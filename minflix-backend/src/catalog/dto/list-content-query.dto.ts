@@ -1,5 +1,21 @@
+/**
+ * DTO de filtros para listar contenido del catálogo.
+ *
+ * Define los parámetros de consulta (query params) soportados
+ * por el endpoint de listado de contenidos. Permite filtrar
+ * por texto, tipo, clasificación, categoría y exclusividad.
+ *
+ * @see {@link CatalogController} para el endpoint que consume este DTO
+ * @see {@link CatalogService.findAll} para la lógica de filtrado
+ */
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsBoolean,
   IsIn,
@@ -12,7 +28,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO de filtros para listar contenido del catalogo.
+ * DTO de filtros para listar contenido del catálogo.
  */
 export class ListContentQueryDto {
   /**

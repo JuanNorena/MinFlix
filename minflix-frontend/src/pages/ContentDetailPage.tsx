@@ -1,20 +1,62 @@
+/**
+ * Página de detalle de un contenido multimedia del catálogo.
+ *
+ * Muestra la información completa de un contenido (título, sinopsis, géneros,
+ * temporadas, episodios, contenido relacionado), permite calificar, reportar,
+ * marcar como favorito e iniciar reproducción desde el perfil activo.
+ *
+ * @see {@link CatalogService} para la lógica de consulta de contenido
+ * @see {@link CommunityService} para la lógica de favoritos, calificaciones y reportes
+ * @see {@link PlaybackService} para la lógica de reproducción
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado, efectos y memorización */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componentes de navegación, parámetros y enrutamiento de React Router */
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+/** Librería HTTP para manejo de errores de Axios */
 import axios from 'axios'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helpers para resolver URLs de avatares y generar iniciales */
 import { profileInitials, resolveAvatarUrl } from '../shared/helpers/avatarUrl'
+
+/** Helpers para gestionar el perfil activo de la sesión */
 import {
   clearActiveProfile,
   getActiveProfile,
 } from '../shared/session/profileSession'
+
+/** Helpers para sesión de autenticación y verificación de rol moderador */
 import {
   getAuthSession,
   hasModeratorRole,
 } from '../shared/session/authSession'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
+/**
+ * Categoría del contenido multimedia.
+ */
 interface CatalogCategory {
   id: number
   nombre: string

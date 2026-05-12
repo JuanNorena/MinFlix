@@ -1,11 +1,28 @@
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones y decorador de inyección de NestJS */
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+/** Decorador de TypeORM para inyectar repositorios */
 import { InjectRepository } from '@nestjs/typeorm';
+
+/** Clase base de repositorio de TypeORM */
 import { Repository } from 'typeorm';
+
+/** Entidad de usuario propietario de facturas y pagos */
 import { UserEntity } from '../auth/entities';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y entidades del módulo financiero
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas financieras */
 import {
   FinanceSummaryView,
   InvoiceItemView,
@@ -13,10 +30,20 @@ import {
   PaymentItemView,
   ReferralItemView,
 } from './contracts/finance-view.types';
+
+/** DTO para simular pago de factura */
 import { CheckoutPaymentDto } from './dto/checkout-payment.dto';
+
+/** DTO de consulta para listar facturas */
 import { ListInvoicesQueryDto } from './dto/list-invoices-query.dto';
+
+/** DTO de consulta para listar pagos */
 import { ListPaymentsQueryDto } from './dto/list-payments-query.dto';
+
+/** DTO de consulta para listar referidos */
 import { ListReferralsQueryDto } from './dto/list-referrals-query.dto';
+
+/** Entidades del dominio financiero */
 import { InvoiceEntity, PaymentEntity, ReferralEntity } from './entities';
 
 /**

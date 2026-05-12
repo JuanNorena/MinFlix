@@ -1,3 +1,21 @@
+/**
+ * Entidad de cuentas de usuario (`USUARIOS`) para autenticación y control de acceso.
+ *
+ * Mapea la tabla `USUARIOS` de Oracle en un objeto TypeORM que representa
+ * la cuenta principal de un cliente de MinFlix. Incluye datos personales,
+ * credenciales de autenticación, rol de autorización, plan de suscripción
+ * y la relación con los perfiles de reproducción dependientes.
+ *
+ * @see {@link PlanEntity} para la entidad del plan de suscripción
+ * @see {@link ProfileEntity} para los perfiles dependientes de esta cuenta
+ * @see {@link AuthService} para la lógica de registro, login y gestión de perfiles
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de TypeORM para decoradores de entidad y relaciones
+// --------------------------------------------------------------------------
+
+/** Decoradores de columnas, relaciones y claves primarias de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -8,11 +26,15 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+/** Entidad de planes de suscripción relacionada */
 import { PlanEntity } from './plan.entity';
+
+/** Entidad de perfiles de reproducción relacionada */
 import { ProfileEntity } from './profile.entity';
 
 /**
- * Entidad de cuentas de usuario para autenticacion y control de acceso.
+ * Entidad de cuentas de usuario para autenticación y control de acceso.
  */
 @Entity({ name: 'USUARIOS' })
 export class UserEntity {

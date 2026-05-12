@@ -1,4 +1,18 @@
+/**
+ * DTO para reportar progreso de reproducción.
+ *
+ * Define los datos enviados periódicamente por el cliente para actualizar
+ * el avance de reproducción de un contenido: progreso en segundos,
+ * duración total, dispositivo y estado actual.
+ *
+ * @see {@link PlaybackController.reportPlaybackProgress} para el endpoint que consume este DTO
+ * @see {@link PlaybackService.reportPlaybackProgress} para la lógica de actualización
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsIn,
   IsInt,
@@ -10,7 +24,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO para reportar progreso de reproduccion.
+ * DTO para reportar progreso de reproducción.
  */
 export class ReportPlaybackProgressDto {
   /**

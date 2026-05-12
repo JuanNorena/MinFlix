@@ -1,7 +1,19 @@
+/**
+ * Entidad de solo lectura para la vista `VW_CONTINUAR_VIENDO`.
+ *
+ * Mapea la vista Oracle que agrega los contenidos que un perfil
+ * ha empezado a ver pero no ha terminado. Se usa para construir
+ * la fila "Continuar viendo" del frontend.
+ *
+ * @see {@link PlaybackService.listContinueWatching} para la consulta de esta vista
+ * @see {@link ContinueWatchingView} para el contrato de respuesta
+ */
+
+/** Decoradores de columnas, entidad y claves primarias de TypeORM */
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 /**
- * Entidad de solo lectura para la vista VW_CONTINUAR_VIENDO.
+ * Entidad de solo lectura para la vista `VW_CONTINUAR_VIENDO`.
  */
 @Entity({ name: 'VW_CONTINUAR_VIENDO' })
 export class ContinueWatchingEntity {

@@ -1,13 +1,32 @@
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones y decorador de inyección de NestJS */
 import {
   BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+/** Decorador de TypeORM para inyectar repositorios */
 import { InjectRepository } from '@nestjs/typeorm';
+
+/** Clase base de repositorio de TypeORM */
 import { Repository } from 'typeorm';
+
+/** Entidades de perfil y usuario (moderador) */
 import { ProfileEntity, UserEntity } from '../auth/entities';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from '../catalog/entities';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y entidades del módulo de comunidad
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas de comunidad */
 import {
   FavoriteItemView,
   FavoriteStatusView,
@@ -15,17 +34,41 @@ import {
   RatingItemView,
   RatingStatusView,
 } from './contracts/community-view.types';
+
+/** DTO para agregar favoritos */
 import { AddFavoriteDto } from './dto/add-favorite.dto';
+
+/** DTO para crear reportes */
 import { CreateReportDto } from './dto/create-report.dto';
+
+/** DTO de consulta para estado de favorito */
 import { FavoriteStatusQueryDto } from './dto/favorite-status-query.dto';
+
+/** DTO de consulta para bandeja de moderación */
 import { ListModerationReportsQueryDto } from './dto/list-moderation-reports-query.dto';
+
+/** DTO de consulta para listar favoritos */
 import { ListFavoritesQueryDto } from './dto/list-favorites-query.dto';
+
+/** DTO de consulta para listar reportes */
 import { ListReportsQueryDto } from './dto/list-reports-query.dto';
+
+/** DTO de consulta para listar calificaciones */
 import { ListRatingsQueryDto } from './dto/list-ratings-query.dto';
+
+/** DTO para moderar reportes */
 import { ModerateReportDto } from './dto/moderate-report.dto';
+
+/** DTO de consulta para estado de calificación */
 import { RatingStatusQueryDto } from './dto/rating-status-query.dto';
+
+/** DTO para crear o actualizar calificación */
 import { UpsertRatingDto } from './dto/upsert-rating.dto';
+
+/** Entidades del módulo de comunidad */
 import { FavoriteEntity, RatingEntity } from './entities';
+
+/** Entidad de reportes */
 import { ReportEntity } from './entities/report.entity';
 
 /**

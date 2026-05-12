@@ -1,3 +1,19 @@
+/**
+ * Entidad de contenidos multimedia (`CONTENIDOS`) del catálogo principal de MinFlix.
+ *
+ * Representa cualquier elemento disponible para reproducción: películas,
+ * series, documentales, podcasts. Incluye metadatos como título, tipo,
+ * duración, clasificación por edad, sinopsis y relaciones con categoría,
+ * géneros, temporadas, episodios y contenidos relacionados.
+ *
+ * @see {@link CategoryEntity} para la categoría asignada
+ * @see {@link SeasonEntity} para las temporadas (series/podcasts)
+ * @see {@link EpisodeEntity} para los episodios de temporadas
+ * @see {@link GenreEntity} para los géneros asociados
+ * @see {@link RelatedContentEntity} para los contenidos relacionados
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -7,14 +23,24 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de categorías del catálogo */
 import { CategoryEntity } from './category.entity';
+
+/** Entidad de usuarios (empleado publicador) */
 import { UserEntity } from '../../auth/entities/user.entity';
+
+/** Entidad puente para la relación contenido-género */
 import { ContentGenreEntity } from './content-genre.entity';
+
+/** Entidad de temporadas de series y podcasts */
 import { SeasonEntity } from './season.entity';
+
+/** Entidad de contenidos relacionados (secuelas, precuelas, etc.) */
 import { RelatedContentEntity } from './related-content.entity';
 
 /**
- * Entidad de contenidos multimedia del catalogo principal de MinFlix.
+ * Entidad de contenidos multimedia del catálogo principal de MinFlix.
  */
 @Entity({ name: 'CONTENIDOS' })
 export class ContentEntity {

@@ -1,3 +1,11 @@
+/**
+ * Configuración de compilación de producción del backend de MinFlix.
+ *
+ * Extiende la configuración base de TypeScript y excluye archivos de pruebas,
+ * carpetas de distribución y dependencias para optimizar el build.
+ *
+ * @see {@link tsconfig.json} para la configuración base del compilador
+ */
 {
   "extends": "./tsconfig.json",
   "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]

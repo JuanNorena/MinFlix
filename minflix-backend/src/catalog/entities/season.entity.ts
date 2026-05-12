@@ -1,3 +1,15 @@
+/**
+ * Entidad de temporadas (`TEMPORADAS`) para series y podcasts.
+ *
+ * Representa una temporada dentro de un contenido serializado.
+ * Contiene metadatos como número de temporada, título, descripción
+ * y fecha de estreno, y se relaciona con los episodios que la componen.
+ *
+ * @see {@link ContentEntity} para el contenido padre de la temporada
+ * @see {@link EpisodeEntity} para los episodios de esta temporada
+ */
+
+/** Decoradores de columnas, relaciones y claves primarias de TypeORM */
 import {
   Column,
   Entity,
@@ -6,7 +18,11 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de contenido multimedia padre */
 import { ContentEntity } from './content.entity';
+
+/** Entidad de episodios de la temporada */
 import { EpisodeEntity } from './episode.entity';
 
 /**

@@ -1,4 +1,17 @@
+/**
+ * Helpers para la resolución de URLs de avatares y generación de iniciales.
+ *
+ * Construye URLs absolutas para avatares de perfil a partir de rutas relativas
+ * y genera iniciales visuales como fallback cuando no hay imagen disponible.
+ *
+ * @see {@link resolveAvatarUrl} para construir la URL completa de un avatar
+ * @see {@link profileInitials} para generar las iniciales de un perfil
+ */
+
+/** URL base de la API usada para derivar el origen del backend */
 const defaultApiBaseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api/v1'
+
+/** Origen del backend (dominio + puerto) sin el path de la API */
 const backendOrigin = defaultApiBaseUrl.replace(/\/api\/v1\/?$/, '')
 
 /**

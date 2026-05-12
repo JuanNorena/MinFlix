@@ -1,3 +1,15 @@
+/**
+ * Entidad puente (`CONTENIDOS_GENEROS`) para la relación M:N entre contenidos y géneros.
+ *
+ * Permite asignar múltiples géneros a un contenido y viceversa,
+ * resolviendo la relación muchos-a-muchos entre `CONTENIDOS` y `GENEROS`.
+ * Incluye la fecha de asignación para auditoría.
+ *
+ * @see {@link ContentEntity} para el contenido asociado
+ * @see {@link GenreEntity} para el género asociado
+ */
+
+/** Decoradores de columnas, relaciones y auditoría de TypeORM */
 import {
   CreateDateColumn,
   Entity,
@@ -5,11 +17,15 @@ import {
   ManyToOne,
   PrimaryColumn,
 } from 'typeorm';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from './content.entity';
+
+/** Entidad de género cinematográfico */
 import { GenreEntity } from './genre.entity';
 
 /**
- * Entidad puente para la relacion M:N entre contenidos y generos.
+ * Entidad puente para la relación M:N entre contenidos y géneros.
  */
 @Entity({ name: 'CONTENIDOS_GENEROS' })
 export class ContentGenreEntity {

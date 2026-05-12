@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// Importaciones de decoradores y utilidades de NestJS
+// --------------------------------------------------------------------------
+
+/** Decoradores de controladores, métodos HTTP, pipes, guardas y excepciones */
 import {
   Body,
   Controller,
@@ -11,8 +16,18 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+
+/** Decoradores de documentación de Swagger para endpoints REST */
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+/** Guarda que protege endpoints requiriendo un token JWT válido */
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y servicios del módulo de comunidad
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas de comunidad */
 import {
   FavoriteItemView,
   FavoriteStatusView,
@@ -20,20 +35,52 @@ import {
   RatingItemView,
   RatingStatusView,
 } from './contracts/community-view.types';
+
+/** DTO para agregar favoritos */
 import { AddFavoriteDto } from './dto/add-favorite.dto';
+
+/** DTO para crear reportes */
 import { CreateReportDto } from './dto/create-report.dto';
+
+/** DTO de consulta para estado de favorito */
 import { FavoriteStatusQueryDto } from './dto/favorite-status-query.dto';
+
+/** DTO de consulta para bandeja de moderación */
 import { ListModerationReportsQueryDto } from './dto/list-moderation-reports-query.dto';
+
+/** DTO de consulta para listar favoritos */
 import { ListFavoritesQueryDto } from './dto/list-favorites-query.dto';
+
+/** DTO de consulta para listar reportes */
 import { ListReportsQueryDto } from './dto/list-reports-query.dto';
+
+/** DTO de consulta para remover favoritos */
 import { RemoveFavoriteQueryDto } from './dto/remove-favorite-query.dto';
+
+/** DTO de consulta para listar calificaciones */
 import { ListRatingsQueryDto } from './dto/list-ratings-query.dto';
+
+/** DTO para moderar reportes */
 import { ModerateReportDto } from './dto/moderate-report.dto';
+
+/** DTO de consulta para estado de calificación */
 import { RatingStatusQueryDto } from './dto/rating-status-query.dto';
+
+/** DTO de consulta para remover calificación */
 import { RemoveRatingQueryDto } from './dto/remove-rating-query.dto';
+
+/** DTO para crear o actualizar calificación */
 import { UpsertRatingDto } from './dto/upsert-rating.dto';
+
+/** Servicio de lógica de negocio de comunidad */
 import { CommunityService } from './community.service';
 
+/**
+ * Tipo auxiliar para el objeto de petición autenticada.
+ *
+ * Extiende la petición de Express con los datos del usuario
+ * extraídos del token JWT por Passport.
+ */
 interface AuthenticatedRequest {
   user: {
     userId: number;

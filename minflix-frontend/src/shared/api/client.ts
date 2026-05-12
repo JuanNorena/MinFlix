@@ -1,3 +1,14 @@
+/**
+ * Cliente HTTP centralizado para consumir la API del backend de MinFlix.
+ *
+ * Configura una instancia de Axios con la URL base del backend y un interceptor
+ * de peticiones que inyecta automáticamente el token JWT de autenticación
+ * desde el almacenamiento local en el header `Authorization`.
+ *
+ * @see {@link apiClient} para la instancia exportada usada en toda la aplicación
+ */
+
+/** Librería HTTP para realizar peticiones al backend */
 import axios from 'axios'
 
 /**

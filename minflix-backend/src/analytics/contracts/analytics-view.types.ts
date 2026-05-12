@@ -1,5 +1,15 @@
 /**
- * Fila de la vista VW_ANALITICA_CONSUMO para el endpoint de consumo de contenido.
+ * Contratos de vistas (types/interfaces) para respuestas del módulo de analítica.
+ *
+ * Define las estructuras de datos que retornan los servicios de analítica
+ * al frontend: filas de consumo, finanzas y rendimiento interno.
+ *
+ * @see {@link AnalyticsService} para los métodos que retornan estas vistas
+ * @see {@link AnalyticsController} para los endpoints que exponen estas vistas
+ */
+
+/**
+ * Fila de la vista `VW_ANALITICA_CONSUMO` para el endpoint de consumo de contenido.
  */
 export interface ConsumptionRow {
   ciudadResidencia: string;

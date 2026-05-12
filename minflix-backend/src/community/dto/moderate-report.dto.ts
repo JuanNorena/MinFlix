@@ -1,9 +1,24 @@
+/**
+ * DTO para acciones de moderación de reportes.
+ *
+ * Define los datos necesarios para que un moderador (rol soporte/admin)
+ * actualice el estado de un reporte y registre una resolución.
+ *
+ * @see {@link CommunityController.moderateReport} para el endpoint que consume este DTO
+ * @see {@link CommunityService.moderateReport} para la lógica de moderación
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decorador de transformación de datos de entrada */
 import { Transform } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 
 /**
- * DTO para acciones de moderacion de reportes.
+ * DTO para acciones de moderación de reportes.
  */
 export class ModerateReportDto {
   /**

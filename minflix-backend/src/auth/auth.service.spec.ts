@@ -1,10 +1,45 @@
+/**
+ * Suite de pruebas unitarias para `AuthService.createProfile`.
+ *
+ * Verifica las reglas de negocio del módulo de autenticación relacionadas
+ * con la creación de perfiles de reproducción, incluyendo:
+ * - Rechazo cuando el usuario alcanza el límite de perfiles de su plan
+ * - Traducción de errores Oracle (`ORA-20011`, `ORA-20012`) a excepciones HTTP
+ * - Creación exitosa cuando el perfil está dentro del límite permitido
+ *
+ * @see {@link AuthService} para el servicio bajo prueba
+ * @see {@link ProfileEntity} para la entidad de perfiles
+ * @see {@link UserEntity} para la entidad de usuarios
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades del módulo
+// --------------------------------------------------------------------------
+
+/** Excepciones HTTP de NestJS para validar comportamiento de errores */
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+
+/** Servicio de configuración simulado para leer variables de entorno */
 import { ConfigService } from '@nestjs/config';
+
+/** Servicio JWT simulado para generación de tokens */
 import { JwtService } from '@nestjs/jwt';
+
+/** Clase base de repositorio de TypeORM para simular operaciones de base de datos */
 import { Repository } from 'typeorm';
+
+/** Entidades del módulo de autenticación */
 import { PlanEntity, ProfileEntity, UserEntity } from './entities';
+
+/** Servicio de autenticación bajo prueba */
 import { AuthService } from './auth.service';
 
+/**
+ * Bloque de pruebas del método `createProfile` de AuthService.
+ *
+ * Aísla el servicio inyectando repositorios simulados (mocks) para validar
+ * la lógica de negocio sin depender de una conexión real a Oracle.
+ */
 describe('AuthService createProfile', () => {
   let service: AuthService;
   let userRepository: {

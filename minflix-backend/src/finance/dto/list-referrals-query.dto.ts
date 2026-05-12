@@ -1,5 +1,20 @@
+/**
+ * DTO de consulta para listar relaciones de referidos.
+ *
+ * Define los parámetros de consulta para obtener las relaciones de referidos
+ * de una cuenta, con filtrado por tipo de relación, estado y paginación.
+ *
+ * @see {@link FinanceController.listReferrals} para el endpoint que consume este DTO
+ * @see {@link FinanceService.listReferrals} para la lógica de consulta
+ */
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 /**

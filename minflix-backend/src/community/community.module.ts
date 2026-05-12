@@ -1,10 +1,25 @@
+/** Decorador que define un módulo de NestJS */
 import { Module } from '@nestjs/common';
+
+/** Módulo de TypeORM para registrar entidades en el contexto de persistencia */
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+/** Entidades de perfil y usuario (moderador) */
 import { ProfileEntity, UserEntity } from '../auth/entities';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from '../catalog/entities';
+
+/** Controlador REST de comunidad */
 import { CommunityController } from './community.controller';
+
+/** Servicio de lógica de negocio de comunidad */
 import { CommunityService } from './community.service';
+
+/** Entidades del dominio de comunidad */
 import { FavoriteEntity, RatingEntity } from './entities';
+
+/** Entidad de reportes */
 import { ReportEntity } from './entities/report.entity';
 
 /**

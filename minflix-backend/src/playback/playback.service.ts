@@ -1,22 +1,51 @@
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones y decorador de inyección de NestJS */
 import {
   BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+/** Decorador de TypeORM para inyectar repositorios */
 import { InjectRepository } from '@nestjs/typeorm';
+
+/** Clase base de repositorio de TypeORM */
 import { Repository } from 'typeorm';
+
+/** Entidad de perfiles de usuario */
 import { ProfileEntity } from '../auth/entities';
+
+/** Entidad de contenidos multimedia */
 import { ContentEntity } from '../catalog/entities';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y entidades del módulo
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas de reproducción */
 import {
   ContinueWatchingView,
   PlaybackHistoryItemView,
   PlaybackEventView,
 } from './contracts/playback-view.types';
+
+/** DTO de consulta para la fila de continuar viendo */
 import { ListContinueWatchingQueryDto } from './dto/list-continue-watching-query.dto';
+
+/** DTO de consulta para historial de reproducción */
 import { ListPlaybackHistoryQueryDto } from './dto/list-playback-history-query.dto';
+
+/** DTO para reportar progreso de reproducción */
 import { ReportPlaybackProgressDto } from './dto/report-playback-progress.dto';
+
+/** DTO para iniciar una reproducción */
 import { StartPlaybackDto } from './dto/start-playback.dto';
+
+/** Entidades del módulo de reproducción */
 import { ContinueWatchingEntity, PlaybackEntity } from './entities';
 
 /**

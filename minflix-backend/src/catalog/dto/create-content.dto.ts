@@ -1,4 +1,18 @@
+/**
+ * DTO para crear contenidos base del catálogo.
+ *
+ * Define la estructura y validación de los datos enviados por el cliente
+ * al endpoint de creación de contenidos multimedia en MinFlix.
+ *
+ * @see {@link CatalogController} para el endpoint que consume este DTO
+ * @see {@link ContentEntity} para la entidad de contenidos en Oracle
+ * @see {@link UpdateContentDto} para la actualización parcial de contenidos
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsBoolean,
   IsIn,
@@ -12,7 +26,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO para crear contenidos base del catalogo.
+ * DTO para crear contenidos base del catálogo.
  */
 export class CreateContentDto {
   /**

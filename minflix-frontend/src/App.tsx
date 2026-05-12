@@ -1,8 +1,20 @@
+/**
+ * Componente raíz de la aplicación frontend de MinFlix.
+ *
+ * Renderiza el enrutador principal de la aplicación y el sistema global
+ * de notificaciones (toasts) usando `react-hot-toast`.
+ *
+ * @see {@link AppRouter} para la configuración de rutas de la aplicación
+ */
+
+/** Componente de enrutamiento principal de la aplicación */
 import { AppRouter } from './router/AppRouter'
+
+/** Componente de notificaciones toast para la aplicación */
 import { Toaster } from 'react-hot-toast'
 
 /**
- * Componente raiz de la aplicacion frontend.
+ * Componente raíz de la aplicación frontend.
  */
 function App() {
   return (

@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// Importaciones de decoradores y utilidades de NestJS
+// --------------------------------------------------------------------------
+
+/** Decoradores de controladores, métodos HTTP, pipes y excepciones de NestJS */
 import {
   BadRequestException,
   Body,
@@ -13,6 +18,8 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+
+/** Decoradores de documentación de Swagger para endpoints REST */
 import {
   ApiBearerAuth,
   ApiBody,
@@ -20,19 +27,53 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+
+/** Interceptor de NestJS para manejar uploads de archivos con Multer */
 import { FileInterceptor } from '@nestjs/platform-express';
+
+/** Utilidad nativa de Node.js para generar identificadores únicos */
 import { randomUUID } from 'node:crypto';
+
+/** Utilidades nativas de Node.js para manipulación de rutas de archivo */
 import { extname, join } from 'node:path';
+
+/** Motor de almacenamiento de Multer para persistir archivos en disco */
 import { diskStorage } from 'multer';
+
+/** Tipo de Request de Express para tipar el objeto de petición */
 import type { Request } from 'express';
+
+// --------------------------------------------------------------------------
+// Importaciones de servicios, DTOs y guardas del módulo de autenticación
+// --------------------------------------------------------------------------
+
+/** Servicio de lógica de negocio para autenticación y perfiles */
 import { AuthService } from './auth.service';
+
+/** DTO para crear un nuevo perfil de reproducción */
 import { CreateProfileDto } from './dto/create-profile.dto';
+
+/** DTO para iniciar sesión con email y contraseña */
 import { LoginDto } from './dto/login.dto';
+
+/** DTO para registrar una nueva cuenta principal */
 import { RegisterDto } from './dto/register.dto';
+
+/** DTO para actualizar datos de un perfil existente */
 import { UpdateProfileDto } from './dto/update-profile.dto';
+
+/** Guarda que protege endpoints requiriendo un token JWT válido */
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+
+/** Guarda que valida credenciales de email/contraseña en el endpoint de login */
 import { LocalAuthGuard } from './guards/local-auth.guard';
 
+/**
+ * Configuración de almacenamiento en disco para uploads de avatares.
+ *
+ * Los avatares se guardan en `uploads/avatars/` con un nombre de archivo
+ * único generado con UUID para evitar colisiones.
+ */
 const avatarUploadStorage = diskStorage({
   destination: join(process.cwd(), 'uploads', 'avatars'),
   filename: (_req, file, callback) => {

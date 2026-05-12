@@ -1,3 +1,15 @@
+/**
+ * Entidad de contenidos relacionados (`CONTENIDOS_RELACIONADOS`).
+ *
+ * Representa una relación entre dos contenidos del catálogo,
+ * como secuelas, precuelas, remakes o spin-offs. Incluye el tipo
+ * de relación y una descripción opcional.
+ *
+ * @see {@link ContentEntity} para los contenidos origen y destino
+ * @see {@link CatalogService.getRelatedContents} para consultar contenidos relacionados
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -6,6 +18,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from './content.entity';
 
 /**

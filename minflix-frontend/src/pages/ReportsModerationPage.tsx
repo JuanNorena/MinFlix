@@ -1,16 +1,55 @@
+/**
+ * Página de moderación de reportes de contenido para roles admin y soporte.
+ *
+ * Muestra la bandeja de reportes creados por los usuarios, permitiendo
+ * filtrar por estado (ABIERTO, EN_REVISION, RESUELTO, DESCARTADO) y
+ * actualizar el estado de cada reporte con una resolución.
+ *
+ * @see {@link CommunityService} para la lógica de moderación del backend
+ * @see {@link CommunityController} para los endpoints de reportes y moderación
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado, efectos y memorización */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componentes de navegación y enrutamiento de React Router */
 import { Link, Navigate, useNavigate } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+/** Librería HTTP para manejo de errores de Axios */
 import axios from 'axios'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helpers para sesión de autenticación y verificación de rol moderador */
 import {
   getAuthSession,
   hasModeratorRole,
 } from '../shared/session/authSession'
+
+/** Helper para limpiar el perfil activo al cerrar sesión */
 import { clearActiveProfile } from '../shared/session/profileSession'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
+/**
+ * Reporte de moderación para la interfaz de bandeja de reportes.
+ */
 interface ModerationReportItem {
   idReporte: number
   perfilId: number

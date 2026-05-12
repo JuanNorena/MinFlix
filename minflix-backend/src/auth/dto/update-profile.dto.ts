@@ -1,4 +1,23 @@
+/**
+ * DTO para actualizar datos editables del perfil.
+ *
+ * Define la estructura y validación de los datos enviados por el cliente
+ * al endpoint `PATCH /api/v1/auth/profiles/:profileId` para modificar
+ * un perfil de reproducción existente de la cuenta autenticada.
+ *
+ * @see {@link AuthController.updateProfile} para el endpoint que consume este DTO
+ * @see {@link AuthService.updateProfile} para la lógica de actualización
+ * @see {@link ProfileEntity} para la entidad de perfiles en la base de datos
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de Swagger y class-validator
+// --------------------------------------------------------------------------
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsIn,
   IsOptional,

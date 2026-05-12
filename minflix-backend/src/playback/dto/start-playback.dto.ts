@@ -1,4 +1,17 @@
+/**
+ * DTO para registrar el inicio de una reproducción.
+ *
+ * Define los datos necesarios para iniciar una sesión de reproducción
+ * vinculando un perfil y un contenido multimedia.
+ *
+ * @see {@link PlaybackController.startPlayback} para el endpoint que consume este DTO
+ * @see {@link PlaybackService.startPlayback} para la lógica de inicio de reproducción
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsInt,
   IsOptional,
@@ -9,7 +22,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO para registrar el inicio de una reproduccion.
+ * DTO para registrar el inicio de una reproducción.
  */
 export class StartPlaybackDto {
   /**

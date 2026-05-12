@@ -1,11 +1,46 @@
+/**
+ * Suite de pruebas unitarias para `CommunityService`.
+ *
+ * Verifica la lógica de negocio del módulo de comunidad, incluyendo
+ * la gestión de favoritos, calificaciones, reportes y moderación.
+ *
+ * @see {@link CommunityService} para el servicio bajo prueba
+ * @see {@link FavoriteEntity} para la entidad de favoritos
+ * @see {@link RatingEntity} para la entidad de calificaciones
+ * @see {@link ReportEntity} para la entidad de reportes
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones HTTP de NestJS para validar comportamiento de errores */
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+
+/** Clase base de repositorio de TypeORM para simular operaciones */
 import { Repository } from 'typeorm';
+
+/** Entidades de perfil y usuario (moderador) */
 import { ProfileEntity, UserEntity } from '../auth/entities';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from '../catalog/entities';
+
+/** Servicio de comunidad bajo prueba */
 import { CommunityService } from './community.service';
+
+/** Entidades del módulo de comunidad */
 import { FavoriteEntity, RatingEntity } from './entities';
+
+/** Entidad de reportes */
 import { ReportEntity } from './entities/report.entity';
 
+/**
+ * Bloque de pruebas del servicio de comunidad.
+ *
+ * Aísla el servicio inyectando repositorios simulados (mocks) para validar
+ * la lógica de negocio sin depender de una conexión real a Oracle.
+ */
 describe('CommunityService', () => {
   let service: CommunityService;
   let favoriteRepository: {

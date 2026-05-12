@@ -1,5 +1,10 @@
+/** Decorador que define un módulo de NestJS */
 import { Module } from '@nestjs/common';
+
+/** Controlador REST del módulo de analítica */
 import { AnalyticsController } from './analytics.controller';
+
+/** Servicio de lógica de consultas OLAP */
 import { AnalyticsService } from './analytics.service';
 
 /**

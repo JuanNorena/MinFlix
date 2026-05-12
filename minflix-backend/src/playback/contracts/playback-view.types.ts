@@ -1,5 +1,15 @@
 /**
- * Vista de evento de reproduccion registrada en el historial.
+ * Contratos de vistas (types/interfaces) para respuestas del módulo de reproducción.
+ *
+ * Define las estructuras de datos que retornan los servicios de reproducción
+ * al frontend: eventos individuales, historial completo y fila de continuar viendo.
+ *
+ * @see {@link PlaybackService} para los métodos que retornan estas vistas
+ * @see {@link PlaybackController} para los endpoints que exponen estas vistas
+ */
+
+/**
+ * Vista de evento de reproducción registrada en el historial.
  */
 export interface PlaybackEventView {
   idReproduccion: number;

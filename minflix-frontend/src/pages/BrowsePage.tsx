@@ -1,19 +1,59 @@
+/**
+ * Página de exploración del catálogo de contenidos de MinFlix.
+ *
+ * Muestra el catálogo completo de películas, series, documentales, música y podcasts,
+ * con filtros por búsqueda, tipo, categoría y clasificación de edad. También presenta
+ * secciones de "Continuar viendo", "Favoritos" e "Historial de reproducción" del perfil activo.
+ *
+ * @see {@link CatalogService} para la lógica de consulta del catálogo
+ * @see {@link CatalogController} para los endpoints de contenidos
+ * @see {@link PlaybackService} para la lógica de reproducción y continuidad
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado, efectos y memorización */
 import { useEffect, useMemo, useState } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componentes de navegación y enrutamiento de React Router */
 import { Link, Navigate, useNavigate } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helpers para resolver URLs de avatares y generar iniciales */
 import { profileInitials, resolveAvatarUrl } from '../shared/helpers/avatarUrl'
+
+/** Helpers para gestionar el perfil activo de la sesión */
 import {
   clearActiveProfile,
   getActiveProfile,
 } from '../shared/session/profileSession'
+
+/** Helpers para sesión de autenticación y verificación de rol moderador */
 import {
   getAuthSession,
   hasModeratorRole,
 } from '../shared/session/authSession'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
+/**
+ * Categoría del catálogo de contenidos.
+ */
 interface CatalogCategory {
   id: number
   nombre: string

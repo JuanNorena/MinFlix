@@ -1,11 +1,24 @@
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones y decorador de inyección de NestJS */
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+/** Decorador de TypeORM para inyectar repositorios */
 import { InjectRepository } from '@nestjs/typeorm';
+
+/** Clase base de repositorio de TypeORM */
 import { Repository } from 'typeorm';
+
+/** Entidad de usuarios (empleado publicador) */
 import { UserEntity } from '../auth/entities/user.entity';
+
+/** Entidades del módulo de catálogo */
 import {
   CategoryEntity,
   ContentEntity,
@@ -15,10 +28,24 @@ import {
   RelatedContentEntity,
   SeasonEntity,
 } from './entities';
+
+// --------------------------------------------------------------------------
+// Importaciones de DTOs y contratos del módulo
+// --------------------------------------------------------------------------
+
+/** DTO para crear categorías */
 import { CreateCategoryDto } from './dto/create-category.dto';
+
+/** DTO para crear contenidos */
 import { CreateContentDto } from './dto/create-content.dto';
+
+/** DTO de filtros para listar contenidos */
 import { ListContentQueryDto } from './dto/list-content-query.dto';
+
+/** DTO para actualizar contenidos */
 import { UpdateContentDto } from './dto/update-content.dto';
+
+/** Contratos de vistas para respuestas del catálogo */
 import {
   CatalogCategoryView,
   CatalogContentView,

@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, utilidades y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones, decorador de inyección y logger de NestJS */
 import {
   BadRequestException,
   Injectable,
@@ -5,15 +10,39 @@ import {
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+
+/** Tipo de Request de Express para tipar peticiones HTTP */
 import type { Request } from 'express';
+
+/** Servicio de NestJS para generación y firma de tokens JWT */
 import { JwtService } from '@nestjs/jwt';
+
+/** Decorador de TypeORM para inyectar repositorios de entidades */
 import { InjectRepository } from '@nestjs/typeorm';
+
+/** Funciones de bcrypt para comparar y generar hashes de contraseñas */
 import { compare, hash } from 'bcrypt';
+
+/** Servicio de configuración de NestJS para leer variables de entorno */
 import { ConfigService } from '@nestjs/config';
+
+/** Entidades del módulo de autenticación */
 import { PlanEntity, ProfileEntity, UserEntity } from './entities';
+
+/** Clase base de repositorio de TypeORM para operaciones CRUD */
 import { Repository } from 'typeorm';
+
+// --------------------------------------------------------------------------
+// Importaciones de DTOs del módulo de autenticación
+// --------------------------------------------------------------------------
+
+/** DTO para crear un perfil de reproducción */
 import { CreateProfileDto } from './dto/create-profile.dto';
+
+/** DTO para registrar una nueva cuenta */
 import { RegisterDto } from './dto/register.dto';
+
+/** DTO para actualizar un perfil existente */
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 /**

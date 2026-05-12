@@ -1,6 +1,13 @@
+/** Decorador que marca la clase como proveedor inyectable en NestJS */
 import { Injectable } from '@nestjs/common';
+
+/** Servicio de configuración para leer variables de entorno (JWT_SECRET) */
 import { ConfigService } from '@nestjs/config';
+
+/** Clase base de Passport para definir estrategias personalizadas en NestJS */
 import { PassportStrategy } from '@nestjs/passport';
+
+/** Extractor de JWT y estrategia JWT de Passport.js */
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 /**

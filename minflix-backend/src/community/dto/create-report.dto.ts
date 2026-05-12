@@ -1,5 +1,20 @@
+/**
+ * DTO para registrar reportes de contenido por perfil.
+ *
+ * Define los datos necesarios para que un perfil reporte un contenido
+ * inapropiado, incluyendo motivo y detalle opcional para moderación.
+ *
+ * @see {@link CommunityController.createReport} para el endpoint que consume este DTO
+ * @see {@link CommunityService.createReport} para la lógica de validación y registro
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsInt,
   IsOptional,

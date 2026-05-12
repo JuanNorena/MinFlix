@@ -1,12 +1,31 @@
+/** Decorador que define un módulo de NestJS con metadatos de importaciones, controladores y proveedores */
 import { Module } from '@nestjs/common';
+
+/** Módulo de NestJS para generación y validación de tokens JWT */
 import { JwtModule } from '@nestjs/jwt';
+
+/** Módulo de NestJS para integración con Passport.js */
 import { PassportModule } from '@nestjs/passport';
+
+/** Módulo y servicio de configuración para leer variables de entorno */
 import { ConfigModule, ConfigService } from '@nestjs/config';
+
+/** Módulo de TypeORM para registrar entidades en el contexto de persistencia */
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+/** Controlador REST que expone los endpoints de autenticación y perfiles */
 import { AuthController } from './auth.controller';
+
+/** Servicio de lógica de negocio para autenticación y gestión de perfiles */
 import { AuthService } from './auth.service';
+
+/** Estrategia local de Passport para validar email y contraseña */
 import { LocalStrategy } from './strategies/local.strategy';
+
+/** Estrategia JWT de Passport para validar tokens Bearer */
 import { JwtStrategy } from './strategies/jwt.strategy';
+
+/** Entidades de autenticación: usuario, plan y perfil */
 import { PlanEntity, ProfileEntity, UserEntity } from './entities';
 
 /**

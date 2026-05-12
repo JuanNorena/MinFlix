@@ -1,3 +1,15 @@
+/**
+ * Entidad de episodios (`EPISODIOS`) para temporadas de series y podcasts.
+ *
+ * Representa un episodio individual dentro de una temporada.
+ * Incluye metadatos como número de episodio, título, duración,
+ * sinopsis y fecha de estreno.
+ *
+ * @see {@link SeasonEntity} para la temporada a la que pertenece el episodio
+ * @see {@link ContentEntity} para el contenido padre de la temporada
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -6,6 +18,8 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de temporada a la que pertenece el episodio */
 import { SeasonEntity } from './season.entity';
 
 /**

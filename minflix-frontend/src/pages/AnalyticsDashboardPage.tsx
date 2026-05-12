@@ -1,10 +1,44 @@
+/**
+ * Página de dashboard de analítica ejecutiva para roles admin y analista.
+ *
+ * Visualiza datos de consumo de contenido, finanzas y rendimiento interno
+ * obtenidos desde las vistas `VW_ANALITICA_*` de Oracle. Permite filtrar
+ * por ciudad, categoría, plan, periodo y departamento.
+ *
+ * @see {@link AnalyticsService} para el servicio backend que provee los datos
+ * @see {@link AnalyticsController} para los endpoints de analítica
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado, efectos y memorización */
 import { useCallback, useMemo, useState } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componentes de navegación y enrutamiento de React Router */
 import { Link, Navigate, useNavigate } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helper para obtener la sesión de autenticación activa */
 import { getAuthSession } from '../shared/session/authSession'
+
+/** Helper para limpiar el perfil activo al cerrar sesión */
 import { clearActiveProfile } from '../shared/session/profileSession'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
 // --- Tipos de respuesta de la API ---

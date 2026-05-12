@@ -1,9 +1,40 @@
+/**
+ * Suite de pruebas unitarias para `FinanceService`.
+ *
+ * Verifica la lógica de negocio del módulo financiero, incluyendo
+ * resumen de cuenta, listado de facturas, pagos y referidos.
+ *
+ * @see {@link FinanceService} para el servicio bajo prueba
+ * @see {@link InvoiceEntity} para la entidad de facturación
+ * @see {@link PaymentEntity} para la entidad de pagos
+ * @see {@link ReferralEntity} para la entidad de referidos
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepción HTTP de NestJS para validar comportamiento de errores */
 import { NotFoundException } from '@nestjs/common';
+
+/** Clase base de repositorio de TypeORM para simular operaciones */
 import { Repository } from 'typeorm';
+
+/** Entidad de usuario propietario de facturas y pagos */
 import { UserEntity } from '../auth/entities';
+
+/** Servicio financiero bajo prueba */
 import { FinanceService } from './finance.service';
+
+/** Entidades del dominio financiero */
 import { InvoiceEntity, PaymentEntity, ReferralEntity } from './entities';
 
+/**
+ * Bloque de pruebas del servicio financiero.
+ *
+ * Aísla el servicio inyectando repositorios simulados (mocks) para validar
+ * la lógica de negocio sin depender de una conexión real a Oracle.
+ */
 describe('FinanceService', () => {
   let service: FinanceService;
   let invoiceRepository: {

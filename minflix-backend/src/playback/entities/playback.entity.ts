@@ -1,3 +1,16 @@
+/**
+ * Entidad de eventos de reproducción (`REPRODUCCIONES`) por perfil y contenido.
+ *
+ * Registra cada sesión de reproducción de un perfil sobre un contenido,
+ * incluyendo progreso en segundos, duración total, porcentaje de avance,
+ * dispositivo utilizado, estado de reproducción y fechas de inicio/fin.
+ *
+ * @see {@link ProfileEntity} para el perfil que reproduce el contenido
+ * @see {@link ContentEntity} para el contenido reproducido
+ * @see {@link PlaybackService} para la lógica de registro y actualización
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -6,11 +19,15 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de contenido multimedia reproducido */
 import { ContentEntity } from '../../catalog/entities';
+
+/** Entidad de perfil de usuario que inicia la reproducción */
 import { ProfileEntity } from '../../auth/entities';
 
 /**
- * Entidad de eventos de reproduccion por perfil y contenido.
+ * Entidad de eventos de reproducción por perfil y contenido.
  */
 @Entity({ name: 'REPRODUCCIONES' })
 export class PlaybackEntity {

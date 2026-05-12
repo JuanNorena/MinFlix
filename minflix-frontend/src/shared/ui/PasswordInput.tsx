@@ -1,6 +1,22 @@
+/**
+ * Input de contraseña reutilizable con toggle para ver u ocultar texto.
+ *
+ * Renderiza un campo de contraseña con un botón de alternancia que muestra
+ * u oculta el texto ingresado, usando iconos de Lucide React.
+ *
+ * @see {@link LoginPage} para el formulario de inicio de sesión
+ * @see {@link RegisterPage} para el formulario de registro
+ */
+
+/** Hook de estado de React para controlar la visibilidad de la contraseña */
 import { useState } from 'react'
+
+/** Iconos de ojo abierto y cerrado de Lucide React */
 import { Eye, EyeOff } from 'lucide-react'
 
+/**
+ * Props del componente de input de contraseña.
+ */
 interface PasswordInputProps {
   id: string
   value: string

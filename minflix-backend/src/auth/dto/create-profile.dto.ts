@@ -1,4 +1,23 @@
+/**
+ * DTO para crear perfiles adicionales en una cuenta existente.
+ *
+ * Define la estructura y validación de los datos enviados por el cliente
+ * al endpoint `POST /api/v1/auth/profiles` para agregar un nuevo perfil
+ * de reproducción a la cuenta autenticada.
+ *
+ * @see {@link AuthController.createProfile} para el endpoint que consume este DTO
+ * @see {@link AuthService.createProfile} para la lógica de validación de límites
+ * @see {@link ProfileEntity} para la entidad de perfiles en la base de datos
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de Swagger y class-validator
+// --------------------------------------------------------------------------
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsIn,
   IsOptional,

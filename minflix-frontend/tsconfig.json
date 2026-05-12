@@ -1,3 +1,12 @@
+/**
+ * Configuración raíz de TypeScript para el frontend de MinFlix.
+ *
+ * Organiza la configuración del proyecto mediante referencias a sub-proyectos:
+ * la aplicación React (`tsconfig.app.json`) y la configuración de Vite (`tsconfig.node.json`).
+ *
+ * @see {@link tsconfig.app.json} para la configuración de la aplicación React
+ * @see {@link tsconfig.node.json} para la configuración de Vite
+ */
 {
   "files": [],
   "references": [

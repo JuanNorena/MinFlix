@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// Importaciones de decoradores y utilidades de NestJS
+// --------------------------------------------------------------------------
+
+/** Decoradores de controladores, métodos HTTP, guardas y excepciones */
 import {
   Body,
   Controller,
@@ -7,19 +12,45 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+
+/** Decoradores de documentación de Swagger para endpoints REST */
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+/** Guarda que protege endpoints requiriendo un token JWT válido */
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y servicios del módulo de reproducción
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas de reproducción */
 import {
   ContinueWatchingView,
   PlaybackHistoryItemView,
   PlaybackEventView,
 } from './contracts/playback-view.types';
+
+/** DTO de consulta para la fila de continuar viendo */
 import { ListContinueWatchingQueryDto } from './dto/list-continue-watching-query.dto';
+
+/** DTO de consulta para historial de reproducción */
 import { ListPlaybackHistoryQueryDto } from './dto/list-playback-history-query.dto';
+
+/** DTO para reportar progreso de reproducción */
 import { ReportPlaybackProgressDto } from './dto/report-playback-progress.dto';
+
+/** DTO para iniciar una reproducción */
 import { StartPlaybackDto } from './dto/start-playback.dto';
+
+/** Servicio de lógica de negocio de reproducción y continuidad */
 import { PlaybackService } from './playback.service';
 
+/**
+ * Tipo auxiliar para el objeto de petición autenticada.
+ *
+ * Extiende la petición de Express con los datos del usuario
+ * extraídos del token JWT por Passport.
+ */
 interface AuthenticatedRequest {
   user: {
     userId: number;

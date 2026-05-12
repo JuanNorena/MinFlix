@@ -1,10 +1,42 @@
+/**
+ * Suite de pruebas unitarias para `PlaybackService`.
+ *
+ * Verifica la lógica de negocio del módulo de reproducción, incluyendo
+ * el registro de inicio de reproducción, validaciones de ownership
+ * y restricciones de edad, y mapeo de respuestas.
+ *
+ * @see {@link PlaybackService} para el servicio bajo prueba
+ * @see {@link PlaybackEntity} para la entidad de eventos de reproducción
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de NestJS, TypeORM y entidades
+// --------------------------------------------------------------------------
+
+/** Excepciones HTTP de NestJS para validar comportamiento de errores */
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
+
+/** Clase base de repositorio de TypeORM para simular operaciones */
 import { Repository } from 'typeorm';
+
+/** Entidad de perfiles de usuario */
 import { ProfileEntity } from '../auth/entities';
+
+/** Entidad de contenidos multimedia */
 import { ContentEntity } from '../catalog/entities';
+
+/** Entidades del módulo de reproducción */
 import { ContinueWatchingEntity, PlaybackEntity } from './entities';
+
+/** Servicio de reproducción bajo prueba */
 import { PlaybackService } from './playback.service';
 
+/**
+ * Bloque de pruebas del servicio de reproducción.
+ *
+ * Aísla el servicio inyectando repositorios simulados (mocks) para validar
+ * la lógica de negocio sin depender de una conexión real a Oracle.
+ */
 describe('PlaybackService', () => {
   let service: PlaybackService;
   let playbackRepository: {

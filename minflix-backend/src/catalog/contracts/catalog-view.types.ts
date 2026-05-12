@@ -1,5 +1,16 @@
 /**
- * Vista de categoria para contratos de respuesta del catalogo.
+ * Contratos de vistas (types/interfaces) para respuestas del módulo de catálogo.
+ *
+ * Define las estructuras de datos que retornan los servicios del catálogo
+ * al frontend. Cada interfaz representa una vista de lectura optimizada
+ * para la UI, con tipos nulables donde la base de datos permite null.
+ *
+ * @see {@link CatalogService} para los métodos que retornan estas vistas
+ * @see {@link CatalogController} para los endpoints que exponen estas vistas
+ */
+
+/**
+ * Vista de categoría para contratos de respuesta del catálogo.
  */
 export interface CatalogCategoryView {
   id: number;

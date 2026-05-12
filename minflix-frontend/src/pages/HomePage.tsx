@@ -1,6 +1,24 @@
+/**
+ * Página de inicio (landing) de MinFlix.
+ *
+ * Pantalla pública que presenta la propuesta de valor de la plataforma,
+ * los planes de suscripción disponibles y enlaces a login y registro.
+ *
+ * @see {@link plansCatalog} para el catálogo de planes mostrados en esta página
+ * @see {@link LoginPage} para el enlace de inicio de sesión
+ * @see {@link RegisterPage} para el enlace de registro de cuenta
+ */
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componente de enlace de React Router */
 import { Link } from 'react-router-dom'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
+
+/** Catálogo de planes de suscripción */
 import { plansCatalog } from '../shared/helpers/plansCatalog'
 
 /**

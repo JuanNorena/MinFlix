@@ -1,3 +1,12 @@
+/**
+ * Configuración de TypeScript para la aplicación React del frontend de MinFlix.
+ *
+ * Define las opciones del compilador orientadas a React y Vite, incluyendo
+ * resolución de módulos ES, transformación JSX y reglas estrictas de linting.
+ *
+ * @see {@link tsconfig.json} para la configuración raíz del proyecto
+ * @see {@link vite.config.ts} para la configuración del bundler Vite
+ */
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",

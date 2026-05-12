@@ -1,3 +1,15 @@
+/**
+ * Entidad de transacciones de pago (`PAGOS`) asociadas a una factura.
+ *
+ * Representa un pago realizado por un usuario sobre una factura específica.
+ * Incluye monto, método de pago, estado de transacción y referencia externa.
+ *
+ * @see {@link InvoiceEntity} para la factura sobre la que se realiza el pago
+ * @see {@link UserEntity} para el usuario que realiza el pago
+ * @see {@link FinanceService} para la lógica de procesamiento de pagos
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -6,7 +18,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de usuario que realiza el pago */
 import { UserEntity } from '../../auth/entities';
+
+/** Entidad de factura sobre la que se realiza el pago */
 import { InvoiceEntity } from './invoice.entity';
 
 /**

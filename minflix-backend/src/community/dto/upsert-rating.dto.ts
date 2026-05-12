@@ -1,5 +1,21 @@
+/**
+ * DTO para crear o actualizar calificación por perfil.
+ *
+ * Define los datos para que un perfil califique un contenido
+ * con puntaje de 1 a 5 estrellas y una reseña opcional.
+ * Si ya existe una calificación, se actualiza (patrón upsert).
+ *
+ * @see {@link CommunityController.upsertRating} para el endpoint que consume este DTO
+ * @see {@link CommunityService.upsertRating} para la lógica de validación y registro
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decorador de transformación de tipos */
 import { Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsInt,
   IsOptional,
@@ -10,7 +26,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO para crear o actualizar calificacion por perfil.
+ * DTO para crear o actualizar calificación por perfil.
  */
 export class UpsertRatingDto {
   /**

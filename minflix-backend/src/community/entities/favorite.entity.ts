@@ -1,3 +1,15 @@
+/**
+ * Entidad de favoritos (`FAVORITOS`) por perfil para personalización de contenido.
+ *
+ * Permite que un perfil marque contenidos como favoritos para acceder
+ * a ellos rápidamente desde su lista personal.
+ *
+ * @see {@link ProfileEntity} para el perfil que marca el favorito
+ * @see {@link ContentEntity} para el contenido favorito
+ * @see {@link CommunityService} para la gestión de favoritos
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   CreateDateColumn,
   Entity,
@@ -5,11 +17,15 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de perfil de usuario */
 import { ProfileEntity } from '../../auth/entities';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from '../../catalog/entities';
 
 /**
- * Entidad de favoritos por perfil para personalizacion de contenido.
+ * Entidad de favoritos por perfil para personalización de contenido.
  */
 @Entity({ name: 'FAVORITOS' })
 export class FavoriteEntity {

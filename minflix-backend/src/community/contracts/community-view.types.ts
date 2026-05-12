@@ -1,5 +1,15 @@
 /**
- * Vista de categoria embebida en respuestas de comunidad.
+ * Contratos de vistas (types/interfaces) para respuestas del módulo de comunidad.
+ *
+ * Define las estructuras de datos que retornan los servicios de comunidad
+ * al frontend: favoritos, calificaciones, estados y reportes.
+ *
+ * @see {@link CommunityService} para los métodos que retornan estas vistas
+ * @see {@link CommunityController} para los endpoints que exponen estas vistas
+ */
+
+/**
+ * Vista de categoría embebida en respuestas de comunidad.
  */
 export interface CommunityCategoryView {
   id: number;

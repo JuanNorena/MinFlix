@@ -1,3 +1,13 @@
+/**
+ * Estilos globales y tema visual de MinFlix.
+ *
+ * Define las variables CSS del tema (colores, tipografía, espaciado),
+ * estilos base del body con gradientes, y todas las clases utilitarias
+ * usadas por los componentes y páginas del frontend.
+ *
+ * @see {@link App} para el componente raíz que importa este archivo
+ */
+
 @import "tailwindcss";
 
 :root {

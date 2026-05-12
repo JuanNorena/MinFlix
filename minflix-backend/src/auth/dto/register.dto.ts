@@ -1,4 +1,23 @@
+/**
+ * DTO para registrar una cuenta principal con perfil inicial.
+ *
+ * Define la estructura y validación de los datos enviados por el cliente
+ * al endpoint `POST /api/v1/auth/register` para crear una nueva cuenta
+ * de usuario, asignarle un plan de suscripción y generar un perfil inicial.
+ *
+ * @see {@link AuthController.register} para el endpoint que consume este DTO
+ * @see {@link AuthService.register} para la lógica de creación de cuenta
+ * @see {@link PlanEntity} para la entidad de planes de suscripción
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de Swagger y class-validator
+// --------------------------------------------------------------------------
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsDateString,
   IsEmail,

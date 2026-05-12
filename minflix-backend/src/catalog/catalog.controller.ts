@@ -1,3 +1,8 @@
+// --------------------------------------------------------------------------
+// Importaciones de decoradores y utilidades de NestJS
+// --------------------------------------------------------------------------
+
+/** Decoradores de controladores, métodos HTTP, pipes, guardas y excepciones */
 import {
   Body,
   Controller,
@@ -11,13 +16,33 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+
+/** Decoradores de documentación de Swagger para endpoints REST */
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+// --------------------------------------------------------------------------
+// Importaciones de servicios, DTOs, guardas y contratos del catálogo
+// --------------------------------------------------------------------------
+
+/** Servicio de lógica de negocio del catálogo multimedia */
 import { CatalogService } from './catalog.service';
+
+/** DTO para crear categorías */
 import { CreateCategoryDto } from './dto/create-category.dto';
+
+/** DTO para crear contenidos */
 import { CreateContentDto } from './dto/create-content.dto';
+
+/** DTO de filtros para listar contenidos */
 import { ListContentQueryDto } from './dto/list-content-query.dto';
+
+/** DTO para actualizar contenidos */
 import { UpdateContentDto } from './dto/update-content.dto';
+
+/** Guarda que protege endpoints requiriendo un token JWT válido */
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+/** Contratos de vistas para respuestas del catálogo */
 import {
   CatalogCategoryView,
   CatalogContentView,
@@ -27,6 +52,12 @@ import {
   CatalogSeasonView,
 } from './contracts/catalog-view.types';
 
+/**
+ * Tipo auxiliar para el objeto de petición autenticada.
+ *
+ * Extiende la petición de Express con los datos del usuario
+ * extraídos del token JWT por Passport.
+ */
 interface AuthenticatedRequest {
   user: {
     userId: number;

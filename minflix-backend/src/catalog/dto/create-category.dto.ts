@@ -1,8 +1,21 @@
+/**
+ * DTO para crear categorías del catálogo.
+ *
+ * Define la estructura y validación de los datos enviados por el cliente
+ * al endpoint de creación de categorías en el catálogo multimedia.
+ *
+ * @see {@link CatalogController} para el endpoint que consume este DTO
+ * @see {@link CategoryEntity} para la entidad de categorías en Oracle
+ */
+
+/** Decoradores de documentación de propiedades para Swagger */
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de validación de datos de entrada */
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 
 /**
- * DTO para crear categorias del catalogo.
+ * DTO para crear categorías del catálogo.
  */
 export class CreateCategoryDto {
   /**

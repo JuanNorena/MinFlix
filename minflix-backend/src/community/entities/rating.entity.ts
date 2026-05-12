@@ -1,3 +1,15 @@
+/**
+ * Entidad de calificaciones (`CALIFICACIONES`) por perfil y contenido.
+ *
+ * Permite que un perfil puntúe y reseñe contenidos del catálogo
+ * con una escala de 1 a 5 estrellas.
+ *
+ * @see {@link ProfileEntity} para el perfil que califica
+ * @see {@link ContentEntity} para el contenido evaluado
+ * @see {@link CommunityService} para la gestión de calificaciones
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -6,7 +18,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+
+/** Entidad de perfil de usuario */
 import { ProfileEntity } from '../../auth/entities';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from '../../catalog/entities';
 
 /**

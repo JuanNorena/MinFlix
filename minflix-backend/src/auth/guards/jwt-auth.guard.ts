@@ -1,4 +1,7 @@
+/** Decorador que marca la clase como proveedor inyectable en NestJS */
 import { Injectable } from '@nestjs/common';
+
+/** Clase base de Passport que activa la estrategia JWT por nombre */
 import { AuthGuard } from '@nestjs/passport';
 
 /**

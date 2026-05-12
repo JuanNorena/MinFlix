@@ -1,3 +1,10 @@
+/**
+ * Estilos específicos del componente App y utilidades adicionales.
+ *
+ * Complementa los estilos globales de `index.css` con clases específicas
+ * para componentes y animaciones del frontend.
+ */
+
 .counter {
   font-size: 16px;
   padding: 5px 10px;

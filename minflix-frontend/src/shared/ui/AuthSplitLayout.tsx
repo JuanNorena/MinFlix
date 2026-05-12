@@ -1,6 +1,23 @@
+/**
+ * Layout reutilizable para vistas de autenticación con panel promocional.
+ *
+ * Divide la pantalla en dos paneles: uno promocional con animación de entrada
+ * (chip, título y descripción) y otro con el formulario de autenticación.
+ * Se usa en las páginas de login y registro.
+ *
+ * @see {@link LoginPage} para la página de inicio de sesión que usa este layout
+ * @see {@link RegisterPage} para la página de registro que usa este layout
+ */
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Tipo de React para nodos hijos */
 import type { ReactNode } from 'react'
 
+/**
+ * Props del layout de autenticación dividida.
+ */
 interface AuthSplitLayoutProps {
   chip: string
   title: string

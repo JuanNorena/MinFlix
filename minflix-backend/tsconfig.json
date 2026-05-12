@@ -1,3 +1,12 @@
+/**
+ * Configuración de TypeScript para el backend de MinFlix.
+ *
+ * Define las opciones del compilador orientadas a NestJS y Node.js,
+ * incluyendo soporte para decoradores, resolución de módulos ES,
+ * mapas de fuente y tipos de Jest para pruebas unitarias.
+ *
+ * @see {@link tsconfig.build.json} para la configuración de compilación de producción
+ */
 {
   "compilerOptions": {
     "module": "nodenext",

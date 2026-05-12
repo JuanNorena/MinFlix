@@ -1,5 +1,20 @@
+/**
+ * DTO de consulta para listado de facturas del usuario autenticado.
+ *
+ * Define los parámetros de consulta para obtener las facturas de una cuenta,
+ * con filtros por año, mes, estado y paginación.
+ *
+ * @see {@link FinanceController.listInvoices} para el endpoint que consume este DTO
+ * @see {@link FinanceService.listInvoices} para la lógica de consulta
+ */
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
 
 /**

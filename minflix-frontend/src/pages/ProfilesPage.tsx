@@ -1,14 +1,52 @@
+/**
+ * Página de gestión de perfiles de la cuenta autenticada.
+ *
+ * Permite crear, editar y eliminar perfiles de reproducción asociados a la cuenta,
+ * incluyendo la carga de avatares personalizados. Muestra la lista de perfiles
+ * existentes con sus avatares y tipos (adulto / infantil).
+ *
+ * @see {@link AuthService} para la lógica de gestión de perfiles del backend
+ * @see {@link AuthController} para los endpoints de perfiles
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de React y librerías de UI
+// --------------------------------------------------------------------------
+
+/** Hooks de React para estado, efectos y memorización */
 import { useEffect, useMemo, useState } from 'react'
+
+/** Tipos de eventos de React */
 import type { ChangeEvent, FormEvent } from 'react'
+
+/** Componente de animación de Framer Motion */
 import { motion } from 'framer-motion'
+
+/** Componente de enlace de React Router */
 import { Link } from 'react-router-dom'
+
+/** Notificaciones toast para retroalimentación al usuario */
 import { toast } from 'react-hot-toast'
+
+// --------------------------------------------------------------------------
+// Importaciones de utilidades compartidas
+// --------------------------------------------------------------------------
+
+/** Cliente HTTP para consumir la API del backend */
 import { apiClient } from '../shared/api/client'
+
+/** Helpers para resolver URLs de avatares y generar iniciales */
 import { profileInitials, resolveAvatarUrl } from '../shared/helpers/avatarUrl'
+
+/** Helper para obtener clases CSS de botones */
 import { buttonClassName } from '../shared/ui/buttonStyles'
 
+/** Tipos de perfil disponibles en la plataforma */
 type ProfileType = 'adulto' | 'infantil'
 
+/**
+ * Perfil de cuenta para la interfaz de gestión.
+ */
 interface AccountProfile {
   id: number
   nombre: string

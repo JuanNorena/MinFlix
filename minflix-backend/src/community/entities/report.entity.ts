@@ -1,3 +1,17 @@
+/**
+ * Entidad de reportes (`REPORTES`) de comunidad para flujo de moderación.
+ *
+ * Permite que los perfiles reporten contenidos inapropiados,
+ * activando un flujo de moderación con estados (ABIERTO, EN_REVISION, CERRADO)
+ * y asignación de moderadores.
+ *
+ * @see {@link ProfileEntity} para el perfil que reporta
+ * @see {@link UserEntity} para el moderador asignado
+ * @see {@link ContentEntity} para el contenido reportado
+ * @see {@link CommunityService} para la gestión de reportes
+ */
+
+/** Decoradores de columnas, relaciones, claves primarias y auditoría de TypeORM */
 import {
   Column,
   CreateDateColumn,
@@ -7,11 +21,15 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+
+/** Entidades de perfil y usuario (moderador) */
 import { ProfileEntity, UserEntity } from '../../auth/entities';
+
+/** Entidad de contenido multimedia */
 import { ContentEntity } from '../../catalog/entities';
 
 /**
- * Entidad de reportes de comunidad para flujo de moderacion.
+ * Entidad de reportes de comunidad para flujo de moderación.
  */
 @Entity({ name: 'REPORTES' })
 export class ReportEntity {

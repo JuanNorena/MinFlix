@@ -1,5 +1,20 @@
+/**
+ * DTO de filtros para el endpoint de analítica financiera ejecutiva.
+ *
+ * Define los parámetros de consulta para filtrar la vista `VW_ANALITICA_FINANZAS`
+ * por ciudad, plan, año, mes y límite de filas.
+ *
+ * @see {@link AnalyticsController.getFinance} para el endpoint que consume este DTO
+ * @see {@link AnalyticsService.getFinance} para la lógica de consulta
+ */
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsInt,
   IsOptional,
@@ -10,7 +25,7 @@ import {
 } from 'class-validator';
 
 /**
- * DTO de filtros para el endpoint de analitica financiera ejecutiva.
+ * DTO de filtros para el endpoint de analítica financiera ejecutiva.
  */
 export class AnalyticsFinanceQueryDto {
   /**

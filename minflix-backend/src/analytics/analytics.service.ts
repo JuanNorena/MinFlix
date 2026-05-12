@@ -1,12 +1,31 @@
+// --------------------------------------------------------------------------
+// Importaciones de NestJS y TypeORM
+// --------------------------------------------------------------------------
+
+/** Excepción y decorador de inyección de NestJS */
 import { ForbiddenException, Injectable } from '@nestjs/common';
+
+/** Conexión directa a la base de datos de TypeORM para consultas nativas */
 import { DataSource } from 'typeorm';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos y DTOs del módulo de analítica
+// --------------------------------------------------------------------------
+
+/** Contratos de vistas para respuestas de analítica */
 import {
   ConsumptionRow,
   FinanceAnalyticsRow,
   PerformanceRow,
 } from './contracts/analytics-view.types';
+
+/** DTO de filtros para analítica de consumo */
 import { AnalyticsConsumptionQueryDto } from './dto/analytics-consumption-query.dto';
+
+/** DTO de filtros para analítica financiera */
 import { AnalyticsFinanceQueryDto } from './dto/analytics-finance-query.dto';
+
+/** DTO de filtros para analítica de rendimiento interno */
 import { AnalyticsPerformanceQueryDto } from './dto/analytics-performance-query.dto';
 
 /**

@@ -1,3 +1,18 @@
+/**
+ * Gestión de sesión de autenticación del frontend.
+ *
+ * Proporciona funciones para leer la sesión activa desde el JWT almacenado
+ * en `localStorage`, decodificar el payload del token, y verificar roles
+ * de moderación (admin / soporte).
+ *
+ * @see {@link getAuthSession} para obtener la sesión actual del usuario
+ * @see {@link hasModeratorRole} para verificar si el usuario es moderador
+ * @see {@link RequireAuth} para la guarda de rutas que usa esta sesión
+ */
+
+/**
+ * Datos extraídos de la sesión de autenticación activa.
+ */
 export interface AuthSession {
   userId: number
   email: string | null

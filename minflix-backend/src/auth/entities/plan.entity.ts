@@ -1,8 +1,27 @@
+/**
+ * Entidad de planes de suscripción (`PLANES`) para límites de perfiles y facturación.
+ *
+ * Define los planes comerciales disponibles en MinFlix (Básico, Estándar, Premium),
+ * cada uno con un precio mensual y un límite máximo de perfiles por cuenta.
+ * Los usuarios se vinculan a un plan al momento del registro.
+ *
+ * @see {@link UserEntity} para las cuentas asociadas a este plan
+ * @see {@link RegisterDto} para la selección de plan durante el registro
+ * @see {@link AuthService.register} para la asignación automática de plan
+ */
+
+// --------------------------------------------------------------------------
+// Importaciones de TypeORM para decoradores de entidad y relaciones
+// --------------------------------------------------------------------------
+
+/** Decoradores de columnas, relaciones y claves primarias de TypeORM */
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+
+/** Entidad de usuarios suscritos a este plan */
 import { UserEntity } from './user.entity';
 
 /**
- * Entidad de planes de suscripcion para limites de perfiles y facturacion.
+ * Entidad de planes de suscripción para límites de perfiles y facturación.
  */
 @Entity({ name: 'PLANES' })
 export class PlanEntity {

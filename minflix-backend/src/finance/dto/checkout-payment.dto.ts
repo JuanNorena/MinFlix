@@ -1,5 +1,21 @@
+/**
+ * DTO para ejecutar un pago simulado con tarjeta desde la UI.
+ *
+ * Define los datos capturados en el formulario de checkout para simular
+ * el pago de una factura pendiente. Los datos de tarjeta se validan
+ * pero no se procesan realmente (proyecto académico).
+ *
+ * @see {@link FinanceController.checkoutPayment} para el endpoint que consume este DTO
+ * @see {@link FinanceService.checkoutPayment} para la lógica de simulación de pago
+ */
+
+/** Decorador de documentación de propiedades para Swagger */
 import { ApiProperty } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsIn,
   IsInt,

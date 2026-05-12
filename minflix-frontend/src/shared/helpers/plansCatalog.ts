@@ -1,3 +1,17 @@
+/**
+ * Catálogo de planes de suscripción y notas de ayuda para perfiles.
+ *
+ * Define la estructura de datos y el catálogo completo de planes disponibles
+ * en MinFlix (Básico, Estándar, Premium) con precios, límites y beneficios.
+ * También incluye notas explicativas sobre los perfiles de usuario.
+ *
+ * @see {@link RegisterPage} para la página de registro que muestra estos planes
+ * @see {@link PlanCatalogItem} para la interfaz de datos de un plan
+ */
+
+/**
+ * Estructura de un plan de suscripción en el catálogo del frontend.
+ */
 export interface PlanCatalogItem {
   code: 'BASICO' | 'ESTANDAR' | 'PREMIUM'
   title: string

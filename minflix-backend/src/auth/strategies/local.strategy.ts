@@ -1,6 +1,13 @@
+/** Decoradores de NestJS para inyección de dependencias y excepciones HTTP */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+
+/** Clase base de Passport para definir estrategias personalizadas en NestJS */
 import { PassportStrategy } from '@nestjs/passport';
+
+/** Estrategia local de Passport.js para autenticación con usuario/contraseña */
 import { Strategy } from 'passport-local';
+
+/** Servicio de autenticación para validar credenciales contra Oracle */
 import { AuthService } from '../auth.service';
 
 /**

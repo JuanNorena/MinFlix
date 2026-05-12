@@ -1,8 +1,19 @@
+/** Decorador que define un módulo de NestJS */
 import { Module } from '@nestjs/common';
+
+/** Módulo de TypeORM para registrar entidades en el contexto de persistencia */
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+/** Entidad de usuarios (empleado publicador de contenidos) */
 import { UserEntity } from '../auth/entities/user.entity';
+
+/** Controlador REST del catálogo multimedia */
 import { CatalogController } from './catalog.controller';
+
+/** Servicio de lógica de negocio del catálogo multimedia */
 import { CatalogService } from './catalog.service';
+
+/** Entidades del dominio de catálogo */
 import {
   CategoryEntity,
   ContentEntity,

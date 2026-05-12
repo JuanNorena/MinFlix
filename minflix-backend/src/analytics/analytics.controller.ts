@@ -1,16 +1,45 @@
+// --------------------------------------------------------------------------
+// Importaciones de decoradores y utilidades de NestJS
+// --------------------------------------------------------------------------
+
+/** Decoradores de controladores, métodos HTTP, guardas y excepciones */
 import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+
+/** Decoradores de documentación de Swagger para endpoints REST */
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+/** Guarda que protege endpoints requiriendo un token JWT válido */
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+
+// --------------------------------------------------------------------------
+// Importaciones de contratos, DTOs y servicios del módulo de analítica
+// --------------------------------------------------------------------------
+
+/** Servicio de lógica de consultas OLAP */
 import { AnalyticsService } from './analytics.service';
+
+/** Contratos de vistas para respuestas de analítica */
 import {
   ConsumptionRow,
   FinanceAnalyticsRow,
   PerformanceRow,
 } from './contracts/analytics-view.types';
+
+/** DTO de filtros para analítica de consumo */
 import { AnalyticsConsumptionQueryDto } from './dto/analytics-consumption-query.dto';
+
+/** DTO de filtros para analítica financiera */
 import { AnalyticsFinanceQueryDto } from './dto/analytics-finance-query.dto';
+
+/** DTO de filtros para analítica de rendimiento interno */
 import { AnalyticsPerformanceQueryDto } from './dto/analytics-performance-query.dto';
 
+/**
+ * Tipo auxiliar para el objeto de petición autenticada.
+ *
+ * Extiende la petición de Express con los datos del usuario
+ * extraídos del token JWT por Passport.
+ */
 interface AuthenticatedRequest {
   user: {
     userId: number;

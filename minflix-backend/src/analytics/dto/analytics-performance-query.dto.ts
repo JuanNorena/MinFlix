@@ -1,5 +1,20 @@
+/**
+ * DTO de filtros para el endpoint de rendimiento interno del equipo.
+ *
+ * Define los parámetros de consulta para filtrar la vista `VW_ANALITICA_RENDIMIENTO`
+ * por departamento, año de ingreso y límite de filas.
+ *
+ * @see {@link AnalyticsController.getPerformance} para el endpoint que consume este DTO
+ * @see {@link AnalyticsService.getPerformance} para la lógica de consulta
+ */
+
+/** Decorador de documentación de propiedades opcionales para Swagger */
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
+/** Decoradores de transformación de datos de entrada */
 import { Transform, Type } from 'class-transformer';
+
+/** Decoradores de validación de datos de entrada */
 import {
   IsInt,
   IsOptional,

@@ -1,3 +1,12 @@
+/**
+ * Configuración de TypeScript para el entorno de Vite del frontend de MinFlix.
+ *
+ * Define las opciones del compilador para la configuración de Vite
+ * (`vite.config.ts`), incluyendo tipos de Node.js y resolución de módulos ES.
+ *
+ * @see {@link tsconfig.json} para la configuración raíz del proyecto
+ * @see {@link vite.config.ts} para la configuración del bundler Vite
+ */
 {
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",

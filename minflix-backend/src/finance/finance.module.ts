@@ -1,8 +1,19 @@
+/** Decorador que define un módulo de NestJS */
 import { Module } from '@nestjs/common';
+
+/** Módulo de TypeORM para registrar entidades en el contexto de persistencia */
 import { TypeOrmModule } from '@nestjs/typeorm';
+
+/** Entidad de usuario propietario de facturas y pagos */
 import { UserEntity } from '../auth/entities';
+
+/** Controlador REST del módulo financiero */
 import { FinanceController } from './finance.controller';
+
+/** Servicio de lógica de negocio financiera */
 import { FinanceService } from './finance.service';
+
+/** Entidades del dominio financiero */
 import { InvoiceEntity, PaymentEntity, ReferralEntity } from './entities';
 
 /**
