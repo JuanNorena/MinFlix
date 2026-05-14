@@ -44,6 +44,9 @@ import { ProfilesPage } from '../pages/ProfilesPage'
 /** Página de moderación de reportes */
 import { ReportsModerationPage } from '../pages/ReportsModerationPage'
 
+/** Página de showcase académico NT1..NT4 */
+import { AcademicShowcasePage } from '../pages/AcademicShowcasePage'
+
 /** Página de registro de cuenta */
 import { RegisterPage } from '../pages/RegisterPage'
 
@@ -102,6 +105,7 @@ export function AppRouter() {
         <Route path="/account/billing" element={<BillingPage />} />
         <Route path="/moderation/reports" element={<ReportsModerationPage />} />
         <Route path="/analytics/dashboard" element={<AnalyticsDashboardPage />} />
+        <Route path="/academic-showcase" element={<AcademicShowcasePage />} />
 
         <Route element={<RequireProfileSelection />}>
           <Route path="/browse" element={<BrowsePage />} />

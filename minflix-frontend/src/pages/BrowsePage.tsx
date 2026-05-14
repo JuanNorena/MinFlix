@@ -563,13 +563,22 @@ export function BrowsePage() {
               </Link>
             ) : null}
             {(authSession?.role === 'admin' || authSession?.role === 'analista') ? (
-              <Link
-                to="/analytics/dashboard"
-                className={buttonClassName('ghost')}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Analitica
-              </Link>
+              <>
+                <Link
+                  to="/analytics/dashboard"
+                  className={buttonClassName('ghost')}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Analitica
+                </Link>
+                <Link
+                  to="/academic-showcase"
+                  className={buttonClassName('ghost')}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Showcase academico
+                </Link>
+              </>
             ) : null}
             <button
               type="button"

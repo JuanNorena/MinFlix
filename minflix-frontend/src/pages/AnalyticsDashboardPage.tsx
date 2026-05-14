@@ -265,6 +265,13 @@ export function AnalyticsDashboardPage() {
             >
               Ir a catalogo
             </Link>
+            <Link
+              to="/academic-showcase"
+              className={buttonClassName('ghost')}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Showcase academico
+            </Link>
             <button
               type="button"
               className={buttonClassName('primary')}

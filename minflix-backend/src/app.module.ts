@@ -47,6 +47,7 @@ import { PlaybackModule } from './playback/playback.module';
 import { CommunityModule } from './community/community.module';
 import { FinanceModule } from './finance/finance.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { ShowcaseModule } from './showcase/showcase.module';
 
 /**
  * Módulo raíz que integra todos los módulos funcionales de MinFlix.
@@ -64,6 +65,7 @@ import { AnalyticsModule } from './analytics/analytics.module';
     CommunityModule,
     FinanceModule,
     AnalyticsModule,
+    ShowcaseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
