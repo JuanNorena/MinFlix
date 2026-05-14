@@ -83,11 +83,15 @@ CREATE OR REPLACE TRIGGER TRG_REPRODUCCIONES_REGLAS_BIU
 BEFORE INSERT OR UPDATE ON REPRODUCCIONES
 FOR EACH ROW
 DECLARE
+  -- Estado de cuenta del usuario titular (ACTIVO, SUSPENDIDO, INACTIVO)
   V_ESTADO_CUENTA USUARIOS.ESTADO_CUENTA%TYPE;
+  -- Tipo de perfil que reproduce (adulto o infantil)
   V_TIPO_PERFIL PERFILES.TIPO_PERFIL%TYPE;
+  -- Clasificacion de edad del contenido (TP, +7, +13, +16, +18)
   V_CLASIFICACION CONTENIDOS.CLASIFICACION_EDAD%TYPE;
 BEGIN
-  -- Cargar estado de cuenta, tipo de perfil y clasificacion del contenido.
+  -- Paso 1: cargar datos del perfil, usuario y contenido para validaciones.
+  -- JOIN a USUARIOS para obtener estado de cuenta; JOIN a CONTENIDOS para clasificacion.
   SELECT U.ESTADO_CUENTA, P.TIPO_PERFIL, C.CLASIFICACION_EDAD
     INTO V_ESTADO_CUENTA, V_TIPO_PERFIL, V_CLASIFICACION
     FROM PERFILES P
@@ -95,7 +99,8 @@ BEGIN
     INNER JOIN CONTENIDOS C ON C.ID_CONTENIDO = :NEW.ID_CONTENIDO
    WHERE P.ID_PERFIL = :NEW.ID_PERFIL;
 
-  -- Regla: la cuenta debe estar activa para reproducir.
+  -- Regla 1: la cuenta del usuario debe estar activa para poder reproducir contenido.
+  -- Si la cuenta esta suspendida o inactiva, se rechaza la reproduccion.
   IF V_ESTADO_CUENTA <> 'ACTIVO' THEN
     RAISE_APPLICATION_ERROR(
       -20021,
@@ -103,7 +108,8 @@ BEGIN
     );
   END IF;
 
-  -- Regla: perfil infantil no puede ver +16/+18.
+  -- Regla 2: perfil infantil no puede reproducir contenido clasificado +16 o +18.
+  -- Se delega a la funcion FN_CLASIFICACION_PERMITIDA_PARA_PERFIL para centralizar la logica.
   IF FN_CLASIFICACION_PERMITIDA_PARA_PERFIL(V_TIPO_PERFIL, V_CLASIFICACION) = 0 THEN
     RAISE_APPLICATION_ERROR(
       -20022,
@@ -111,7 +117,8 @@ BEGIN
     );
   END IF;
 
-  -- Regla: progreso no puede superar duracion si esta presente.
+  -- Regla 3: el progreso en segundos no puede superar la duracion total del contenido.
+  -- Solo se valida cuando la duracion total esta definida (no NULL).
   IF :NEW.DURACION_TOTAL_SEGUNDOS IS NOT NULL
      AND :NEW.PROGRESO_SEGUNDOS > :NEW.DURACION_TOTAL_SEGUNDOS THEN
     RAISE_APPLICATION_ERROR(
@@ -120,24 +127,29 @@ BEGIN
     );
   END IF;
 
-  -- Calculo del porcentaje de avance.
+  -- Paso 2: calcular el porcentaje de avance automaticamente.
+  -- Formula: (progreso / duracion_total) * 100, redondeado a 2 decimales.
+  -- LEAST(100, ...) garantiza que nunca exceda 100%.
   IF :NEW.DURACION_TOTAL_SEGUNDOS IS NOT NULL AND :NEW.DURACION_TOTAL_SEGUNDOS > 0 THEN
     :NEW.PORCENTAJE_AVANCE := ROUND(
       LEAST(100, (:NEW.PROGRESO_SEGUNDOS / :NEW.DURACION_TOTAL_SEGUNDOS) * 100),
       2
     );
   ELSE
+    -- Si no hay duracion total conocida, el avance se define como 0%
     :NEW.PORCENTAJE_AVANCE := 0;
   END IF;
 
-  -- Registrar timestamp del ultimo evento.
+  -- Paso 3: actualizar timestamp del ultimo evento recibido (play/pause/stop).
   :NEW.FECHA_ULTIMO_EVENTO := CURRENT_TIMESTAMP;
 
-  -- Si se marca como finalizado, persistir fecha_fin si no estaba definida.
+  -- Paso 4: si la reproduccion se marca como FINALIZADO, registrar fecha_fin.
+  -- Solo se asigna si no estaba previamente definida (evita sobrescribir).
   IF :NEW.ESTADO_REPRODUCCION = 'FINALIZADO' AND :NEW.FECHA_FIN IS NULL THEN
     :NEW.FECHA_FIN := CURRENT_TIMESTAMP;
   END IF;
 EXCEPTION
+  -- Si el perfil o contenido no existen en la base de datos
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(
       -20024,

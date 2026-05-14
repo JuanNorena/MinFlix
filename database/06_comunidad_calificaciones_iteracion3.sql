@@ -55,22 +55,26 @@ CREATE OR REPLACE TRIGGER TRG_CALIFICACIONES_REGLAS_BIU
 BEFORE INSERT OR UPDATE ON CALIFICACIONES
 FOR EACH ROW
 DECLARE
+  -- Flag de existencia del perfil que califica (0 o 1)
   V_PERFIL_EXISTE NUMBER;
+  -- Flag de existencia del contenido calificado (0 o 1)
   V_CONTENIDO_EXISTE NUMBER;
+  -- Maximo porcentaje de avance alcanzado por el perfil en el contenido
   V_MAX_AVANCE NUMBER(5,2);
 BEGIN
-  -- Verificar que el perfil exista.
+  -- Paso 1: verificar que el perfil exista en la tabla PERFILES.
   SELECT COUNT(*)
     INTO V_PERFIL_EXISTE
     FROM PERFILES
    WHERE ID_PERFIL = :NEW.ID_PERFIL;
 
-  -- Verificar que el contenido exista.
+  -- Paso 2: verificar que el contenido exista en la tabla CONTENIDOS.
   SELECT COUNT(*)
     INTO V_CONTENIDO_EXISTE
     FROM CONTENIDOS
    WHERE ID_CONTENIDO = :NEW.ID_CONTENIDO;
 
+  -- Si alguno de los dos no existe, rechazar la calificacion.
   IF V_PERFIL_EXISTE = 0 OR V_CONTENIDO_EXISTE = 0 THEN
     RAISE_APPLICATION_ERROR(
       -20042,
@@ -78,14 +82,16 @@ BEGIN
     );
   END IF;
 
-  -- Consultar el maximo avance logrado por el perfil en ese contenido.
+  -- Paso 3: consultar el maximo avance logrado por el perfil en ese contenido.
+  -- NVL(MAX(...), 0) maneja el caso de que nunca haya reproducido (devuelve 0).
   SELECT NVL(MAX(R.PORCENTAJE_AVANCE), 0)
     INTO V_MAX_AVANCE
     FROM REPRODUCCIONES R
    WHERE R.ID_PERFIL = :NEW.ID_PERFIL
      AND R.ID_CONTENIDO = :NEW.ID_CONTENIDO;
 
-  -- Regla de negocio: exigir minimo 50% de reproduccion.
+  -- Regla de negocio: exigir minimo 50% de reproduccion antes de calificar.
+  -- Esto evita calificaciones de usuarios que no han visto el contenido suficientemente.
   IF V_MAX_AVANCE < 50 THEN
     RAISE_APPLICATION_ERROR(
       -20041,
@@ -93,7 +99,7 @@ BEGIN
     );
   END IF;
 
-  -- Normalizar fecha de calificacion en cada insercion/actualizacion.
+  -- Paso 4: actualizar la fecha de calificacion en cada insercion o modificacion.
   :NEW.FECHA_CALIFICACION := CURRENT_TIMESTAMP;
 END;
 /

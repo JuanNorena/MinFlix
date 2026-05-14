@@ -74,10 +74,12 @@ CREATE OR REPLACE TRIGGER TRG_REPORTES_REGLAS_BIU
 BEFORE INSERT OR UPDATE ON REPORTES
 FOR EACH ROW
 DECLARE
+  -- Variable temporal para verificar existencia de perfil/contenido (0 o 1)
   V_EXISTE NUMBER;
+  -- Rol del usuario moderador asignado al reporte
   V_ROL_MODERADOR USUARIOS.ROL%TYPE;
 BEGIN
-  -- Validar existencia del perfil reportador.
+  -- Regla 1: validar que el perfil reportador exista en la tabla PERFILES.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM PERFILES
@@ -90,7 +92,7 @@ BEGIN
     );
   END IF;
 
-  -- Validar existencia del contenido reportado.
+  -- Regla 2: validar que el contenido reportado exista en la tabla CONTENIDOS.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM CONTENIDOS
@@ -103,13 +105,14 @@ BEGIN
     );
   END IF;
 
-  -- Si hay moderador asignado, validar su rol.
+  -- Regla 3: si hay moderador asignado, validar que tenga rol 'soporte' o 'admin'.
   IF :NEW.ID_USUARIO_MODERADOR IS NOT NULL THEN
     SELECT U.ROL
       INTO V_ROL_MODERADOR
       FROM USUARIOS U
      WHERE U.ID_USUARIO = :NEW.ID_USUARIO_MODERADOR;
 
+    -- LOWER() para comparacion case-insensitive del rol
     IF LOWER(V_ROL_MODERADOR) NOT IN ('soporte', 'admin') THEN
       RAISE_APPLICATION_ERROR(
         -20063,
@@ -118,7 +121,7 @@ BEGIN
     END IF;
   END IF;
 
-  -- Regla: reportes cerrados no se pueden reabrir.
+  -- Regla 4: reportes ya cerrados (RESUELTO/DESCARTADO) no pueden reabrirse ni cambiar estado.
   IF UPDATING THEN
     IF :OLD.ESTADO_REPORTE IN ('RESUELTO', 'DESCARTADO')
        AND :NEW.ESTADO_REPORTE <> :OLD.ESTADO_REPORTE THEN
@@ -129,11 +132,12 @@ BEGIN
     END IF;
   END IF;
 
-  -- Actualizar timestamp de cambios.
+  -- Paso 1: actualizar timestamp de la ultima modificacion del reporte.
   :NEW.FECHA_ACTUALIZACION := CURRENT_TIMESTAMP;
 
-  -- Reglas al cerrar: moderador obligatorio y fecha de resolucion.
+  -- Regla 5: al cerrar un reporte (RESUELTO o DESCARTADO) se requiere moderador y fecha de resolucion.
   IF :NEW.ESTADO_REPORTE IN ('RESUELTO', 'DESCARTADO') THEN
+    -- Moderador obligatorio para cierre
     IF :NEW.ID_USUARIO_MODERADOR IS NULL THEN
       RAISE_APPLICATION_ERROR(
         -20065,
@@ -141,14 +145,17 @@ BEGIN
       );
     END IF;
 
+    -- Si no hay fecha de resolucion, asignarla automaticamente al momento del cierre
     IF :NEW.FECHA_RESOLUCION IS NULL THEN
       :NEW.FECHA_RESOLUCION := CURRENT_TIMESTAMP;
     END IF;
   ELSIF :NEW.ESTADO_REPORTE = 'ABIERTO' THEN
+    -- Si se reabre (INSERT), limpiar campos de resolucion previa
     :NEW.FECHA_RESOLUCION := NULL;
     :NEW.RESOLUCION := NULL;
   END IF;
 EXCEPTION
+  -- Si el moderador asignado no existe en USUARIOS
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(
       -20066,
@@ -163,20 +170,23 @@ END;
 -- --------------------------------------------------------------------------
 CREATE OR REPLACE VIEW VW_REPORTES_PENDIENTES_SOPORTE AS
 SELECT
-  R.ID_REPORTE,
-  R.ID_PERFIL_REPORTADOR,
-  P.NOMBRE AS NOMBRE_PERFIL_REPORTADOR,
-  R.ID_CONTENIDO,
-  C.TITULO,
-  R.MOTIVO,
-  R.DETALLE,
-  R.ESTADO_REPORTE,
-  R.ID_USUARIO_MODERADOR,
-  R.FECHA_REPORTE,
-  R.FECHA_ACTUALIZACION
+  R.ID_REPORTE,                         -- PK del reporte
+  R.ID_PERFIL_REPORTADOR,               -- FK al perfil que reporto
+  P.NOMBRE AS NOMBRE_PERFIL_REPORTADOR, -- Nombre legible del perfil reportador
+  R.ID_CONTENIDO,                       -- FK al contenido reportado
+  C.TITULO,                             -- Titulo del contenido reportado
+  R.MOTIVO,                             -- Motivo corto de la denuncia
+  R.DETALLE,                            -- Detalle opcional del reporte
+  R.ESTADO_REPORTE,                     -- Estado: ABIERTO o EN_REVISION
+  R.ID_USUARIO_MODERADOR,               -- FK al moderador asignado (NULL si sin asignar)
+  R.FECHA_REPORTE,                      -- Fecha de creacion del reporte
+  R.FECHA_ACTUALIZACION                 -- Fecha de ultima modificacion
 FROM REPORTES R
+-- JOIN obligatorio: traer nombre del perfil que reporto
 INNER JOIN PERFILES P ON P.ID_PERFIL = R.ID_PERFIL_REPORTADOR
+-- JOIN obligatorio: traer titulo del contenido reportado
 INNER JOIN CONTENIDOS C ON C.ID_CONTENIDO = R.ID_CONTENIDO
+-- Solo reportes activos (no RESUELTO ni DESCARTADO)
 WHERE R.ESTADO_REPORTE IN ('ABIERTO', 'EN_REVISION');
 
 COMMIT;

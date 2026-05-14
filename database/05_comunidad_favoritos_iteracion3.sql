@@ -44,17 +44,21 @@ CREATE OR REPLACE TRIGGER TRG_FAVORITOS_REGLAS_BI
 BEFORE INSERT ON FAVORITOS
 FOR EACH ROW
 DECLARE
+  -- Tipo de perfil que intenta agregar a favoritos (adulto o infantil)
   V_TIPO_PERFIL PERFILES.TIPO_PERFIL%TYPE;
+  -- Clasificacion de edad del contenido a agregar (TP, +7, +13, +16, +18)
   V_CLASIFICACION CONTENIDOS.CLASIFICACION_EDAD%TYPE;
 BEGIN
-  -- Consultar tipo de perfil y clasificacion del contenido.
+  -- Paso 1: consultar tipo de perfil y clasificacion del contenido.
+  -- JOIN a CONTENIDOS para traer la clasificacion del contenido solicitado.
   SELECT P.TIPO_PERFIL, C.CLASIFICACION_EDAD
     INTO V_TIPO_PERFIL, V_CLASIFICACION
     FROM PERFILES P
     INNER JOIN CONTENIDOS C ON C.ID_CONTENIDO = :NEW.ID_CONTENIDO
    WHERE P.ID_PERFIL = :NEW.ID_PERFIL;
 
-  -- Bloqueo infantil para clasificaciones +16 y +18.
+  -- Regla de negocio: perfil infantil no puede agregar a favoritos contenido +16 o +18.
+  -- Se delega a la funcion FN_CLASIFICACION_PERMITIDA_PARA_PERFIL para centralizar logica.
   IF FN_CLASIFICACION_PERMITIDA_PARA_PERFIL(V_TIPO_PERFIL, V_CLASIFICACION) = 0 THEN
     RAISE_APPLICATION_ERROR(
       -20031,
@@ -62,6 +66,7 @@ BEGIN
     );
   END IF;
 EXCEPTION
+  -- Si el perfil o contenido no existen en la base de datos
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(
       -20032,

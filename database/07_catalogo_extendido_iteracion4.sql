@@ -87,13 +87,17 @@ CREATE OR REPLACE TRIGGER TRG_TEMPORADAS_TIPO_CONTENIDO_BIU
 BEFORE INSERT OR UPDATE ON TEMPORADAS
 FOR EACH ROW
 DECLARE
+  -- Tipo del contenido padre para validar si acepta temporadas
   V_TIPO_CONTENIDO CONTENIDOS.TIPO_CONTENIDO%TYPE;
 BEGIN
+  -- Paso 1: obtener el tipo del contenido al que se asocia la temporada.
   SELECT C.TIPO_CONTENIDO
     INTO V_TIPO_CONTENIDO
     FROM CONTENIDOS C
    WHERE C.ID_CONTENIDO = :NEW.ID_CONTENIDO;
 
+  -- Regla: solo contenidos tipo 'serie' o 'podcast' pueden tener temporadas.
+  -- Peliculas, documentales y musica no admiten temporadas.
   IF V_TIPO_CONTENIDO NOT IN ('serie', 'podcast') THEN
     RAISE_APPLICATION_ERROR(
       -20051,
@@ -101,6 +105,7 @@ BEGIN
     );
   END IF;
 EXCEPTION
+  -- Si el contenido padre no existe en la tabla CONTENIDOS
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(
       -20052,
@@ -203,8 +208,11 @@ CREATE OR REPLACE TRIGGER TRG_CONTENIDOS_RELACIONADOS_BI
 BEFORE INSERT ON CONTENIDOS_RELACIONADOS
 FOR EACH ROW
 DECLARE
+  -- Contador para verificar si existe relacion inversa del mismo tipo
   V_RELACION_INVERSA NUMBER;
 BEGIN
+  -- Paso 1: verificar si ya existe una relacion inversa del mismo tipo.
+  -- Ejemplo: si A -> B (SECUELA) ya existe, evita que se cree B -> A (SECUELA).
   SELECT COUNT(*)
     INTO V_RELACION_INVERSA
     FROM CONTENIDOS_RELACIONADOS CR
@@ -212,6 +220,7 @@ BEGIN
      AND CR.ID_CONTENIDO_RELACIONADO = :NEW.ID_CONTENIDO_ORIGEN
      AND CR.TIPO_RELACION = :NEW.TIPO_RELACION;
 
+  -- Regla: bloquear relaciones inversas duplicadas del mismo tipo.
   IF V_RELACION_INVERSA > 0 THEN
     RAISE_APPLICATION_ERROR(
       -20053,

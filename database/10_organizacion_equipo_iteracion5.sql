@@ -82,9 +82,10 @@ CREATE OR REPLACE TRIGGER TRG_EMPLEADOS_JERARQUIA_BIU
 BEFORE INSERT OR UPDATE ON EMPLEADOS
 FOR EACH ROW
 DECLARE
+  -- Departamento del supervisor asignado para validar que coincida
   V_DEPTO_SUPERVISOR EMPLEADOS.ID_DEPARTAMENTO%TYPE;
 BEGIN
-  -- Evitar referencias reflexivas.
+  -- Regla 1: evitar referencias reflexivas (un empleado no puede ser su propio jefe).
   IF :NEW.ID_SUPERVISOR IS NOT NULL AND :NEW.ID_SUPERVISOR = :NEW.ID_EMPLEADO THEN
     RAISE_APPLICATION_ERROR(
       -20091,
@@ -92,7 +93,7 @@ BEGIN
     );
   END IF;
 
-  -- Jefe de departamento no debe registrar supervisor directo.
+  -- Regla 2: un jefe de departamento (ES_JEFE = 1) no debe tener supervisor directo.
   IF :NEW.ES_JEFE = 1 AND :NEW.ID_SUPERVISOR IS NOT NULL THEN
     RAISE_APPLICATION_ERROR(
       -20092,
@@ -100,7 +101,7 @@ BEGIN
     );
   END IF;
 
-  -- Si hay supervisor, validar que pertenezca al mismo departamento.
+  -- Regla 3: si hay supervisor asignado, validar que pertenezca al mismo departamento.
   IF :NEW.ID_SUPERVISOR IS NOT NULL THEN
     SELECT E.ID_DEPARTAMENTO
       INTO V_DEPTO_SUPERVISOR
@@ -115,6 +116,7 @@ BEGIN
     END IF;
   END IF;
 EXCEPTION
+  -- Si el supervisor asignado no existe en la tabla EMPLEADOS
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(
       -20094,
@@ -131,18 +133,22 @@ CREATE OR REPLACE TRIGGER TRG_CONTENIDOS_PUBLICADOR_BIU
 BEFORE INSERT OR UPDATE OF ID_EMPLEADO_PUBLICADOR ON CONTENIDOS
 FOR EACH ROW
 DECLARE
+  -- Rol del usuario asignado como publicador del contenido
   V_ROL_PUBLICADOR USUARIOS.ROL%TYPE;
 BEGIN
-  -- Permitir contenidos sin publicador asignado.
+  -- Permitir contenidos sin publicador asignado (NULL es valido).
   IF :NEW.ID_EMPLEADO_PUBLICADOR IS NULL THEN
     RETURN;
   END IF;
 
+  -- Paso 1: consultar el rol del usuario asignado como publicador.
   SELECT U.ROL
     INTO V_ROL_PUBLICADOR
     FROM USUARIOS U
    WHERE U.ID_USUARIO = :NEW.ID_EMPLEADO_PUBLICADOR;
 
+  -- Regla: solo usuarios con rol 'admin' o 'contenido' pueden publicar contenidos.
+  -- LOWER() para comparacion case-insensitive del rol.
   IF LOWER(V_ROL_PUBLICADOR) NOT IN ('admin', 'contenido') THEN
     RAISE_APPLICATION_ERROR(
       -20095,
@@ -150,6 +156,7 @@ BEGIN
     );
   END IF;
 EXCEPTION
+  -- Si el publicador asignado no existe en la tabla USUARIOS
   WHEN NO_DATA_FOUND THEN
     RAISE_APPLICATION_ERROR(
       -20096,

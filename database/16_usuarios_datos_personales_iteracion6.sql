@@ -14,8 +14,10 @@
 --   - agrega constraints y marca NOT NULL.
 -- --------------------------------------------------------------------------
 DECLARE
+  -- Flag para verificar existencia de columnas/constraints (idempotencia)
   V_EXISTE NUMBER := 0;
 BEGIN
+  -- Paso 1: agregar columna TELEFONO si no existe en la tabla USUARIOS
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_TAB_COLUMNS
@@ -26,6 +28,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS ADD (TELEFONO VARCHAR2(30))';
   END IF;
 
+  -- Paso 2: agregar columna FECHA_NACIMIENTO si no existe
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_TAB_COLUMNS
@@ -36,6 +39,7 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS ADD (FECHA_NACIMIENTO DATE)';
   END IF;
 
+  -- Paso 3: agregar columna CIUDAD_RESIDENCIA si no existe
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_TAB_COLUMNS
@@ -46,7 +50,8 @@ BEGIN
     EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS ADD (CIUDAD_RESIDENCIA VARCHAR2(120))';
   END IF;
 
-  -- Backfill controlado para registros existentes.
+  -- Paso 4: backfill controlado para registros existentes antes de marcar NOT NULL.
+  -- Valores por defecto: telefono generico, fecha neutral, ciudad capital.
   EXECUTE IMMEDIATE q'[
     UPDATE USUARIOS
        SET TELEFONO = '3000000000'
@@ -65,7 +70,8 @@ BEGIN
      WHERE CIUDAD_RESIDENCIA IS NULL
   ]';
 
-  -- Constraints de validacion (solo si no existen).
+  -- Paso 5: agregar constraints de validacion solo si no existen.
+  -- CK_USUARIOS_TELEFONO: solo digitos, longitud entre 7 y 15 caracteres.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_CONSTRAINTS
@@ -79,6 +85,7 @@ BEGIN
     ]';
   END IF;
 
+  -- CK_USUARIOS_CIUDAD: longitud minima de 2 caracteres despues de trim.
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_CONSTRAINTS
@@ -92,7 +99,7 @@ BEGIN
     ]';
   END IF;
 
-  -- Finalmente, marcar columnas como obligatorias.
+  -- Paso 6: marcar columnas como NOT NULL ahora que tienen valores.
   EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS MODIFY (TELEFONO NOT NULL)';
   EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS MODIFY (FECHA_NACIMIENTO NOT NULL)';
   EXECUTE IMMEDIATE 'ALTER TABLE USUARIOS MODIFY (CIUDAD_RESIDENCIA NOT NULL)';

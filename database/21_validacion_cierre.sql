@@ -18,11 +18,14 @@ PROMPT 1. CONTEXTO DE CONEXION
 PROMPT ========================================================================
 -- Verifica usuario, contenedor y esquema actual para evitar ejecuciones erradas.
 
+-- Verificar usuario Oracle conectado (debe ser MINFLIX_APP o owner del esquema)
 SELECT USER AS USUARIO_CONECTADO FROM DUAL;
 
+-- Verificar nombre del contenedor PDB (debe ser XEPDB1 en entornos XE)
 SELECT SYS_CONTEXT('USERENV', 'CON_NAME') AS CONTENEDOR
   FROM DUAL;
 
+-- Verificar esquema actual de ejecucion (debe coincidir con el usuario conectado)
 SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') AS ESQUEMA_ACTUAL
   FROM DUAL;
 
@@ -31,45 +34,29 @@ PROMPT 2. ESTADO DE OBJETOS PRINCIPALES
 PROMPT ========================================================================
 -- Esperado: STATUS = VALID para tablas, vistas, MVs y programas.
 
+-- Verificar que todos los objetos principales existen y estan VALID (no invalidos).
+-- STATUS = VALID significa que el objeto se compilo correctamente.
+-- Si hay STATUS = INVALID, recompilar con: ALTER <tipo> <nombre> COMPILE;
 SELECT OBJECT_TYPE, OBJECT_NAME, STATUS
   FROM USER_OBJECTS
  WHERE OBJECT_NAME IN (
-   'USUARIOS',
-   'PLANES',
-   'PERFILES',
-   'CATEGORIAS',
-   'CONTENIDOS',
-   'GENEROS',
-   'CONTENIDOS_GENEROS',
-   'TEMPORADAS',
-   'EPISODIOS',
-   'CONTENIDOS_RELACIONADOS',
-   'REPRODUCCIONES',
-   'FAVORITOS',
-   'CALIFICACIONES',
-   'REPORTES',
-   'REFERIDOS',
-   'FACTURACIONES',
-   'PAGOS',
-   'DEPARTAMENTOS',
-   'EMPLEADOS',
-   'VW_CONTENIDO_VISIBLE_POR_PERFIL',
-   'VW_CONTINUAR_VIENDO',
-   'VW_REPORTES_PENDIENTES_SOPORTE',
-   'VW_FIN_RESUMEN_USUARIO',
-   'VW_FIN_FACTURAS_DETALLE',
-   'VW_FIN_PAGOS_DETALLE',
-   'VW_FIN_REFERIDOS_DETALLE',
-   'VW_ANALITICA_CONSUMO',
-   'VW_ANALITICA_FINANZAS',
-   'VW_ANALITICA_RENDIMIENTO',
-   'MV_CALIFICACIONES_PROMEDIO',
-   'MV_METRICAS_FINANCIERAS',
-   'SP_APLICAR_MORA_CUENTAS',
-   'SP_REGISTRAR_USUARIO',
-   'SP_CAMBIAR_PLAN',
-   'FN_CLASIFICACION_PERMITIDA_PARA_PERFIL',
-   'FN_CALCULAR_MONTO',
+   -- Tablas del dominio
+   'USUARIOS', 'PLANES', 'PERFILES', 'CATEGORIAS', 'CONTENIDOS',
+   'GENEROS', 'CONTENIDOS_GENEROS', 'TEMPORADAS', 'EPISODIOS',
+   'CONTENIDOS_RELACIONADOS', 'REPRODUCCIONES', 'FAVORITOS',
+   'CALIFICACIONES', 'REPORTES', 'REFERIDOS', 'FACTURACIONES',
+   'PAGOS', 'DEPARTAMENTOS', 'EMPLEADOS',
+   -- Vistas API y analiticas
+   'VW_CONTENIDO_VISIBLE_POR_PERFIL', 'VW_CONTINUAR_VIENDO',
+   'VW_REPORTES_PENDIENTES_SOPORTE', 'VW_FIN_RESUMEN_USUARIO',
+   'VW_FIN_FACTURAS_DETALLE', 'VW_FIN_PAGOS_DETALLE',
+   'VW_FIN_REFERIDOS_DETALLE', 'VW_ANALITICA_CONSUMO',
+   'VW_ANALITICA_FINANZAS', 'VW_ANALITICA_RENDIMIENTO',
+   -- Vistas materializadas
+   'MV_CALIFICACIONES_PROMEDIO', 'MV_METRICAS_FINANCIERAS',
+   -- Procedimientos y funciones PL/SQL
+   'SP_APLICAR_MORA_CUENTAS', 'SP_REGISTRAR_USUARIO', 'SP_CAMBIAR_PLAN',
+   'FN_CLASIFICACION_PERMITIDA_PARA_PERFIL', 'FN_CALCULAR_MONTO',
    'FN_CONTENIDO_RECOMENDADO'
  )
  ORDER BY OBJECT_TYPE, OBJECT_NAME;
@@ -79,6 +66,9 @@ PROMPT 3. ERRORES DE COMPILACION
 PROMPT ========================================================================
 -- Esperado: cero filas en USER_ERRORS.
 
+-- Verificar errores de compilacion en objetos PL/SQL.
+-- Resultado esperado: cero filas (ningun objeto con error de compilacion).
+-- Si hay errores, corregir el codigo fuente y recompilar.
 SELECT NAME, TYPE, LINE, POSITION, TEXT
   FROM USER_ERRORS
  ORDER BY NAME, TYPE, SEQUENCE;
@@ -88,6 +78,9 @@ PROMPT 4. CONTEO DE DATOS OPERATIVOS
 PROMPT ========================================================================
 -- Esperado: conteos > 0 para tablas base y seeds.
 
+-- Contar registros en cada tabla operativa para verificar que el seed se aplico.
+-- Resultado esperado: valores > 0 en tablas base (PLANES, CATEGORIAS, CONTENIDOS, etc.).
+-- Si hay 0 filas en tablas base, ejecutar el script de seed (14_seed_datos_funcionales).
 SELECT 'USUARIOS' AS OBJETO, COUNT(*) AS FILAS FROM USUARIOS
 UNION ALL SELECT 'PERFILES', COUNT(*) FROM PERFILES
 UNION ALL SELECT 'PLANES', COUNT(*) FROM PLANES
@@ -114,6 +107,10 @@ PROMPT 5. VALIDACION DE VISTAS API Y ANALITICAS
 PROMPT ========================================================================
 -- Esperado: COUNT(*) sin ORA-00942/ORA-04063.
 
+-- Verificar que las vistas y vistas materializadas responden sin errores.
+-- ORA-00942: tabla o vista no existe (falta crear la vista).
+-- ORA-04063: vista tiene errores de compilacion (recompilar con ALTER VIEW ... COMPILE).
+-- Resultado esperado: COUNT(*) exitoso para cada vista (puede ser 0 si no hay datos).
 SELECT 'VW_CONTINUAR_VIENDO' AS VISTA, COUNT(*) AS FILAS FROM VW_CONTINUAR_VIENDO
 UNION ALL SELECT 'VW_REPORTES_PENDIENTES_SOPORTE', COUNT(*) FROM VW_REPORTES_PENDIENTES_SOPORTE
 UNION ALL SELECT 'VW_FIN_RESUMEN_USUARIO', COUNT(*) FROM VW_FIN_RESUMEN_USUARIO

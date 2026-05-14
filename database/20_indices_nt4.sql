@@ -24,26 +24,35 @@ SET SERVEROUTPUT ON;
 -- incluyendo titulo del contenido, categoria, ciudad del usuario y progreso.
 -- ============================================================================
 
--- Definir el ID de perfil de prueba (ajustar segun seed real)
+-- Definir el ID de perfil de prueba (ajustar segun seed real del ambiente)
 DEFINE ID_PERFIL_PRUEBA = 1
 
--- Consulta pesada del dominio
+-- Consulta pesada del dominio: historial de reproducciones por perfil.
+-- Realiza 4 JOINs y ordena por FECHA_INICIO DESC, lo que genera alto costo.
+-- FETCH FIRST 50 ROWS ONLY limita el resultado pero no reduce el costo del SORT.
 SELECT
-  R.ID_REPRODUCCION,
-  C.TITULO,
-  CAT.NOMBRE AS CATEGORIA,
-  U.CIUDAD_RESIDENCIA,
-  R.PROGRESO_SEGUNDOS,
-  R.PORCENTAJE_AVANCE,
-  R.ULTIMO_DISPOSITIVO,
-  R.FECHA_INICIO
+  R.ID_REPRODUCCION,        -- PK de la reproduccion
+  C.TITULO,                 -- Titulo del contenido reproducido
+  CAT.NOMBRE AS CATEGORIA,  -- Categoria del contenido (ej. Accion, Drama)
+  U.CIUDAD_RESIDENCIA,      -- Ciudad del usuario titular
+  R.PROGRESO_SEGUNDOS,      -- Segundos visionados en esta sesion
+  R.PORCENTAJE_AVANCE,      -- Porcentaje de avance en la reproduccion
+  R.ULTIMO_DISPOSITIVO,     -- Dispositivo desde el que se reprodujo
+  R.FECHA_INICIO            -- Fecha y hora de inicio de la sesion
 FROM REPRODUCCIONES R
+-- JOIN obligatorio: traer titulo y datos del contenido
 JOIN CONTENIDOS C ON C.ID_CONTENIDO = R.ID_CONTENIDO
+-- JOIN obligatorio: traer nombre de la categoria del contenido
 JOIN CATEGORIAS CAT ON CAT.ID_CATEGORIA = C.ID_CATEGORIA
+-- JOIN obligatorio: traer datos del perfil que reprodujo
 JOIN PERFILES P ON P.ID_PERFIL = R.ID_PERFIL
+-- JOIN obligatorio: traer ciudad de residencia del usuario titular
 JOIN USUARIOS U ON U.ID_USUARIO = P.ID_USUARIO
+-- Filtro por perfil especifico (parametro &&ID_PERFIL_PRUEBA)
 WHERE R.ID_PERFIL = &&ID_PERFIL_PRUEBA
+-- Ordenar de la mas reciente a la mas antigua
 ORDER BY R.FECHA_INICIO DESC
+-- Solo las ultimas 50 reproducciones del perfil
 FETCH FIRST 50 ROWS ONLY;
 
 -- ============================================================================
@@ -78,24 +87,27 @@ FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 -- SECCION C: Creacion del indice adicional justificado
 -- ============================================================================
 -- Justificacion:
---   La consulta filtra por ID_PERFIL y ordena por FECHA_INICIO DESC.
+--   La consulta filtra por ID_PERFIL (WHERE) y ordena por FECHA_INICIO DESC (ORDER BY).
 --   Aunque existe IDX_REPRODUCCIONES_PERFIL_EVENTO (ID_PERFIL, FECHA_ULTIMO_EVENTO),
 --   no cubre la columna FECHA_INICIO que se usa en el ORDER BY de esta consulta.
---   El nuevo indice compuesto cubre la clausula WHERE (ID_PERFIL = ...) y
---   la clausula ORDER BY (FECHA_INICIO DESC), evitando el SORT OPERATION
---   y reduciendo el costo de acceso a la tabla REPRODUCCIONES.
+--   El nuevo indice compuesto (ID_PERFIL, FECHA_INICIO DESC) cubre ambas clausulas,
+--   permitiendo un INDEX RANGE SCAN seguido de un INDEX FULL SCAN DESCENDING,
+--   evitando asi el SORT OPERATION costoso y reduciendo el acceso a la tabla.
 -- ============================================================================
 
 DECLARE
+  -- Variable para verificar si el indice ya existe (idempotencia)
   V_EXISTE NUMBER := 0;
 BEGIN
-  -- Bloque idempotente: crear indice solo si no existe.
+  -- Consultar diccionario de datos para verificar existencia previa del indice
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
    WHERE INDEX_NAME = 'IDX_REPRODUCCIONES_PERFIL_FECHA_INICIO';
 
+  -- Crear indice solo si no existe (evita ORA-00955 en re-ejecuciones)
   IF V_EXISTE = 0 THEN
+    -- DDL dinamico: ejecuta CREATE INDEX en tiempo de ejecucion
     EXECUTE IMMEDIATE '
       CREATE INDEX IDX_REPRODUCCIONES_PERFIL_FECHA_INICIO
       ON REPRODUCCIONES (ID_PERFIL, FECHA_INICIO DESC)';
@@ -158,17 +170,21 @@ FETCH FIRST 20 ROWS ONLY;
 SELECT PLAN_TABLE_OUTPUT
 FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 
--- Crear indice compuesto
+-- Crear indice compuesto de forma idempotente.
+-- Verifica USER_INDEXES antes de ejecutar DDL para evitar ORA-00955.
 DECLARE
+  -- Flag de existencia del indice
   V_EXISTE NUMBER := 0;
 BEGIN
-  -- Bloque idempotente para indice de categoria/anio.
+  -- Consultar diccionario de datos para verificar existencia previa
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
    WHERE INDEX_NAME = 'IDX_CONTENIDOS_CATEGORIA_ANIO';
 
+  -- Crear indice solo si no existe
   IF V_EXISTE = 0 THEN
+    -- DDL dinamico: indice compuesto para filtro por categoria + orden por anio
     EXECUTE IMMEDIATE '
       CREATE INDEX IDX_CONTENIDOS_CATEGORIA_ANIO
       ON CONTENIDOS (ID_CATEGORIA, ANIO_LANZAMIENTO DESC)';
@@ -216,15 +232,18 @@ SELECT PLAN_TABLE_OUTPUT
 FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 
 DECLARE
+  -- Flag de existencia del indice
   V_EXISTE NUMBER := 0;
 BEGIN
-  -- Bloque idempotente para indice de ciudad/estado.
+  -- Consultar diccionario de datos para verificar existencia previa
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
    WHERE INDEX_NAME = 'IDX_USUARIOS_CIUDAD_ESTADO';
 
+  -- Crear indice solo si no existe
   IF V_EXISTE = 0 THEN
+    -- DDL dinamico: indice con UPPER para acelerar filtros case-insensitive
     EXECUTE IMMEDIATE '
       CREATE INDEX IDX_USUARIOS_CIUDAD_ESTADO
       ON USUARIOS (UPPER(CIUDAD_RESIDENCIA), ESTADO_CUENTA)';
@@ -268,15 +287,18 @@ SELECT PLAN_TABLE_OUTPUT
 FROM TABLE(DBMS_XPLAN.DISPLAY('PLAN_TABLE', NULL, 'BASIC +COST'));
 
 DECLARE
+  -- Flag de existencia del indice
   V_EXISTE NUMBER := 0;
 BEGIN
-  -- Bloque idempotente para indice de calificaciones.
+  -- Consultar diccionario de datos para verificar existencia previa
   SELECT COUNT(*)
     INTO V_EXISTE
     FROM USER_INDEXES
    WHERE INDEX_NAME = 'IDX_CALIFICACIONES_CONTENIDO_FECHA';
 
+  -- Crear indice solo si no existe
   IF V_EXISTE = 0 THEN
+    -- DDL dinamico: indice para acelerar JOINs y agregaciones AVG/COUNT por contenido
     EXECUTE IMMEDIATE '
       CREATE INDEX IDX_CALIFICACIONES_CONTENIDO_FECHA
       ON CALIFICACIONES (ID_CONTENIDO, FECHA_CALIFICACION DESC)';

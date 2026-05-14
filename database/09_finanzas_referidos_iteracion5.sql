@@ -161,9 +161,10 @@ CREATE OR REPLACE TRIGGER TRG_FACTURACIONES_CALCULO_BIU
 BEFORE INSERT OR UPDATE ON FACTURACIONES
 FOR EACH ROW
 DECLARE
+  -- Suma acumulada de descuentos (referidos + fidelidad) en porcentaje
   V_TOTAL_DESCUENTO NUMBER(6,2);
 BEGIN
-  -- Validar que la fecha de vencimiento sea posterior al corte.
+  -- Regla 1: la fecha de vencimiento debe ser igual o posterior a la fecha de corte.
   IF :NEW.FECHA_VENCIMIENTO < :NEW.FECHA_CORTE THEN
     RAISE_APPLICATION_ERROR(
       -20081,
@@ -171,10 +172,12 @@ BEGIN
     );
   END IF;
 
-  -- Calcular descuento total y validar tope.
+  -- Paso 1: calcular descuento total sumando referidos y fidelidad.
+  -- NVL maneja NULL como 0 para evitar errores de aritmetica con NULL.
   V_TOTAL_DESCUENTO := NVL(:NEW.DESCUENTO_REFERIDOS_PCT, 0)
     + NVL(:NEW.DESCUENTO_FIDELIDAD_PCT, 0);
 
+  -- Regla 2: los descuentos acumulados no pueden superar el 100%.
   IF V_TOTAL_DESCUENTO > 100 THEN
     RAISE_APPLICATION_ERROR(
       -20082,
@@ -182,7 +185,9 @@ BEGIN
     );
   END IF;
 
-  -- Calcular monto final con descuentos (no puede ser negativo).
+  -- Paso 2: calcular monto final aplicando descuentos al monto base.
+  -- Formula: monto_base * (1 - descuento_total / 100).
+  -- GREATEST(0, ...) garantiza que el monto final nunca sea negativo.
   :NEW.MONTO_FINAL := ROUND(
     GREATEST(
       0,
@@ -191,7 +196,7 @@ BEGIN
     2
   );
 
-  -- Si la factura se marca pagada, registrar fecha de pago.
+  -- Paso 3: si la factura se marca como PAGADA, registrar fecha de pago automaticamente.
   IF :NEW.ESTADO_FACTURA = 'PAGADA' AND :NEW.FECHA_PAGO IS NULL THEN
     :NEW.FECHA_PAGO := CURRENT_TIMESTAMP;
   END IF;
@@ -206,13 +211,16 @@ CREATE OR REPLACE TRIGGER TRG_PAGOS_ACTUALIZA_FACTURA_AI
 AFTER INSERT ON PAGOS
 FOR EACH ROW
 BEGIN
-  -- Solo los pagos exitosos impactan la factura y la cuenta.
+  -- Solo los pagos con estado EXITOSO impactan la factura y reactivan la cuenta.
   IF :NEW.ESTADO_TRANSACCION = 'EXITOSO' THEN
+    -- Actualizar la factura asociada: marcar como PAGADA y registrar fecha de pago.
+    -- NVL(FECHA_PAGO, :NEW.FECHA_PAGO) evita sobrescribir una fecha ya existente.
     UPDATE FACTURACIONES
        SET ESTADO_FACTURA = 'PAGADA',
            FECHA_PAGO = NVL(FECHA_PAGO, :NEW.FECHA_PAGO)
      WHERE ID_FACTURACION = :NEW.ID_FACTURACION;
 
+    -- Reactivar la cuenta del usuario para permitir reproduccion nuevamente.
     UPDATE USUARIOS
        SET ESTADO_CUENTA = 'ACTIVO'
      WHERE ID_USUARIO = :NEW.ID_USUARIO;
@@ -228,13 +236,15 @@ END;
 CREATE OR REPLACE PROCEDURE SP_APLICAR_MORA_CUENTAS
 IS
 BEGIN
-  -- Marcar facturas pendientes cuyo vencimiento ya paso.
+  -- Paso 1: marcar como VENCIDA las facturas PENDIENTES cuya fecha de vencimiento ya paso.
+  -- TRUNC(SYSDATE) obtiene la fecha actual sin hora para comparar fechas puras.
   UPDATE FACTURACIONES F
      SET F.ESTADO_FACTURA = 'VENCIDA'
    WHERE F.ESTADO_FACTURA = 'PENDIENTE'
      AND F.FECHA_VENCIMIENTO < TRUNC(SYSDATE);
 
-  -- Desactivar cuentas con facturas pendientes o vencidas > 30 dias.
+  -- Paso 2: desactivar cuentas de usuarios con facturas pendientes o vencidas
+  -- cuya fecha de vencimiento tiene mas de 30 dias de retraso.
   UPDATE USUARIOS U
      SET U.ESTADO_CUENTA = 'INACTIVO'
    WHERE EXISTS (

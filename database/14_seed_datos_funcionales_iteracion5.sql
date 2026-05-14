@@ -1347,21 +1347,28 @@ BEGIN
 
   COMMIT;
 
+  -- Paso final: contar registros creados por este script para auditoria.
+  -- Se usa el prefijo SEED14 para identificar los objetos creados.
+
+  -- Contar contenidos creados cuyo titulo inicia con el prefijo de seed
   SELECT COUNT(*)
     INTO V_CNT_CONTENIDOS_SEED
     FROM CONTENIDOS C
    WHERE UPPER(C.TITULO) LIKE UPPER(C_PREFIJO_SEED || ' - %');
 
+  -- Contar reportes creados cuyo detalle contiene el prefijo de seed entre corchetes
   SELECT COUNT(*)
     INTO V_CNT_REPORTE_SEED
     FROM REPORTES R
    WHERE UPPER(NVL(R.DETALLE, 'NA')) LIKE UPPER('%[' || C_PREFIJO_SEED || ']%');
 
+  -- Contar pagos creados cuya referencia inicia con el prefijo de seed
   SELECT COUNT(*)
     INTO V_CNT_PAGO_SEED
     FROM PAGOS P
    WHERE UPPER(NVL(P.REFERENCIA_PAGO, 'NA')) LIKE UPPER(C_PREFIJO_SEED || '-PAGO%');
 
+  -- Imprimir resumen de ejecucion para validacion manual
   DBMS_OUTPUT.PUT_LINE('Seed extra finalizado.');
   DBMS_OUTPUT.PUT_LINE('Contenidos seed ' || C_PREFIJO_SEED || ': ' || V_CNT_CONTENIDOS_SEED);
   DBMS_OUTPUT.PUT_LINE('Reportes seed ' || C_PREFIJO_SEED || ': ' || V_CNT_REPORTE_SEED);
