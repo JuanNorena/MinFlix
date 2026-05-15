@@ -38,10 +38,15 @@ CREATE TABLE PLANES (
   PRECIO_MENSUAL NUMBER(10,2) NOT NULL,
   -- Maximo de perfiles permitidos por plan.
   LIMITE_PERFILES NUMBER(2,0) NOT NULL,
+  -- Número máximo de pantallas simultáneas.
+  PANTALLAS_SIMULTANEAS NUMBER(2,0) NOT NULL,  
+  -- Calidad de video asociada al plan (SD, HD, 4K).
+  CALIDAD_VIDEO VARCHAR2(20) NOT NULL,
   -- Constraint unica por nombre.
   CONSTRAINT UK_PLANES_NOMBRE UNIQUE (NOMBRE),
   -- Constraint de rango permitido (1..5 perfiles).
-  CONSTRAINT CK_PLANES_LIMITE_PERFILES CHECK (LIMITE_PERFILES BETWEEN 1 AND 5)
+  CONSTRAINT CK_PLANES_LIMITE_PERFILES CHECK (LIMITE_PERFILES BETWEEN 1 AND 5),
+  CONSTRAINT CK_PLANES_CALIDAD CHECK (CALIDAD_VIDEO IN ('SD', 'HD', '4K'))
 );
 
 -- --------------------------------------------------------------------------
@@ -122,13 +127,18 @@ CREATE TABLE PERFILES (
 -- Indice de apoyo para consultas de perfiles por cuenta.
 CREATE INDEX IDX_PERFILES_USUARIO ON PERFILES (ID_USUARIO);
 
--- Seed base de planes (valores del enunciado).
--- BASICO: 1 pantalla, 2 perfiles.
-INSERT INTO PLANES (NOMBRE, PRECIO_MENSUAL, LIMITE_PERFILES) VALUES ('BASICO', 14900, 2);
--- ESTANDAR: 2 pantallas, 3 perfiles.
-INSERT INTO PLANES (NOMBRE, PRECIO_MENSUAL, LIMITE_PERFILES) VALUES ('ESTANDAR', 24900, 3);
--- PREMIUM: 4 pantallas, 5 perfiles.
-INSERT INTO PLANES (NOMBRE, PRECIO_MENSUAL, LIMITE_PERFILES) VALUES ('PREMIUM', 34900, 5);
+-- Seed base de planes actualizado (basado en recomendación de la 1er entrega)
+-- BASICO: 1 pantalla, 2 perfiles, calidad SD
+INSERT INTO PLANES (NOMBRE, PRECIO_MENSUAL, LIMITE_PERFILES, PANTALLAS_SIMULTANEAS, CALIDAD_VIDEO) 
+VALUES ('BASICO', 14900, 2, 1, 'SD');
+
+-- ESTANDAR: 2 pantallas, 3 perfiles, calidad HD
+INSERT INTO PLANES (NOMBRE, PRECIO_MENSUAL, LIMITE_PERFILES, PANTALLAS_SIMULTANEAS, CALIDAD_VIDEO) 
+VALUES ('ESTANDAR', 24900, 3, 2, 'HD');
+
+-- PREMIUM: 4 pantallas, 5 perfiles, calidad 4K
+INSERT INTO PLANES (NOMBRE, PRECIO_MENSUAL, LIMITE_PERFILES, PANTALLAS_SIMULTANEAS, CALIDAD_VIDEO) 
+VALUES ('PREMIUM', 34900, 5, 4, '4K');
 
 COMMIT;
 
