@@ -33,3 +33,8 @@ Thumbs.db
 
 # TypeScript
 *.tsbuildinfo
+
+# Ignorar archivos locales de pnpm
+pnpm-lock.yaml
+pnpm-workspace.yaml
+**/pnpm-lock.yaml
