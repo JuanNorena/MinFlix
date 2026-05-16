@@ -16,7 +16,7 @@ MinFlix es un proyecto académico y técnico diseñado para construir una plataf
 
 ---
 
-## 🌟 Características Principales
+## Características Principales
 
 - **Catálogo Multimedia**: Administración completa de películas, series, documentales, música y podcasts.
 - **Gestión de Cuentas y Perfiles**: Soporte multi-perfil por cuenta, con restricciones basadas en planes de suscripción y perfiles infantiles.
@@ -27,7 +27,7 @@ MinFlix es un proyecto académico y técnico diseñado para construir una plataf
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## Arquitectura del Sistema
 
 MinFlix sigue una arquitectura por capas bien definida:
 
