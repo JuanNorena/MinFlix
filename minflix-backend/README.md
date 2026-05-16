@@ -1,98 +1,73 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# ⚙️ MinFlix - Backend (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este directorio contiene la API RESTful de MinFlix, construida con **NestJS**. Actúa como el puente orquestador entre el cliente web (React) y nuestro robusto motor de base de datos (Oracle).
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 🏛️ Arquitectura y Rol en el Proyecto
 
-## Project setup
+Dado que la arquitectura de MinFlix está orientada a bases de datos (donde Oracle maneja la lógica de negocio fuerte mediante PL/SQL, Triggers y Constraints), el rol de este backend está enfocado en:
 
-```bash
-$ npm install
-```
+1. **Orquestación y Enrutamiento**: Exponer endpoints REST limpios (`/api/v1/...`) para que el frontend los consuma.
+2. **Seguridad Perimetral**:
+   - Gestión de sesiones estáticas y sin estado mediante **JWT (JSON Web Tokens)**.
+   - Implementación de **Passport.js** para estrategias de autenticación (Local y JWT).
+   - Sanitización de entradas (Helmet, Class-Validator) antes de enviarlas a Oracle para evitar inyecciones.
+3. **Delegación de Responsabilidades a Oracle**:
+   - El backend **no** calcula métricas financieras complejas ni cruza datos analíticos masivos en memoria (Node.js). En su lugar, invoca **Procedimientos Almacenados**, funciones o consulta **Vistas Materializadas** directamente en Oracle.
+   - Los errores de integridad (ej. "Límite de perfiles alcanzado") son capturados desde las excepciones generadas por Oracle (ORA-XXXXX) y mapeados a respuestas HTTP semánticas (400 Bad Request, 409 Conflict).
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ npm run start
+## 🛠️ Tecnologías Principales
 
-# watch mode
-$ npm run start:dev
+- **Framework**: NestJS (Arquitectura modular: Controllers, Services, Guards).
+- **Lenguaje**: TypeScript (Tipado estricto alineado con el modelo de DB).
+- **Conexión a BD**: `oracledb` (Driver nativo) y `TypeORM` para mapeo de entidades sencillas, combinando Raw SQL para llamadas a PL/SQL.
+- **Validación**: `class-validator`, `class-transformer` (DTOs).
+- **Documentación**: Swagger / OpenAPI integrado automáticamente.
 
-# production mode
-$ npm run start:prod
-```
+---
 
-## Run tests
+## 🚀 Guía de Instalación y Ejecución
 
-```bash
-# unit tests
-$ npm run test
+### Prerrequisitos
+- Node.js v18 o superior.
+- Base de datos Oracle ejecutándose con el esquema de MinFlix cargado (ver `database/README.md`).
 
-# e2e tests
-$ npm run test:e2e
+### Pasos
 
-# test coverage
-$ npm run test:cov
-```
+1. **Instalar dependencias**:
+   ```bash
+   npm install
+   ```
 
-## Deployment
+2. **Configurar Variables de Entorno**:
+   Copia el archivo de ejemplo y configura tu conexión a Oracle:
+   ```bash
+   cp .env.example .env
+   ```
+   *Asegúrate de que `DB_USER`, `DB_PASSWORD` y `DB_CONNECTION_STRING` apunten a tu esquema local.*
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+3. **Ejecutar en Desarrollo**:
+   ```bash
+   npm run start:dev
+   ```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+4. **Verificar Documentación**:
+   Navega a `http://localhost:3000/api/docs` para visualizar la especificación Swagger completa de todos los endpoints disponibles.
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+---
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🧩 Estructura de Módulos (Épicas)
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+El código está estructurado en módulos que reflejan las Épicas INVEST del proyecto:
+- `AuthModule`: Login, registro y emisión de JWT.
+- `CatalogModule`: Lectura de películas, series, etc. (Consultas optimizadas a Oracle).
+- `PlaybackModule`: Tracking de reproducciones (Actualizaciones de alta frecuencia a tablas particionadas).
+- `CommunityModule`: Favoritos y calificaciones.
+- `FinanceModule`: Integración con simuladores de pago y lectura de vistas financieras.
+- `AnalyticsModule`: Lectura exclusiva de Vistas Materializadas y cubos OLAP en Oracle.

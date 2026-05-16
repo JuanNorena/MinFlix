@@ -1,286 +1,134 @@
 # MinFlix - Plataforma de Streaming Multimedia
 
-MinFlix es un proyecto academico y tecnico para construir una plataforma de streaming con arquitectura empresarial sobre Oracle, backend en NestJS y frontend en React. El objetivo es demostrar modelado de datos, reglas de negocio fuertes y una implementacion full stack trazable a epicas INVEST.
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Oracle](https://img.shields.io/badge/Oracle-F80000?style=for-the-badge&logo=oracle&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 
-## Autor
-Juan Sebastian Norena Espinosa, Daniel Eduardo Jurado Celemin y Samuel Andres Castaño
+MinFlix es un proyecto académico y técnico diseñado para construir una plataforma de streaming robusta con una **arquitectura empresarial**. El proyecto demuestra el uso avanzado de modelado de datos, reglas de negocio fuertes centralizadas en base de datos y una implementación full-stack trazable mediante metodologías ágiles (Épicas INVEST).
 
-## 1. Analisis Paso a Paso de la Aplicacion
+---
 
-### Paso 1. Dominio funcional
-1. La plataforma administra catalogo multimedia (peliculas, series, documentales, musica y podcasts).
-2. Cada cuenta puede tener multiples perfiles con restricciones por plan y tipo de perfil.
-3. El sistema registra reproducciones para habilitar continuidad y analitica.
-4. El sistema incluye procesos financieros de cobro, descuentos y renovacion.
-5. El sistema debe soportar reportes ejecutivos con consultas avanzadas.
+## Equipo de Desarrollo
+- Juan Sebastian Norena Espinosa
+- Daniel Eduardo Jurado Celemin
+- Samuel Andres Castaño Montes
 
-### Paso 2. Arquitectura por capas
-1. Oracle Database:
-   - Persistencia principal.
-   - Validaciones y reglas fuertes via SQL y PL/SQL.
-2. Backend NestJS:
-   - API REST central.
-   - Autenticacion y autorizacion.
-   - Orquestacion entre frontend y Oracle.
-3. Frontend React:
-   - Interfaces por rol.
-   - Formularios y consumo de API.
-   - Visualizacion de catalogo, pagos y reportes.
+---
 
-### Paso 3. Estado actual de implementacion
-1. Repositorios separados:
-   - minflix-backend
-   - minflix-frontend
-2. Backend base operativo:
-   - Prefijo de API /api/v1.
-   - Swagger en /api/docs.
-   - Auth inicial con Passport.js.
-3. Frontend base operativo:
-   - Router principal.
-   - Pantalla de inicio.
-   - Formulario de login conectado a la API.
-4. Calidad activa:
-   - Lint y build funcionales.
-   - Regla TSDoc en espanol habilitada.
+## 🌟 Características Principales
 
-### Paso 4. Brecha hacia objetivo final
-1. La autenticacion debe pasar de demo local a persistencia real en Oracle.
-2. Falta construir modulos de negocio por epica de forma completa.
-3. Falta consolidar scripts Oracle por nucleo con evidencia ejecutable.
+- **Catálogo Multimedia**: Administración completa de películas, series, documentales, música y podcasts.
+- **Gestión de Cuentas y Perfiles**: Soporte multi-perfil por cuenta, con restricciones basadas en planes de suscripción y perfiles infantiles.
+- **Tracking de Reproducción**: Registro en tiempo real del progreso de visualización, permitiendo continuar donde se dejó.
+- **Interacción Comunitaria**: Sistema de favoritos, calificaciones, reseñas y reporte de contenido.
+- **Módulo Financiero**: Simulador de pagos, facturación mensual, cobros, descuentos por referidos y renovaciones.
+- **Analítica Avanzada**: Dashboards y reportes ejecutivos alimentados por vistas materializadas y OLAP.
 
-## 2. Tecnologias del Proyecto
+---
 
-### 2.1 Base de Datos
-1. Oracle Database.
-2. SQL y PL/SQL.
-3. Objetos esperados: tablas, constraints, triggers, procedures, functions, roles, indices, vistas materializadas.
+## 🏗️ Arquitectura del Sistema
 
-### 2.2 Backend (minflix-backend)
-1. TypeScript.
-2. NestJS.
-3. TypeORM.
-4. oracledb.
-5. Passport.js:
-   - passport-local.
-   - passport-jwt.
-6. Validacion y seguridad:
-   - class-validator.
-   - class-transformer.
-   - helmet.
-   - compression.
-   - nestjs-pino.
-7. Calidad y pruebas:
-   - eslint + eslint-plugin-tsdoc.
-   - prettier.
-   - typedoc.
-   - jest + supertest.
-   - husky + lint-staged.
+MinFlix sigue una arquitectura por capas bien definida:
 
-### 2.3 Frontend (minflix-frontend)
-1. React + TypeScript + Vite.
-2. Navegacion: react-router-dom.
-3. Estado de servidor: @tanstack/react-query.
-4. Cliente HTTP: axios.
-5. Formularios y validaciones:
-   - react-hook-form.
-   - @hookform/resolvers.
-   - zod.
-6. UI y experiencia:
-   - tailwindcss + @tailwindcss/vite.
-   - framer-motion.
-   - lucide-react.
-7. Calidad y pruebas:
-   - eslint + eslint-plugin-tsdoc.
-   - typedoc.
-   - vitest + testing-library.
-   - husky + lint-staged.
+1. **Capa de Persistencia (Oracle Database)**
+   - Motor principal de almacenamiento.
+   - Validaciones y reglas de negocio críticas implementadas vía **SQL y PL/SQL** (Triggers, Procedures, Functions).
+   - Uso de Vistas Materializadas y particionamiento para rendimiento analítico.
 
-## 3. Mapa Epicas INVEST -> Implementacion
-1. Epica 1 (Catalogo):
-   - Backend: modulo de contenidos.
-   - Frontend: vistas de catalogo.
-   - Oracle: modelo relacional de contenidos.
-2. Epica 2 (Usuarios y perfiles):
-   - Backend: auth, usuarios, perfiles y reglas por plan.
-   - Frontend: login y gestion de perfiles.
-   - Oracle: limites por plan y restricciones infantiles.
-3. Epica 3 (Reproducciones):
-   - Backend: tracking de consumo.
-   - Frontend: continuar viendo.
-   - Oracle: registros de reproduccion e indices.
-4. Epica 4 (Comunidad):
-   - Backend: favoritos, calificaciones y reportes.
-   - Frontend: interaccion social.
-   - Oracle: reglas de elegibilidad de calificacion.
-5. Epica 5 (Finanzas):
-   - Backend: pagos y facturacion.
-   - Frontend: estado de cuenta.
-   - Oracle: transacciones y automatizaciones mensuales.
-6. Epica 6 (Analitica):
-   - Backend: endpoints de reportes.
-   - Frontend: dashboards.
-   - Oracle: OLAP y vistas materializadas.
+2. **Capa de Negocio / Backend (NestJS)**
+   - API RESTful central.
+   - Autenticación y autorización basada en JWT y Passport.js.
+   - Orquestación segura entre el cliente y la base de datos Oracle.
 
-## 4. Plan de Ejecucion Resumido
-1. Fase de base tecnica: repos, configuraciones, seguridad inicial y convenciones.
-2. Fase de autenticacion real: login persistente en Oracle con Passport.
-3. Fase funcional por iteraciones: modulos de epicas 1 a 6.
-4. Fase de cierre: pruebas, evidencias academicas y sustentacion.
+3. **Capa de Presentación / Frontend (React)**
+   - Interfaces dinámicas basadas en roles de usuario.
+   - Experiencia de usuario fluida con animaciones y diseño responsivo (TailwindCSS + Framer Motion).
+   - Consumo eficiente de API mediante React Query.
 
-Detalle completo del plan:
-- [Plan de Desarrollo](./Docs/Plan_Desarrollo.md)
-- [Epicas INVEST](./Docs/Epicas.md)
-- [Enunciado](./Docs/Enunciado.md)
-- [Iteracion 6 Finanzas API](./Docs/Finanzas_Iteracion6_API.md)
+---
 
-## 5. Guia de Ejecucion Paso a Paso
+## Tecnologías Utilizadas
 
-### 5.1 Backend
-1. Ir a la carpeta minflix-backend.
-2. Copiar .env.example como .env.
-3. Configurar credenciales y conexion Oracle.
-4. Instalar dependencias con npm install.
-5. Ejecutar npm run start:dev.
-6. Verificar Swagger en http://localhost:3000/api/docs.
+### Base de Datos
+- Oracle Database
+- SQL y PL/SQL avanzado
 
-### 5.2 Frontend
-1. Ir a la carpeta minflix-frontend.
-2. Copiar .env.example como .env.
-3. Configurar VITE_API_URL segun backend.
-4. Instalar dependencias con npm install.
-5. Ejecutar npm run dev.
+### Backend (`minflix-backend`)
+- **Framework**: NestJS (TypeScript)
+- **ORM/Driver**: TypeORM, `oracledb`
+- **Seguridad**: Passport.js (Local & JWT), Helmet, bcrypt
+- **Calidad**: ESLint, Jest, Supertest, Swagger (OpenAPI)
 
-### 5.3 Base de datos Oracle
-1. Ejecutar scripts en orden versionado:
-   - database/01_bootstrap_oracle_iteracion1.sql.
-   - database/02_catalogo_base_iteracion2.sql.
-   - database/03_reglas_perfiles_iteracion1.sql.
-   - database/04_reproducciones_iteracion2.sql.
-   - database/05_comunidad_favoritos_iteracion3.sql.
-   - database/06_comunidad_calificaciones_iteracion3.sql.
-   - database/07_catalogo_extendido_iteracion4.sql.
-   - database/08_comunidad_reportes_moderacion_iteracion4.sql.
-   - database/09_finanzas_referidos_iteracion5.sql.
-   - database/10_organizacion_equipo_iteracion5.sql.
-   - database/11_seguridad_roles_nt5.sql.
-   - database/12_diccionario_comentarios_modelo_fisico.sql.
-   - database/13_seed_usuarios_roles_login_iteracion5.sql.
-   - database/14_seed_datos_funcionales_iteracion5.sql.
-   - database/15_finanzas_vistas_api_iteracion6.sql.
-   - database/16_usuarios_datos_personales_iteracion6.sql.
-   - database/17_analitica_nt1.sql.
-   - database/18_plsql_nt2_completo.sql.
-   - database/19_transacciones_nt3.sql.
-   - database/20_indices_nt4.sql.
-   - database/21_validacion_cierre.sql.
-2. Guardar evidencia de ejecucion y resultados de pruebas.
-3. Para SQLcl o SQL*Plus, desde la carpeta database tambien se puede usar:
-   - database/run_all.sql.
-4. database/00_drop_all.sql es destructivo y solo debe ejecutarse manualmente
-   cuando se quiera reiniciar el esquema.
+### Frontend (`minflix-frontend`)
+- **Core**: React, TypeScript, Vite
+- **Navegación & Estado**: React Router DOM, TanStack React Query
+- **Estilos & UI**: TailwindCSS, Framer Motion, Lucide React
+- **Formularios**: React Hook Form, Zod
 
-### 5.4 Ejecucion rapida desde raiz
-1. Desde la raiz del workspace, ejecutar el script PowerShell start-dev.ps1.
-2. El script abre dos terminales: backend y frontend, ambos en modo desarrollo.
-3. Verificar:
-   - Frontend: http://localhost:5173.
-   - Backend Swagger: http://localhost:3000/api/docs.
+---
 
-## 6. Seguridad de Inicio de Sesion
-1. El login usa Passport.js de forma obligatoria.
-2. Flujo actual:
-   - POST /api/v1/auth/login.
-   - POST /api/v1/auth/register.
-   - GET /api/v1/auth/profile con JWT.
-   - POST /api/v1/playback/start con JWT.
-   - POST /api/v1/playback/progress con JWT.
-   - GET /api/v1/playback/continue-watching?perfilId=:id con JWT.
-   - GET /api/v1/playback/history?perfilId=:id con JWT.
-   - POST /api/v1/community/favorites con JWT.
-   - DELETE /api/v1/community/favorites/:contenidoId?perfilId=:id con JWT.
-   - GET /api/v1/community/favorites?perfilId=:id con JWT.
-   - GET /api/v1/community/favorites/status?perfilId=:id&contenidoId=:id con JWT.
-   - POST /api/v1/community/ratings con JWT.
-   - DELETE /api/v1/community/ratings/:contenidoId?perfilId=:id con JWT.
-   - GET /api/v1/community/ratings?perfilId=:id con JWT.
-   - GET /api/v1/community/ratings/status?perfilId=:id&contenidoId=:id con JWT.
-   - GET /api/v1/finance/summary con JWT.
-   - GET /api/v1/finance/invoices?estado=:estado&anio=:anio&mes=:mes&limit=:n con JWT.
-   - GET /api/v1/finance/payments?estadoTransaccion=:estado&limit=:n con JWT.
-   - POST /api/v1/finance/payments/checkout con JWT.
-   - GET /api/v1/finance/referrals?tipoRelacion=:tipo&estado=:estado&limit=:n con JWT.
-4. El flujo de pago de MinFlix en este proyecto es simulado para fines academicos:
-   - Se capturan datos de tarjeta en UI para validar experiencia end-to-end.
-   - La API registra pago exitoso de prueba.
-   - No existe integracion con pasarela externa ni cobro real de dinero.
-3. El login, registro, tracking de reproduccion, favoritos y calificaciones se validan contra Oracle usando bcrypt y reglas de negocio en triggers.
+## Guía de Instalación y Ejecución
 
-## 7. Guia Visual de Auth (Fase 1)
-1. La UI de login y registro usa una paleta cinematica con acentos rojos y dorados.
-2. La base visual y componentes se centralizan en minflix-frontend/src/index.css.
-3. Tipografia oficial de interfaz: Helvetica Neue / Helvetica / Arial.
-4. Se incluyo toggle ver/ocultar contrasena en login y registro.
-5. Se incluyo vista de planes y beneficios en /planes para apoyar la decision de registro.
-6. Referencia de estilo detallada en Docs/Guia_Diseno_UI.md.
+### Prerrequisitos
+- Node.js (v18+)
+- npm o pnpm (recomendado)
+- Oracle Database (19c+) con un esquema configurado.
 
-## 8. Helpers de UX (Campos ambiguos)
-1. Perfil inicial:
-   - Es el primer perfil de reproduccion creado para la cuenta principal.
-   - Se usa para separar recomendaciones, historial y continuidad de visualizacion.
-2. Plan inicial:
-   - Define limite de perfiles y condiciones de reproduccion.
-3. Contraseña:
-   - Incluye control visual para ver/ocultar durante digitacion.
+### 1. Ejecución Rápida (Recomendado)
+Desde la raíz del proyecto en Windows:
+```powershell
+.\start-dev.ps1
+```
+*Este script iniciará ambos entornos (Frontend y Backend) simultáneamente.*
 
-Ubicacion de helpers en frontend:
-- minflix-frontend/src/shared/helpers/authFieldHelp.ts
-- minflix-frontend/src/shared/helpers/plansCatalog.ts
+### 2. Ejecución Manual
 
-## 9. Estandares de Documentacion y Calidad
-1. TSDoc en espanol es obligatorio para codigo publico.
-2. Todo endpoint debe documentarse en Swagger.
-3. Todo cambio debe pasar lint y build en backend y frontend.
+**Backend:**
+```bash
+cd minflix-backend
+cp .env.example .env # Configurar credenciales de Oracle
+npm install
+npm run start:dev
+```
+*Swagger disponible en: `http://localhost:3000/api/docs`*
 
-## 10. Estructura del Workspace
-1. Docs/: enunciado, epicas y plan.
-2. minflix-backend/: API y seguridad.
-3. minflix-frontend/: aplicacion web.
+**Frontend:**
+```bash
+cd minflix-frontend
+cp .env.example .env # Configurar VITE_API_URL
+npm install
+npm run dev
+```
+*Aplicación disponible en: `http://localhost:5173`*
 
-## 11. Diagnostico ORA-00942 (Backend)
-Si al iniciar backend aparece ORA-00942 sobre USUARIOS, valide en este orden:
+### 3. Base de Datos (Oracle)
+Ejecutar los scripts de la carpeta `database/` en orden secuencial (del `01` al `21`) para inicializar el esquema, estructuras, reglas PL/SQL y datos semilla.
+Se puede utilizar el script maestro `database/run_all.sql` a través de SQLcl o SQL*Plus.
 
-1. Confirmar owner real de tablas en Oracle:
-    SELECT OWNER, TABLE_NAME
-    FROM ALL_TABLES
-    WHERE OWNER IN ('SYSTEM', 'MINFLIX_APP')
-       AND TABLE_NAME IN ('USUARIOS', 'PLANES', 'PERFILES')
-    ORDER BY OWNER, TABLE_NAME;
-2. Ajustar DB_SCHEMA en minflix-backend/.env al owner real detectado.
-3. Reiniciar backend y validar que mapea rutas sin excepcion en onModuleInit.
-4. Si las tablas no existen en ningun owner esperado, reejecutar database/01_bootstrap_oracle_iteracion1.sql con el usuario correcto.
+>  **Nota:** El script `00_drop_all.sql` es destructivo y solo debe usarse para reiniciar completamente el entorno de base de datos.
 
-## 12. Estado de Cierre y Validacion Final
-1. Frontend:
-   - `npm run lint` pasa.
-   - `npm run build` pasa.
-   - Vite puede emitir una advertencia de chunk mayor a 500 kB; no bloquea build.
-2. Backend:
-   - `npm run lint` pasa.
-   - `npm run build` pasa.
-3. Integracion frontend/backend validada:
-   - Catalogo base y extendido.
-   - Reproduccion e historial.
-   - Favoritos, calificaciones y reportes.
-   - Moderacion.
-   - Finanzas.
-   - Analitica.
-4. Cierre Oracle preparado:
-   - database/run_all.sql ejecuta scripts 01..21 en orden.
-   - database/21_validacion_cierre.sql valida objetos, errores de compilacion,
-     vistas, MVs, datos seed, catalogo extendido, permisos por rol e indices NT4.
-5. Nota MCP Oracle:
-   - En la sesion de cierre se intento localizar el MCP Oracle con nombres
-     `oracle`, `Oracle`, `oracle-sql`, `oracle_sql`, `oracledb` y `sql`.
-   - Todos respondieron como servidor no registrado en la sesion.
-   - La maquina local si expone `sqlplus.exe` y `sql.exe`, pero la ejecucion por
-     terminal debe hacerse solo si se decide reemplazar el mecanismo MCP Oracle.
+---
+
+##  Documentación Técnica
+
+Para un detalle exhaustivo del diseño, modelado y plan de proyecto, consulte la carpeta `Docs/`:
+
+-  [Definición del Proyecto (Documento Técnico Principal)](./Docs/Definicion_Proyecto.md)
+-  [Plan de Desarrollo](./Docs/Plan_Desarrollo.md)
+-  [Épicas INVEST](./Docs/Epicas.md)
+-  [Guía de Diseño UI](./Docs/Guia_Diseno_UI.md)
+
+---
+
+##  Seguridad y Autenticación
+- Integración obligatoria con **Passport.js**.
+- Las contraseñas se encriptan con `bcrypt` en la base de datos mediante triggers en Oracle.
+- Los flujos principales (reproducción, finanzas, comunidad) requieren autenticación mediante **JWT**.
+
+---
+
+##  Estado de Validación
+- Pruebas de integración Frontend/Backend validadas en todos los módulos (Catálogo, Reproducción, Finanzas, etc.).
+- Compilación (`build`) y análisis estático (`lint`) exitosos en ambos repositorios.
+- Reglas de calidad aplicadas, incluyendo documentación con `TSDoc`.
