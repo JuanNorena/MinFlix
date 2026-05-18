@@ -64,3 +64,31 @@ Para inicializar la base de datos desde cero:
 4. Revisa los logs en consola para confirmar que no hay errores de compilación (`PL/SQL procedure successfully completed`).
 
 > **Peligro**: El script `00_drop_all.sql` elimina todo el esquema. Úsalo solo en entornos de desarrollo para reiniciar las pruebas.
+
+---
+
+## Iteración 7 - Refactorizaciones de Modelo (Mayo 2026)
+
+### 1. PLANES - Pantallas simultáneas y calidad de video
+- Columnas agregadas: `PANTALLAS_SIMULTANEAS NUMBER(2,0)` y `CALIDAD_VIDEO VARCHAR2(20)`.
+- Seeds actualizados en `01_bootstrap_oracle_iteracion1.sql` (líneas 132-140).
+- Constraint `CK_PLANES_CALIDAD` valida ('SD','HD','4K').
+- Estado: **Completado**.
+
+### 2. ROLES_USUARIOS - Relación M:N robusta
+- Nueva tabla `ROLES_USUARIOS` (`22_roles_favoritos_iteracion7.sql`).
+- Migración automática de roles existentes.
+- Eliminación idempotente de columna `ROL` de `USUARIOS` (incluye drop de CK_USUARIOS_ROL).
+- Actualización de `SP_REGISTRAR_USUARIO` (`18_plsql_nt2_completo.sql:243-252`): ahora inserta en ROLES_USUARIOS.
+- Índice `IDX_ROLES_USUARIOS_ROL` para consultas por rol.
+- Estado: **Completado**.
+
+### 3. FAVORITOS - Clave primaria compuesta
+- Refactor en `22_roles_favoritos_iteracion7.sql`:
+  - Eliminación de `ID_FAVORITO` y su PK.
+  - Conversión de `UK_FAVORITOS_PERFIL_CONTENIDO` → `PK_FAVORITOS (ID_PERFIL, ID_CONTENIDO)`.
+  - Actualización de FKs con `ON DELETE CASCADE`.
+  - Recreación de índice `IDX_FAVORITOS_PERFIL_FECHA`.
+  - Trigger `TRG_FAVORITOS_REGLAS_BI` actualizado (ya no referencia ID_FAVORITO).
+- Actualización de `00_drop_all.sql`.
+- Estado: **Completado**.

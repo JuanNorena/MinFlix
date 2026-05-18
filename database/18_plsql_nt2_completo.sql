@@ -242,13 +242,16 @@ BEGIN
   -- LOWER(TRIM()) normaliza el email para evitar duplicados por espacios o mayusculas.
   INSERT INTO USUARIOS (
     NOMBRE, EMAIL, TELEFONO, FECHA_NACIMIENTO, CIUDAD_RESIDENCIA,
-    PASSWORD_HASH, ROL, ESTADO_CUENTA, ID_PLAN
+    PASSWORD_HASH, ESTADO_CUENTA, ID_PLAN
   ) VALUES (
     P_NOMBRE, LOWER(TRIM(P_EMAIL)), P_TELEFONO, P_FECHA_NACIMIENTO,
-    P_CIUDAD_RESIDENCIA, P_PASSWORD_HASH, 'usuario', 'ACTIVO', V_ID_PLAN
+    P_CIUDAD_RESIDENCIA, P_PASSWORD_HASH, 'ACTIVO', V_ID_PLAN
   )
   -- Capturar el ID autogenerado para retornarlo al caller
   RETURNING ID_USUARIO INTO P_ID_USUARIO;
+
+  -- Asignar rol por defecto 'usuario' en la tabla de roles M:N
+  INSERT INTO ROLES_USUARIOS (ID_USUARIO, ROL) VALUES (P_ID_USUARIO, 'usuario');
 
   -- Paso 3: crear el perfil de reproduccion inicial vinculado al usuario.
   -- LOWER(TRIM()) normaliza el tipo de perfil (adulto/infantil).

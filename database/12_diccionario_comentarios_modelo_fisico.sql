@@ -30,7 +30,7 @@ COMMENT ON TABLE EMPLEADOS IS 'Plantilla de empleados y jerarquia supervisor-sub
 -- --------------------------------------------------------------------------
 -- Comentarios a nivel de columna: explican campos sensibles o de negocio.
 -- --------------------------------------------------------------------------
-COMMENT ON COLUMN USUARIOS.ROL IS 'Rol funcional de cuenta: admin, soporte, contenido, analista, usuario.';
+COMMENT ON TABLE ROLES_USUARIOS IS 'Tabla puente M:N para asignar múltiples roles funcionales por usuario (admin, soporte, contenido, analista, usuario).';
 COMMENT ON COLUMN USUARIOS.ESTADO_CUENTA IS 'Estado operativo para control de acceso y reproduccion.';
 COMMENT ON COLUMN USUARIOS.TELEFONO IS 'Telefono de contacto del titular de cuenta para soporte y recuperacion.';
 COMMENT ON COLUMN USUARIOS.FECHA_NACIMIENTO IS 'Fecha de nacimiento del titular para validaciones de negocio y segmentacion.';
