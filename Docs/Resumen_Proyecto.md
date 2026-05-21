@@ -1,529 +1,1083 @@
-# Análisis Completo del Proyecto MinFlix
+# MinFlix - Resumen Integral del Proyecto para Sustentación
 
-> **Proyecto académico** — Bases de Datos II, Noveno Semestre
-> **Autores:** Juan Sebastián Noreña Espinosa, Daniel Eduardo Jurado Celemín, Samuel Andrés Castaño
-> **Stack:** Oracle Database + NestJS (TypeScript) + React/Vite (TypeScript)
-
----
-
-## 1. Visión General del Dominio
-
-MinFlix es una **plataforma de streaming multimedia** con las siguientes capacidades funcionales:
-
-| Área | Descripción |
-|------|-------------|
-| **Catálogo** | Películas, series, documentales, música y podcasts con categorización |
-| **Cuentas y Perfiles** | Multi-perfil por cuenta principal con restricciones por plan |
-| **Reproducción** | Tracking de consumo con continuidad ("Seguir viendo") |
-| **Comunidad** | Favoritos, calificaciones con regla de 50%, y reportes de contenido |
-| **Finanzas** | Facturación mensual, referidos, descuentos por fidelidad y mora automática |
-| **Analítica** | Reportes ejecutivos con consultas OLAP (planificado) |
+> **Proyecto académico:** Bases de Datos II - Noveno Semestre  
+> **Autores:** Juan Sebastián Noreña Espinosa, Daniel Eduardo Jurado Celemín, Samuel Andrés Castaño  
+> **Stack principal:** Oracle Database + NestJS + React/Vite + TypeScript  
+> **Objetivo:** explicar arquitectura, UML, clases, módulos, consultas SQL, scripts Oracle y flujos principales para sustentar el proyecto ante la profesora.
 
 ---
 
-## 2. Arquitectura de Tres Capas
+## Tabla de contenido
+
+1. [Resumen ejecutivo](#1-resumen-ejecutivo)
+2. [Arquitectura general](#2-arquitectura-general)
+3. [UML y modelo del dominio](#3-uml-y-modelo-del-dominio)
+4. [Base de datos Oracle](#4-base-de-datos-oracle)
+5. [Backend NestJS](#5-backend-nestjs)
+6. [Frontend React/Vite](#6-frontend-reactvite)
+7. [Consultas SQL por clase](#7-consultas-sql-por-clase)
+8. [Flujos principales](#8-flujos-principales)
+9. [Seguridad y reglas de negocio](#9-seguridad-y-reglas-de-negocio)
+10. [Núcleos académicos NT1..NT4](#10-núcleos-académicos-nt1nt4)
+11. [Guía de sustentación](#11-guía-de-sustentación)
+12. [Preguntas probables](#12-preguntas-probables)
+13. [Mapa de archivos importantes](#13-mapa-de-archivos-importantes)
+
+---
+
+## 1. Resumen ejecutivo
+
+MinFlix es una plataforma de streaming multimedia inspirada en servicios como Netflix. Permite registrar usuarios, iniciar sesión, seleccionar perfiles, navegar un catálogo de contenidos, reproducir, continuar viendo, guardar favoritos, calificar, reportar contenido, moderar reportes, consultar facturas, simular pagos y visualizar analítica ejecutiva.
+
+La característica más importante del proyecto es que Oracle no se usa solo como almacenamiento. Oracle también aplica reglas de negocio, seguridad, analítica y optimización mediante constraints, triggers, funciones, procedimientos, vistas, vistas materializadas, roles, privilegios, particiones e índices.
+
+| Área | Qué demuestra |
+|---|---|
+| **Frontend** | Experiencia de usuario tipo streaming, formularios, rutas protegidas, dashboards y showcase académico. |
+| **Backend** | API REST modular con NestJS, autenticación JWT, DTOs, servicios, controladores, TypeORM y SQL nativo. |
+| **Oracle** | Modelo relacional, integridad, reglas de negocio, PL/SQL, transacciones, roles, analítica e indexación. |
+
+### Idea central para explicar
+
+MinFlix es un sistema de tres capas donde React muestra la interfaz, NestJS coordina la API y Oracle garantiza integridad, reglas de negocio y análisis avanzado. La base de datos es parte activa del sistema, no un repositorio pasivo.
+
+---
+
+## 2. Arquitectura general
+
+### 2.1 Diagrama de tres capas
 
 ```mermaid
 graph TB
-    subgraph "Frontend - React + Vite"
-        FE["React 19 + TypeScript"]
-        RQ["@tanstack/react-query"]
-        RHF["react-hook-form + zod"]
-        AX["axios (apiClient)"]
-        FM["framer-motion"]
+    subgraph FE["Frontend - React/Vite/TypeScript"]
+        UI["Páginas React"]
+        ROUTER["React Router"]
+        CLIENT["apiClient Axios"]
+        SESSION["localStorage: JWT + perfil activo"]
+        QUERY["TanStack Query"]
     end
 
-    subgraph "Backend - NestJS"
+    subgraph BE["Backend - NestJS/TypeScript"]
+        MAIN["main.ts"]
         API["REST API /api/v1"]
-        PASS["Passport.js (Local + JWT)"]
-        TORM["TypeORM (oracle driver)"]
-        SWAG["Swagger /api/docs"]
+        AUTH["Passport Local/JWT"]
+        MODULES["Módulos de negocio"]
+        TYPEORM["TypeORM + Oracle driver"]
+        NATIVE["DataSource.query SQL nativo"]
+        SWAGGER["Swagger /api/docs"]
     end
 
-    subgraph "Oracle Database"
-        TABLES["19+ tablas"]
-        TRIGGERS["7+ triggers PL/SQL"]
-        VIEWS["3+ vistas"]
-        PROCS["Procedure SP_APLICAR_MORA_CUENTAS"]
-        FUNCS["FN_CLASIFICACION_PERMITIDA_PARA_PERFIL"]
-        ROLES["4 roles DB + PROFILE NT5"]
+    subgraph DB["Oracle Database"]
+        TABLES["Tablas relacionales"]
+        TRIGGERS["Triggers"]
+        FUNCTIONS["Funciones PL/SQL"]
+        PROCEDURES["Procedimientos"]
+        VIEWS["Vistas y materialized views"]
+        INDEXES["Índices y particiones"]
+        ROLES["Roles y privilegios"]
     end
 
-    FE --> AX --> API
-    API --> PASS
-    API --> TORM --> TABLES
+    UI --> ROUTER
+    ROUTER --> CLIENT
+    SESSION --> CLIENT
+    QUERY --> CLIENT
+    CLIENT --> API
+    API --> AUTH
+    API --> MODULES
+    MODULES --> TYPEORM
+    MODULES --> NATIVE
+    TYPEORM --> TABLES
+    NATIVE --> TABLES
+    NATIVE --> VIEWS
     TABLES --> TRIGGERS
-    TABLES --> VIEWS
+    TRIGGERS --> FUNCTIONS
+    PROCEDURES --> TABLES
+    INDEXES --> TABLES
+    ROLES --> TABLES
 ```
 
-### 2.1 Datos de Conexión
+### 2.2 Responsabilidades por capa
 
-| Variable | Default |
-|----------|---------|
-| `DB_CONNECT_STRING` | `localhost:1521/FREEPDB1` |
-| `DB_USER` | `MINFLIX_APP` |
-| `DB_SCHEMA` | configurable |
-| `JWT_SECRET` | `dev_jwt_secret` |
-| `CORS_ORIGIN` | `http://localhost:5173` |
-| `VITE_API_URL` | `http://localhost:3000/api/v1` |
+| Capa | Tecnología | Responsabilidad |
+|---|---|---|
+| **Frontend** | React, Vite, TypeScript, React Router, Axios, TanStack Query | UI, navegación, formularios, sesión local, consumo de API y visualización. |
+| **Backend** | NestJS, TypeScript, TypeORM, Passport, JWT, Swagger | API REST, autenticación, autorización, DTOs, servicios, validación y conexión a Oracle. |
+| **Base de datos** | Oracle SQL/PLSQL | Persistencia, reglas de negocio, triggers, funciones, vistas, roles, transacciones e índices. |
+
+### 2.3 Flujo general de una petición
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant React as Frontend React
+    participant Axios as apiClient Axios
+    participant Nest as Backend NestJS
+    participant Service as Service del módulo
+    participant Oracle as Oracle Database
+
+    Usuario->>React: Interactúa con una pantalla
+    React->>Axios: Llama endpoint REST
+    Axios->>Nest: Envía HTTP + Bearer JWT
+    Nest->>Nest: JwtAuthGuard valida token
+    Nest->>Service: Controller delega operación
+    Service->>Oracle: TypeORM o SQL nativo
+    Oracle->>Oracle: Constraints/triggers/PLSQL validan reglas
+    Oracle-->>Service: Datos o error ORA
+    Service-->>Nest: Contrato de respuesta
+    Nest-->>Axios: JSON
+    Axios-->>React: Datos normalizados
+    React-->>Usuario: Actualiza pantalla
+```
+
+### 2.4 Configuración relevante
+
+| Variable | Uso |
+|---|---|
+| `DB_CONNECT_STRING` | Cadena de conexión Oracle. |
+| `DB_USER` | Usuario de aplicación, por ejemplo `MINFLIX_APP`. |
+| `DB_PASSWORD` | Contraseña de Oracle. |
+| `DB_SCHEMA` | Esquema usado por TypeORM. |
+| `JWT_SECRET` | Firma de tokens JWT. |
+| `CORS_ORIGIN` | Origen permitido del frontend. |
+| `VITE_API_URL` | URL base del backend consumida desde React. |
 
 ---
 
-## 3. Capa de Base de Datos (Oracle)
+## 3. UML y modelo del dominio
 
-### 3.1 Scripts Versionados (14 scripts en orden)
+### 3.1 UML de clases principales
 
-| # | Archivo | Propósito | Objetos Principales |
-|---|---------|-----------|---------------------|
-| 00 | `00_drop_all.sql` | Limpieza total | DROP de todos los objetos |
-| 01 | `01_bootstrap_oracle_iteracion1.sql` | Auth base | `PLANES`, `USUARIOS`, `PERFILES` |
-| 02 | `02_catalogo_base_iteracion2.sql` | Catálogo | `CATEGORIAS`, `CONTENIDOS` + 5 categorías seed + 5 contenidos seed |
-| 03 | `03_reglas_perfiles_iteracion1.sql` | Reglas de negocio | `TRG_PERFILES_LIMITE_PLAN_BI`, `FN_CLASIFICACION_PERMITIDA_PARA_PERFIL`, `VW_CONTENIDO_VISIBLE_POR_PERFIL` |
-| 04 | `04_reproducciones_iteracion2.sql` | Tracking | `REPRODUCCIONES`, `TRG_REPRODUCCIONES_REGLAS_BIU`, `VW_CONTINUAR_VIENDO` |
-| 05 | `05_comunidad_favoritos_iteracion3.sql` | Favoritos | `FAVORITOS` + trigger de validación |
-| 06 | `06_comunidad_calificaciones_iteracion3.sql` | Calificaciones | `CALIFICACIONES` + trigger regla 50% |
-| 07 | `07_catalogo_extendido_iteracion4.sql` | Catálogo avanzado | `GENEROS`, `CONTENIDOS_GENEROS`, `TEMPORADAS`, `EPISODIOS`, `CONTENIDOS_RELACIONADOS` |
-| 08 | `08_comunidad_reportes_moderacion_iteracion4.sql` | Moderación | `REPORTES` + triggers de moderación + `VW_REPORTES_PENDIENTES_SOPORTE` |
-| 09 | `09_finanzas_referidos_iteracion5.sql` | Finanzas | `REFERIDOS`, `FACTURACIONES`, `PAGOS` + triggers financieros + `SP_APLICAR_MORA_CUENTAS` |
-| 10 | `10_organizacion_equipo_iteracion5.sql` | Organización | `DEPARTAMENTOS`, `EMPLEADOS` (jerarquía supervisor) |
-| 11 | `11_seguridad_roles_nt5.sql` | Seguridad NT5 | `PRF_MINFLIX_OPERACION`, 4 roles, 4 usuarios DB, GRANTs por rol |
-| 12 | `12_diccionario_comentarios_modelo_fisico.sql` | Documentación | COMMENTs en todas las tablas y columnas |
-| 13 | `13_seed_usuarios_roles_login_iteracion5.sql` | Seed auth | Usuarios por rol con bcrypt hash |
-| 14 | `14_seed_datos_funcionales_iteracion5.sql` | Seed funcional | Datos masivos de catálogo, reproducciones, favoritos, etc. |
+```mermaid
+classDiagram
+    class PlanEntity {
+        +id
+        +nombre
+        +precioMensual
+        +limitePerfiles
+        +pantallasSimultaneas
+        +calidadVideo
+    }
 
-### 3.2 Modelo de Tablas Principales
+    class UserEntity {
+        +id
+        +nombre
+        +email
+        +telefono
+        +fechaNacimiento
+        +ciudadResidencia
+        +passwordHash
+        +role
+        +estadoCuenta
+    }
+
+    class ProfileEntity {
+        +id
+        +nombre
+        +avatarUrl
+        +tipoPerfil
+        +fechaCreacion
+    }
+
+    class CategoryEntity {
+        +id
+        +nombre
+        +descripcion
+    }
+
+    class ContentEntity {
+        +id
+        +titulo
+        +tipoContenido
+        +clasificacionEdad
+        +anioLanzamiento
+        +duracionMinutos
+        +sinopsis
+        +esExclusivo
+    }
+
+    class GenreEntity {
+        +id
+        +nombre
+    }
+
+    class ContentGenreEntity {
+        +contenido
+        +genero
+    }
+
+    class SeasonEntity {
+        +id
+        +numeroTemporada
+        +titulo
+    }
+
+    class EpisodeEntity {
+        +id
+        +numeroEpisodio
+        +titulo
+        +duracionMinutos
+    }
+
+    class RelatedContentEntity {
+        +contenidoOrigen
+        +contenidoRelacionado
+        +tipoRelacion
+    }
+
+    class PlaybackEntity {
+        +id
+        +progresoSegundos
+        +duracionTotalSegundos
+        +porcentajeAvance
+        +ultimoDispositivo
+        +estadoReproduccion
+    }
+
+    class ContinueWatchingEntity {
+        +perfilId
+        +contenidoId
+        +titulo
+        +porcentajeAvance
+    }
+
+    class FavoriteEntity {
+        +perfil
+        +contenido
+        +fechaAgregado
+    }
+
+    class RatingEntity {
+        +perfil
+        +contenido
+        +puntaje
+        +resena
+    }
+
+    class ReportEntity {
+        +id
+        +motivo
+        +detalle
+        +estadoReporte
+        +resolucion
+    }
+
+    class InvoiceEntity {
+        +id
+        +periodoAnio
+        +periodoMes
+        +montoBase
+        +montoFinal
+        +estadoFactura
+    }
+
+    class PaymentEntity {
+        +id
+        +montoPagado
+        +metodoPago
+        +estadoPago
+    }
+
+    class ReferralEntity {
+        +id
+        +codigoReferido
+        +estadoReferido
+        +descuentoPct
+    }
+
+    PlanEntity "1" --> "many" UserEntity
+    UserEntity "1" --> "many" ProfileEntity
+    CategoryEntity "1" --> "many" ContentEntity
+    ContentEntity "many" --> "many" GenreEntity
+    ContentEntity "1" --> "many" SeasonEntity
+    SeasonEntity "1" --> "many" EpisodeEntity
+    ContentEntity "1" --> "many" RelatedContentEntity
+    ProfileEntity "1" --> "many" PlaybackEntity
+    ContentEntity "1" --> "many" PlaybackEntity
+    ProfileEntity "1" --> "many" FavoriteEntity
+    ContentEntity "1" --> "many" FavoriteEntity
+    ProfileEntity "1" --> "many" RatingEntity
+    ContentEntity "1" --> "many" RatingEntity
+    ProfileEntity "1" --> "many" ReportEntity
+    ContentEntity "1" --> "many" ReportEntity
+    UserEntity "1" --> "many" InvoiceEntity
+    InvoiceEntity "1" --> "many" PaymentEntity
+    UserEntity "1" --> "many" ReferralEntity
+```
+
+### 3.2 Modelo entidad-relación principal
 
 ```mermaid
 erDiagram
-    PLANES ||--o{ USUARIOS : "1:N"
-    USUARIOS ||--o{ PERFILES : "1:N"
-    CATEGORIAS ||--o{ CONTENIDOS : "1:N"
+    PLANES ||--o{ USUARIOS : "tiene"
+    USUARIOS ||--o{ PERFILES : "posee"
+    CATEGORIAS ||--o{ CONTENIDOS : "clasifica"
     USUARIOS ||--o{ CONTENIDOS : "publica"
-    PERFILES ||--o{ REPRODUCCIONES : "1:N"
-    CONTENIDOS ||--o{ REPRODUCCIONES : "1:N"
-    PERFILES ||--o{ FAVORITOS : "1:N"
-    CONTENIDOS ||--o{ FAVORITOS : "1:N"
-    PERFILES ||--o{ CALIFICACIONES : "1:N"
-    CONTENIDOS ||--o{ CALIFICACIONES : "1:N"
-    PERFILES ||--o{ REPORTES : "reporta"
+    CONTENIDOS ||--o{ CONTENIDOS_GENEROS : "asocia"
+    GENEROS ||--o{ CONTENIDOS_GENEROS : "asocia"
+    CONTENIDOS ||--o{ TEMPORADAS : "si_es_serie"
+    TEMPORADAS ||--o{ EPISODIOS : "contiene"
+    CONTENIDOS ||--o{ CONTENIDOS_RELACIONADOS : "relaciona"
+    CONTENIDOS ||--o{ REPRODUCCIONES : "reproducido"
+    PERFILES ||--o{ REPRODUCCIONES : "realiza"
+    PERFILES ||--o{ FAVORITOS : "marca"
+    CONTENIDOS ||--o{ FAVORITOS : "favorito"
+    PERFILES ||--o{ CALIFICACIONES : "califica"
+    CONTENIDOS ||--o{ CALIFICACIONES : "recibe"
+    PERFILES ||--o{ REPORTES : "crea"
     CONTENIDOS ||--o{ REPORTES : "reportado"
     USUARIOS ||--o{ REPORTES : "modera"
-    USUARIOS ||--o{ REFERIDOS : "refiere"
-    USUARIOS ||--o{ FACTURACIONES : "1:N"
-    FACTURACIONES ||--o{ PAGOS : "1:N"
-    CONTENIDOS ||--o{ CONTENIDOS_GENEROS : "M:N"
-    GENEROS ||--o{ CONTENIDOS_GENEROS : "M:N"
-    CONTENIDOS ||--o{ TEMPORADAS : "1:N"
-    TEMPORADAS ||--o{ EPISODIOS : "1:N"
-    CONTENIDOS ||--o{ CONTENIDOS_RELACIONADOS : "secuela/remake"
+    USUARIOS ||--o{ FACTURACIONES : "recibe"
+    FACTURACIONES ||--o{ PAGOS : "se_paga_con"
+    USUARIOS ||--o{ REFERIDOS : "participa"
+    DEPARTAMENTOS ||--o{ EMPLEADOS : "agrupa"
+    EMPLEADOS ||--o{ EMPLEADOS : "supervisa"
 ```
 
-### 3.3 Triggers y Reglas de Negocio en Oracle
+### 3.3 Paquetes funcionales del dominio
 
-| Trigger | Tabla | Errores ORA | Regla |
-|---------|-------|-------------|-------|
-| `TRG_PERFILES_LIMITE_PLAN_BI` | PERFILES | ORA-20011, ORA-20012 | Máximo de perfiles según plan |
-| `TRG_REPRODUCCIONES_REGLAS_BIU` | REPRODUCCIONES | ORA-20021..ORA-20024 | Cuenta activa + clasificación + progreso ≤ duración + cálculo automático de % |
-| `TRG_FACTURACIONES_CALCULO_BIU` | FACTURACIONES | ORA-20081, ORA-20082 | Validación fechas + cálculo monto_final con descuentos |
-| `TRG_PAGOS_ACTUALIZA_FACTURA_AI` | PAGOS | — | Pago exitoso → factura PAGADA + cuenta ACTIVA |
-| Triggers comunidad (05-08) | FAVORITOS, CALIFICACIONES, REPORTES | ORA-20031..ORA-20066 | Clasificación infantil, regla 50%, moderación por rol |
-
-### 3.4 Seguridad NT5 (Núcleo 5)
-
-| Rol Oracle | Permisos |
-|------------|----------|
-| `ROL_ADMIN` | Full CRUD en todas las tablas + EXECUTE en funciones/procedures |
-| `ROL_ANALISTA` | Solo SELECT sobre todas las tablas (lectura analítica) |
-| `ROL_SOPORTE` | SELECT contexto + INSERT/UPDATE en REPORTES |
-| `ROL_CONTENIDO` | Mantenimiento editorial de catálogo (sin finanzas ni moderación) |
-
-**PROFILE:** `PRF_MINFLIX_OPERACION` — 3 sesiones máx, 30 min idle, 5 intentos fallidos, contraseña caduca 180 días.
+| Paquete | Entidades principales | Qué representa |
+|---|---|---|
+| **Cuentas** | `USUARIOS`, `PLANES`, `PERFILES` | Registro, autenticación, planes y perfiles. |
+| **Catálogo** | `CATEGORIAS`, `CONTENIDOS`, `GENEROS`, `TEMPORADAS`, `EPISODIOS` | Contenido multimedia navegable. |
+| **Reproducción** | `REPRODUCCIONES`, `VW_CONTINUAR_VIENDO` | Tracking de consumo, progreso e historial. |
+| **Comunidad** | `FAVORITOS`, `CALIFICACIONES`, `REPORTES` | Interacción de perfiles con contenidos. |
+| **Finanzas** | `FACTURACIONES`, `PAGOS`, `REFERIDOS` | Cobros, pagos simulados y descuentos. |
+| **Analítica** | `VW_ANALITICA_CONSUMO`, `VW_ANALITICA_FINANZAS`, `VW_ANALITICA_RENDIMIENTO` | Reportes ejecutivos. |
+| **Organización** | `DEPARTAMENTOS`, `EMPLEADOS` | Estructura interna para analítica. |
 
 ---
 
-## 4. Capa Backend (NestJS)
+## 4. Base de datos Oracle
 
-### 4.1 Estructura de Módulos
+### 4.1 Enfoque: Fat Database
 
-```
+MinFlix usa Oracle como una base de datos robusta. La base no solo guarda datos: también protege el modelo. Si otro cliente intentara insertar información sin pasar por el backend, Oracle seguiría aplicando reglas mediante constraints, triggers, funciones y privilegios.
+
+Esto demuestra conceptos centrales de Bases de Datos II: modelado relacional, integridad, PL/SQL, transacciones, seguridad, vistas, particiones, índices y analítica.
+
+### 4.2 Scripts versionados
+
+| Script | Archivo | Propósito |
+|---|---|---|
+| `00` | `00_drop_all.sql` | Limpieza del esquema para reiniciar despliegues. |
+| `01` | `01_bootstrap_oracle_iteracion1.sql` | Crea `PLANES`, `USUARIOS`, `PERFILES`. |
+| `02` | `02_catalogo_base_iteracion2.sql` | Crea `CATEGORIAS` y `CONTENIDOS`. |
+| `03` | `03_reglas_perfiles_iteracion1.sql` | Reglas de perfiles y clasificación. |
+| `04` | `04_reproducciones_iteracion2.sql` | Crea `REPRODUCCIONES` y `VW_CONTINUAR_VIENDO`. |
+| `05` | `05_comunidad_favoritos_iteracion3.sql` | Crea favoritos y reglas. |
+| `06` | `06_comunidad_calificaciones_iteracion3.sql` | Crea calificaciones y regla del 50%. |
+| `07` | `07_catalogo_extendido_iteracion4.sql` | Géneros, temporadas, episodios y relacionados. |
+| `08` | `08_comunidad_reportes_moderacion_iteracion4.sql` | Reportes y moderación. |
+| `09` | `09_finanzas_referidos_iteracion5.sql` | Referidos, facturas, pagos y mora. |
+| `10` | `10_organizacion_equipo_iteracion5.sql` | Departamentos y empleados. |
+| `11` | `11_seguridad_roles_nt5.sql` | Roles, usuarios DB, profile y grants. |
+| `12` | `12_diccionario_comentarios_modelo_fisico.sql` | Comentarios del modelo físico. |
+| `13` | `13_seed_usuarios_roles_login_iteracion5.sql` | Usuarios semilla por rol. |
+| `14` | `14_seed_datos_funcionales_iteracion5.sql` | Dataset funcional amplio. |
+| `15` | `15_finanzas_vistas_api_iteracion6.sql` | Vistas de apoyo para finanzas. |
+| `16` | `16_usuarios_datos_personales_iteracion6.sql` | Datos personales para segmentación. |
+| `17` | `17_analitica_nt1.sql` | NT1: particiones, MVs, PIVOT, ROLLUP, CUBE, vistas analíticas. |
+| `18` | `18_plsql_nt2_completo.sql` | NT2: funciones, procedimientos, cursores y errores. |
+| `19` | `19_transacciones_nt3.sql` | NT3: transacciones, savepoints, locks y rollback. |
+| `20` | `20_indices_nt4.sql` | NT4: índices y `EXPLAIN PLAN`. |
+| `21` | `21_validacion_cierre.sql` | Validación final del esquema. |
+| `22` | `22_roles_favoritos_iteracion7.sql` | Refactor de roles/favoritos. |
+| Maestro | `run_all.sql` | Ejecución ordenada del esquema. |
+
+### 4.3 Tablas por área
+
+| Área | Tablas | Descripción |
+|---|---|---|
+| **Usuarios** | `PLANES`, `USUARIOS`, `PERFILES` | Cuentas, datos personales, plan y perfiles. |
+| **Catálogo** | `CATEGORIAS`, `CONTENIDOS`, `GENEROS`, `CONTENIDOS_GENEROS`, `TEMPORADAS`, `EPISODIOS`, `CONTENIDOS_RELACIONADOS` | Estructura del contenido. |
+| **Reproducción** | `REPRODUCCIONES` | Eventos de consumo. |
+| **Comunidad** | `FAVORITOS`, `CALIFICACIONES`, `REPORTES` | Lista, ratings y moderación. |
+| **Finanzas** | `FACTURACIONES`, `PAGOS`, `REFERIDOS` | Facturación, pagos y descuentos. |
+| **Organización** | `DEPARTAMENTOS`, `EMPLEADOS` | Equipo interno para analítica. |
+
+### 4.4 Vistas y vistas materializadas
+
+| Objeto | Tipo | Uso |
+|---|---|---|
+| `VW_CONTINUAR_VIENDO` | Vista | Contenidos no finalizados por perfil. |
+| `VW_CONTENIDO_VISIBLE_POR_PERFIL` | Vista | Apoyo a visibilidad por clasificación. |
+| `VW_REPORTES_PENDIENTES_SOPORTE` | Vista | Bandeja de reportes pendientes. |
+| `VW_ANALITICA_CONSUMO` | Vista | Consumo por ciudad, categoría, género, dispositivo, plan y mes. |
+| `VW_ANALITICA_FINANZAS` | Vista | Ingresos, facturas, cobrados y pendientes. |
+| `VW_ANALITICA_RENDIMIENTO` | Vista | Métricas de empleados por departamento. |
+| `MV_CALIFICACIONES_PROMEDIO` | Vista materializada | Promedios de calificación por contenido. |
+| `MV_METRICAS_FINANCIERAS` | Vista materializada | Métricas financieras precalculadas. |
+
+### 4.5 Triggers principales
+
+| Trigger o grupo | Tabla | Regla |
+|---|---|---|
+| `TRG_PERFILES_LIMITE_PLAN_BI` | `PERFILES` | Impide superar el límite de perfiles del plan. |
+| `TRG_REPRODUCCIONES_REGLAS_BIU` | `REPRODUCCIONES` | Valida cuenta, edad, progreso y calcula porcentaje. |
+| `TRG_FAVORITOS_REGLAS_BI` | `FAVORITOS` | Bloquea favoritos no permitidos para perfiles infantiles. |
+| Trigger de calificaciones | `CALIFICACIONES` | Permite calificar solo si se vio más del 50%. |
+| Triggers de reportes | `REPORTES` | Controlan estados y moderación. |
+| `TRG_FACTURACIONES_CALCULO_BIU` | `FACTURACIONES` | Calcula monto final y valida periodos. |
+| `TRG_PAGOS_ACTUALIZA_FACTURA_AI` | `PAGOS` | Pago exitoso actualiza factura y estado de cuenta. |
+
+### 4.6 Funciones y procedimientos
+
+| Objeto | Propósito |
+|---|---|
+| `FN_CLASIFICACION_PERMITIDA_PARA_PERFIL` | Determina si un perfil puede ver una clasificación. |
+| `FN_CALCULAR_MONTO` | Calcula factura con descuentos por referidos y fidelidad. |
+| `FN_CONTENIDO_RECOMENDADO` | Recomienda contenido según favoritos/historial. |
+| `SP_APLICAR_MORA_CUENTAS` | Aplica mora a cuentas con facturas vencidas. |
+
+### 4.7 Índices y optimización
+
+| Índice | Tabla | Justificación |
+|---|---|---|
+| `IDX_REPRODUCCIONES_PERFIL_FECHA_INICIO` | `REPRODUCCIONES` | Historial por perfil ordenado por fecha. |
+| `IDX_CONTENIDOS_CATEGORIA_ANIO` | `CONTENIDOS` | Filtros de catálogo. |
+| `IDX_USUARIOS_CIUDAD_ESTADO` | `USUARIOS` | Segmentación por ciudad y estado. |
+| `IDX_CALIFICACIONES_CONTENIDO_FECHA` | `CALIFICACIONES` | Agregaciones por contenido y fecha. |
+| `IDX_REPRODUCCIONES_PERFIL_EVENTO` | `REPRODUCCIONES` | Último evento por perfil. |
+| `IDX_REPRODUCCIONES_CONTENIDO` | `REPRODUCCIONES` | Analítica por contenido. |
+| `IDX_REPRODUCCIONES_ESTADO` | `REPRODUCCIONES` | Filtros por estado. |
+
+---
+
+## 5. Backend NestJS
+
+### 5.1 Estructura general
+
+```text
 minflix-backend/src/
-├── main.ts                    # Bootstrap: Helmet, Compression, CORS, Swagger, ValidationPipe
-├── app.module.ts              # Root: ConfigModule, TypeORM, 4 feature modules
-├── config/
-│   └── database.config.ts     # TypeORM async config para Oracle
-├── auth/                      # Módulo de autenticación (~4 DTOs, 3 entidades, 2 guards, 2 strategies)
-├── catalog/                   # Módulo de catálogo (~4 DTOs, 2 entidades, 1 contract)
-├── playback/                  # Módulo de reproducción (~4 DTOs, 2 entidades, 1 contract)
-└── community/                 # Módulo de comunidad (~12 DTOs, 3 entidades, 1 contract)
+├── main.ts
+├── app.module.ts
+├── config/database.config.ts
+├── auth/
+├── catalog/
+├── playback/
+├── community/
+├── finance/
+├── analytics/
+└── showcase/
 ```
 
-### 4.2 Módulo Auth — [auth.module.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/auth.module.ts)
-
-**Entidades TypeORM:**
-| Entidad | Tabla Oracle | Campos principales |
-|---------|-------------|-------------------|
-| [UserEntity](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/entities/user.entity.ts) | `USUARIOS` | id, nombre, email, passwordHash, rol, estadoCuenta, plan (ManyToOne), perfiles (OneToMany) |
-| [PlanEntity](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/entities/plan.entity.ts) | `PLANES` | id, nombre, precioMensual, limitePerfiles |
-| [ProfileEntity](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/entities/profile.entity.ts) | `PERFILES` | id, nombre, avatar, tipoPerfil, usuario (ManyToOne) |
-
-**Estrategias Passport:**
-- [LocalStrategy](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/strategies/local.strategy.ts): Valida email + password contra Oracle con bcrypt
-- [JwtStrategy](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/strategies/jwt.strategy.ts): Extrae token Bearer y normaliza payload `{userId, email, role}`
-
-**Endpoints Auth** — [auth.controller.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/auth.controller.ts):
-
-| Método | Ruta | Guard | Descripción |
-|--------|------|-------|-------------|
-| POST | `/auth/login` | LocalAuth | Login con Passport local → JWT |
-| POST | `/auth/register` | — | Registro con plan + perfil inicial |
-| GET | `/auth/profile` | JwtAuth | Identidad autenticada |
-| GET | `/auth/profiles` | JwtAuth | Listar perfiles de la cuenta |
-| POST | `/auth/profiles` | JwtAuth | Crear perfil (valida límite plan) |
-| POST | `/auth/profiles/avatar` | JwtAuth | Upload avatar multipart (max 5MB) |
-| PATCH | `/auth/profiles/:id` | JwtAuth | Actualizar perfil |
-| DELETE | `/auth/profiles/:id` | JwtAuth | Eliminar perfil (mín 1 activo) |
-
-**Servicio Auth** — [auth.service.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/auth.service.ts) (470 líneas):
-- Implementa `OnModuleInit` para seed de admin configurable por env
-- Validación de credenciales con búsqueda case-insensitive (`UPPER()`)
-- Creación de perfil con doble validación: app-level + catch de `ORA-20011`
-- Resolución de URL pública de avatars con fallback a host del request
-
-### 4.3 Módulo Catalog — [catalog.module.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/catalog/catalog.module.ts)
-
-**Entidades:**
-| Entidad | Tabla | Relaciones |
-|---------|-------|------------|
-| [ContentEntity](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/catalog/entities/content.entity.ts) | `CONTENIDOS` | ManyToOne → Categoría, ManyToOne → empleadoPublicador |
-| [CategoryEntity](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/catalog/entities/category.entity.ts) | `CATEGORIAS` | OneToMany → Contenidos |
-
-**Endpoints Catalog** — [catalog.controller.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/catalog/catalog.controller.ts):
-
-| Método | Ruta | Guard | Autorización |
-|--------|------|-------|-------------|
-| GET | `/catalog/categories` | — | Público |
-| POST | `/catalog/categories` | JwtAuth | Solo admin/contenido |
-| GET | `/catalog/contents` | — | Público (filtros: tipo, categoría, clasificación, exclusivo) |
-| GET | `/catalog/contents/:id` | — | Público |
-| POST | `/catalog/contents` | JwtAuth | Solo admin/contenido |
-| PATCH | `/catalog/contents/:id` | JwtAuth | Solo admin/contenido |
-
-> [!NOTE]
-> El controller usa `assertCatalogEditorRole()` como guard manual inline en vez de un guard decorator dedicado.
-
-### 4.4 Módulo Playback — [playback.module.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/playback/playback.module.ts)
-
-**Entidades:**
-| Entidad | Tabla/Vista | Campos clave |
-|---------|------------|--------------|
-| `PlaybackEntity` | `REPRODUCCIONES` | perfil, contenido, progresoSegundos, duracionTotal, porcentajeAvance, estadoReproduccion |
-| `ContinueWatchingEntity` | `VW_CONTINUAR_VIENDO` | Vista Oracle read-only con ROW_NUMBER sobre reproducciones no finalizadas |
-
-**Endpoints Playback** — todos protegidos con `JwtAuthGuard`:
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/playback/start` | Iniciar reproducción (progreso = 0) |
-| POST | `/playback/progress` | Reportar avance/pausa/fin |
-| GET | `/playback/continue-watching` | Fila "Seguir viendo" por perfil |
-| GET | `/playback/history` | Historial completo por perfil |
-
-**Validaciones integradas:**
-- Ownership de perfil contra cuenta autenticada (`ensureProfileOwnership`)
-- Catch de ORA-20021 a ORA-20024 con mapeo a excepciones HTTP
-
-### 4.5 Módulo Community — [community.module.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/community/community.module.ts)
-
-**El módulo más complejo** — 826 líneas de servicio, 12 DTOs, 3 entidades.
-
-**Entidades:**
-| Entidad | Tabla |
-|---------|-------|
-| `FavoriteEntity` | `FAVORITOS` |
-| `RatingEntity` | `CALIFICACIONES` |
-| [ReportEntity](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/community/entities/report.entity.ts) | `REPORTES` — con relaciones a perfilReportador, contenido, usuarioModerador |
-
-**Endpoints Community** — todos protegidos con JWT:
-
-| Grupo | Método | Ruta | Descripción |
-|-------|--------|------|-------------|
-| Favoritos | POST | `/community/favorites` | Agregar a favoritos (idempotente) |
-| | DELETE | `/community/favorites/:contenidoId` | Quitar de favoritos |
-| | GET | `/community/favorites` | Listar favoritos por perfil |
-| | GET | `/community/favorites/status` | Estado de favorito (booleano) |
-| Calificaciones | POST | `/community/ratings` | Crear/actualizar calificación (upsert) |
-| | DELETE | `/community/ratings/:contenidoId` | Eliminar calificación |
-| | GET | `/community/ratings` | Listar calificaciones por perfil |
-| | GET | `/community/ratings/status` | Estado con puntaje y reseña |
-| Reportes | POST | `/community/reports` | Reportar contenido |
-| | GET | `/community/reports` | Mis reportes por perfil |
-| | GET | `/community/reports/moderation` | Bandeja de moderación (soporte/admin) |
-| | PATCH | `/community/reports/:id/moderation` | Moderar: cambiar estado + resolución |
-
-**Reglas de negocio notables:**
-- Favoritos: restricción de clasificación para perfiles infantiles (`+16`, `+18` bloqueados)
-- Calificaciones: Oracle trigger valida reproducción >50% antes de permitir calificación (ORA-20041)
-- Reportes: flujo de estados `ABIERTO → EN_REVISION → RESUELTO/DESCARTADO`
-- Moderación: doble validación de rol (JWT + base de datos)
-
-### 4.6 Contratos de API (View Types)
-
-Cada módulo define interfaces de contrato en `contracts/`:
-- `CatalogCategoryView`, `CatalogContentView`
-- `PlaybackEventView`, `ContinueWatchingView`, `PlaybackHistoryItemView`
-- `FavoriteItemView`, `FavoriteStatusView`, `RatingItemView`, `RatingStatusView`, `ReportItemView`
-
-Los servicios usan métodos `private map*()` para normalizar entidades a contratos.
-
-### 4.7 Calidad y Configuración Backend
-
-| Aspecto | Implementación |
-|---------|---------------|
-| **Validación** | `ValidationPipe` global con whitelist + transform + forbidUnknownValues |
-| **Seguridad HTTP** | Helmet (con cross-origin resource policy) + Compression |
-| **CORS** | Origen configurable con credentials |
-| **Logging** | nestjs-pino + pino-pretty |
-| **Lint** | ESLint + eslint-plugin-tsdoc + Prettier |
-| **Testing** | Jest + Supertest (3 archivos .spec.ts presentes) |
-| **Git Hooks** | Husky + lint-staged |
-| **Documentación** | TypeDoc + TSDoc en español obligatorio |
-| **API Docs** | Swagger en `/api/docs` con Bearer Auth |
-
----
-
-## 5. Capa Frontend (React + Vite)
-
-### 5.1 Estructura General
-
-```
-minflix-frontend/src/
-├── main.tsx                # Entry: StrictMode + QueryClient + BrowserRouter + App
-├── App.tsx                 # AppRouter + Toaster (react-hot-toast)
-├── index.css              # Sistema de diseño completo (30KB, paleta cinematica)
-├── App.css                # Estilos complementarios
-├── router/
-│   ├── AppRouter.tsx       # Rutas con guards anidados
-│   ├── RequireAuth.tsx     # Guard: exige JWT en localStorage
-│   └── RequireProfileSelection.tsx  # Guard: exige perfil activo
-├── pages/
-│   ├── HomePage.tsx        # Landing pública
-│   ├── LoginPage.tsx       # Formulario login (react-hook-form + zod)
-│   ├── RegisterPage.tsx    # Formulario registro con selección de plan
-│   ├── ProfileSelectorPage.tsx  # "¿Quién está viendo?" estilo Netflix
-│   ├── ProfilesPage.tsx    # CRUD de perfiles con upload de avatar
-│   ├── BrowsePage.tsx      # Catálogo principal (~950 líneas)
-│   ├── ContentDetailPage.tsx  # Detalle con favoritos, rating, reportes (~1005 líneas)
-│   └── ReportsModerationPage.tsx  # Bandeja de moderación para soporte/admin
-└── shared/
-    ├── api/client.ts       # Axios con interceptor JWT automático
-    ├── session/
-    │   ├── authSession.ts  # Decodifica JWT del localStorage para extraer userId/email/role
-    │   └── profileSession.ts  # Perfil activo en localStorage (get/save/clear)
-    ├── helpers/
-    │   ├── authFieldHelp.ts   # Textos de ayuda para campos ambiguos
-    │   ├── avatarUrl.ts       # Resolución de URL de avatar + iniciales fallback
-    │   └── plansCatalog.ts    # Catálogo estático de planes con beneficios
-    └── ui/
-        ├── AuthSplitLayout.tsx  # Layout split (hero + formulario) para login/registro
-        ├── PasswordInput.tsx    # Input con toggle ver/ocultar contraseña
-        └── buttonStyles.ts     # Clases CSS reutilizables para botones
-```
-
-### 5.2 Árbol de Rutas
+`main.ts` configura CORS, Helmet, compresión, Swagger, prefijo `/api/v1` y `ValidationPipe`. `app.module.ts` integra `AuthModule`, `CatalogModule`, `PlaybackModule`, `CommunityModule`, `FinanceModule`, `AnalyticsModule` y `ShowcaseModule`.
 
 ```mermaid
 graph TD
-    ROOT["/"] --> HOME["HomePage (público)"]
-    ROOT --> LOGIN["/login → LoginPage"]
-    ROOT --> REGISTER["/register → RegisterPage"]
-    
-    subgraph "RequireAuth guard"
-        PROFILES_SELECT["/profiles/select → ProfileSelectorPage"]
-        PROFILES_MANAGE["/profiles/manage → ProfilesPage"]
-        MODERATION["/moderation/reports → ReportsModerationPage"]
-        
-        subgraph "RequireProfileSelection guard"
-            BROWSE["/browse → BrowsePage"]
-            DETAIL["/browse/content/:contentId → ContentDetailPage"]
+    AppModule --> ConfigModule
+    AppModule --> TypeOrmModule
+    AppModule --> AuthModule
+    AppModule --> CatalogModule
+    AppModule --> PlaybackModule
+    AppModule --> CommunityModule
+    AppModule --> FinanceModule
+    AppModule --> AnalyticsModule
+    AppModule --> ShowcaseModule
+```
+
+### 5.2 Módulos backend
+
+| Módulo | Controller | Service | Responsabilidad |
+|---|---|---|---|
+| `AuthModule` | `AuthController` | `AuthService` | Registro, login, JWT, perfiles y avatar. |
+| `CatalogModule` | `CatalogController` | `CatalogService` | Categorías, contenidos, géneros, temporadas, episodios y relacionados. |
+| `PlaybackModule` | `PlaybackController` | `PlaybackService` | Inicio, progreso, historial y continuar viendo. |
+| `CommunityModule` | `CommunityController` | `CommunityService` | Favoritos, calificaciones, reportes y moderación. |
+| `FinanceModule` | `FinanceController` | `FinanceService` | Facturas, pagos simulados, referidos y resumen financiero. |
+| `AnalyticsModule` | `AnalyticsController` | `AnalyticsService` | Dashboards ejecutivos con vistas analíticas. |
+| `ShowcaseModule` | `ShowcaseController` | `ShowcaseService` | Demostración académica NT1..NT4 con SQL nativo. |
+
+### 5.3 `AuthModule`
+
+| Elemento | Detalle |
+|---|---|
+| **Entidades** | `UserEntity`, `PlanEntity`, `ProfileEntity`. |
+| **Seguridad** | `LocalStrategy`, `JwtStrategy`, `LocalAuthGuard`, `JwtAuthGuard`. |
+| **Función principal** | Autenticación, registro y perfiles. |
+
+| Método | Ruta | Seguridad | Descripción |
+|---|---|---|---|
+| `POST` | `/auth/login` | LocalAuth | Login con email/contraseña y generación de JWT. |
+| `POST` | `/auth/register` | Público | Registro de usuario y perfil inicial. |
+| `GET` | `/auth/profile` | JWT | Identidad autenticada. |
+| `GET` | `/auth/profiles` | JWT | Lista perfiles. |
+| `POST` | `/auth/profiles` | JWT | Crea perfil validando límite de plan. |
+| `POST` | `/auth/profiles/avatar` | JWT + multipart | Sube avatar. |
+| `PATCH` | `/auth/profiles/:profileId` | JWT | Actualiza perfil. |
+| `DELETE` | `/auth/profiles/:profileId` | JWT | Elimina perfil. |
+
+### 5.4 `CatalogModule`
+
+| Entidad | Tabla |
+|---|---|
+| `CategoryEntity` | `CATEGORIAS` |
+| `ContentEntity` | `CONTENIDOS` |
+| `GenreEntity` | `GENEROS` |
+| `ContentGenreEntity` | `CONTENIDOS_GENEROS` |
+| `SeasonEntity` | `TEMPORADAS` |
+| `EpisodeEntity` | `EPISODIOS` |
+| `RelatedContentEntity` | `CONTENIDOS_RELACIONADOS` |
+
+| Método | Ruta | Seguridad | Descripción |
+|---|---|---|---|
+| `GET` | `/catalog/categories` | Público | Lista categorías. |
+| `POST` | `/catalog/categories` | JWT + `admin/contenido` | Crea categoría. |
+| `GET` | `/catalog/contents` | Público | Lista contenidos con filtros. |
+| `GET` | `/catalog/contents/:contentId` | Público | Detalle de contenido. |
+| `POST` | `/catalog/contents` | JWT + `admin/contenido` | Crea contenido. |
+| `PATCH` | `/catalog/contents/:contentId` | JWT + `admin/contenido` | Actualiza contenido. |
+| `GET` | `/catalog/genres` | Público | Lista géneros. |
+| `GET` | `/catalog/contents/:contentId/genres` | Público | Géneros por contenido. |
+| `GET` | `/catalog/contents/:contentId/seasons` | Público | Temporadas. |
+| `GET` | `/catalog/seasons/:seasonId/episodes` | Público | Episodios. |
+| `GET` | `/catalog/contents/:contentId/related` | Público | Relacionados. |
+
+### 5.5 `PlaybackModule`
+
+| Entidad | Tabla/Vista | Descripción |
+|---|---|---|
+| `PlaybackEntity` | `REPRODUCCIONES` | Eventos de reproducción. |
+| `ContinueWatchingEntity` | `VW_CONTINUAR_VIENDO` | Vista para seguir viendo. |
+
+| Método | Ruta | Seguridad | Descripción |
+|---|---|---|---|
+| `POST` | `/playback/start` | JWT | Inicia reproducción. |
+| `POST` | `/playback/progress` | JWT | Reporta avance, pausa o finalización. |
+| `GET` | `/playback/continue-watching` | JWT | Lista contenidos no finalizados. |
+| `GET` | `/playback/history` | JWT | Historial de reproducción. |
+
+### 5.6 `CommunityModule`
+
+| Entidad | Tabla | Descripción |
+|---|---|---|
+| `FavoriteEntity` | `FAVORITOS` | Lista de favoritos por perfil. |
+| `RatingEntity` | `CALIFICACIONES` | Puntaje y reseña. |
+| `ReportEntity` | `REPORTES` | Reportes y moderación. |
+
+| Grupo | Método | Ruta | Descripción |
+|---|---|---|---|
+| Favoritos | `POST` | `/community/favorites` | Agregar favorito. |
+| Favoritos | `DELETE` | `/community/favorites/:contenidoId` | Quitar favorito. |
+| Favoritos | `GET` | `/community/favorites` | Listar favoritos. |
+| Favoritos | `GET` | `/community/favorites/status` | Estado de favorito. |
+| Calificaciones | `POST` | `/community/ratings` | Crear/actualizar rating. |
+| Calificaciones | `DELETE` | `/community/ratings/:contenidoId` | Eliminar rating. |
+| Calificaciones | `GET` | `/community/ratings` | Listar ratings. |
+| Calificaciones | `GET` | `/community/ratings/status` | Estado de rating. |
+| Reportes | `POST` | `/community/reports` | Crear reporte. |
+| Reportes | `GET` | `/community/reports` | Reportes propios. |
+| Moderación | `GET` | `/community/reports/moderation` | Bandeja de moderación. |
+| Moderación | `PATCH` | `/community/reports/:reporteId/moderation` | Moderar reporte. |
+
+### 5.7 `FinanceModule`
+
+| Entidad | Tabla | Descripción |
+|---|---|---|
+| `InvoiceEntity` | `FACTURACIONES` | Facturas. |
+| `PaymentEntity` | `PAGOS` | Pagos. |
+| `ReferralEntity` | `REFERIDOS` | Referidos y descuentos. |
+
+| Método | Ruta | Seguridad | Descripción |
+|---|---|---|---|
+| `GET` | `/finance/summary` | JWT | Resumen financiero. |
+| `GET` | `/finance/invoices` | JWT | Facturas. |
+| `GET` | `/finance/payments` | JWT | Pagos. |
+| `GET` | `/finance/referrals` | JWT | Referidos. |
+| `POST` | `/finance/payments/checkout` | JWT | Pago simulado. |
+
+### 5.8 `AnalyticsModule`
+
+| Método | Ruta | Vista Oracle | Descripción |
+|---|---|---|---|
+| `GET` | `/analytics/consumption` | `VW_ANALITICA_CONSUMO` | Consumo por dimensiones. |
+| `GET` | `/analytics/finance` | `VW_ANALITICA_FINANZAS` | Métricas financieras. |
+| `GET` | `/analytics/internal-performance` | `VW_ANALITICA_RENDIMIENTO` | Rendimiento interno. |
+
+Solo roles `admin` y `analista` pueden acceder.
+
+### 5.9 `ShowcaseModule`
+
+| Núcleo | Endpoints | Qué demuestra |
+|---|---|---|
+| NT1 | `/showcase/nt1/partitions`, `/materialized-views`, `/pivot-sample`, `/rollup-sample` | Particiones, MVs, PIVOT, ROLLUP. |
+| NT2 | `/showcase/nt2/cartera-vencida`, `/function-monto`, `/function-recommendation`, `/triggers` | Cursores, funciones y triggers. |
+| NT3 | `/showcase/nt3/atomic-demo`, `/savepoint-demo`, `/cascade-demo`, `/concurrency-locks`, `/sessions` | Transacciones y concurrencia. |
+| NT4 | `/showcase/nt4/indexes`, `/explain-plan-reference` | Índices y plan de ejecución. |
+
+---
+
+## 6. Frontend React/Vite
+
+### 6.1 Estructura general
+
+```text
+minflix-frontend/src/
+├── main.tsx
+├── App.tsx
+├── index.css
+├── router/
+│   ├── AppRouter.tsx
+│   ├── RequireAuth.tsx
+│   └── RequireProfileSelection.tsx
+├── pages/
+│   ├── HomePage.tsx
+│   ├── LoginPage.tsx
+│   ├── RegisterPage.tsx
+│   ├── ProfileSelectorPage.tsx
+│   ├── ProfilesPage.tsx
+│   ├── BrowsePage.tsx
+│   ├── ContentDetailPage.tsx
+│   ├── BillingPage.tsx
+│   ├── ReportsModerationPage.tsx
+│   ├── AnalyticsDashboardPage.tsx
+│   └── AcademicShowcasePage.tsx
+└── shared/
+    ├── api/
+    ├── helpers/
+    ├── session/
+    └── ui/
+```
+
+### 6.2 Rutas
+
+```mermaid
+graph TD
+    ROOT["/"] --> HOME["HomePage"]
+    ROOT --> LOGIN["/login"]
+    ROOT --> REGISTER["/register"]
+
+    subgraph AUTH["RequireAuth"]
+        SELECT["/profiles/select"]
+        MANAGE["/profiles/manage"]
+        BILLING["/account/billing"]
+        MODERATION["/moderation/reports"]
+        ANALYTICS["/analytics/dashboard"]
+        SHOWCASE["/academic-showcase"]
+
+        subgraph PROFILE["RequireProfileSelection"]
+            BROWSE["/browse"]
+            DETAIL["/browse/content/:contentId"]
         end
     end
-    
-    ROOT --> PROFILES_SELECT
-    ROOT --> PROFILES_MANAGE
-    ROOT --> MODERATION
-    ROOT --> BROWSE
-    ROOT --> DETAIL
 ```
 
-### 5.3 Gestión de Estado
+### 6.3 Páginas principales
 
-| Tipo | Mecanismo | Almacenamiento |
-|------|-----------|----------------|
-| **Autenticación** | JWT decodificado client-side (`authSession.ts`) | `localStorage["minflix_access_token"]` |
-| **Perfil Activo** | JSON serializado (`profileSession.ts`) | `localStorage["minflix_active_profile"]` |
-| **Server State** | `@tanstack/react-query` (QueryClient en main.tsx) | En memoria |
-| **Formularios** | `react-hook-form` + `zod` resolver | Estado local de componente |
-| **Notificaciones** | `react-hot-toast` (Toaster en App.tsx) | Efímero |
+| Página | Propósito | Endpoints principales |
+|---|---|---|
+| `HomePage` | Landing pública. | - |
+| `LoginPage` | Inicio de sesión. | `POST /auth/login` |
+| `RegisterPage` | Registro con plan y perfil inicial. | `POST /auth/register` |
+| `ProfileSelectorPage` | Selección de perfil. | `GET /auth/profiles` |
+| `ProfilesPage` | CRUD de perfiles y avatar. | `/auth/profiles`, `/auth/profiles/avatar` |
+| `BrowsePage` | Catálogo, continuar viendo, favoritos e historial. | `/catalog/*`, `/playback/*`, `/community/favorites` |
+| `ContentDetailPage` | Detalle, reproducción, rating, favoritos, reportes y relacionados. | `/catalog/*`, `/playback/start`, `/community/*` |
+| `BillingPage` | Facturación, pagos y referidos. | `/finance/*` |
+| `ReportsModerationPage` | Moderación soporte/admin. | `/community/reports/moderation` |
+| `AnalyticsDashboardPage` | Dashboards ejecutivos. | `/analytics/*` |
+| `AcademicShowcasePage` | Demostración NT1..NT4. | `/showcase/*` |
 
-### 5.4 Páginas Detalladas
+### 6.4 Estado y utilidades
 
-#### LoginPage / RegisterPage
-- Formularios validados con Zod schema
-- Login: `{email, password}` → `POST /auth/login` → guarda JWT → navega a `/profiles/select`
-- Registro: `{nombre, email, password, planNombre, nombrePerfilInicial}` → `POST /auth/register`
-- Ambas usan `AuthSplitLayout` con mensajes cinematicos y `PasswordInput` con toggle
-
-#### ProfileSelectorPage
-- Estilo "¿Quién está viendo?" tipo Netflix
-- Carga perfiles con `GET /auth/profiles`
-- Al seleccionar: `saveActiveProfile()` → navega a `/browse`
-- Animaciones con `framer-motion`
-
-#### ProfilesPage
-- **CRUD completo** de perfiles: crear, editar (inline), eliminar
-- Upload de avatar: `<input type="file">` → `POST /auth/profiles/avatar` (multipart) → URL en formulario
-- Vista previa de avatar cargado
-- Resumen visual: total, adultos, infantiles
-
-#### BrowsePage (~950 líneas)
-La vista principal más compleja del frontend:
-- **Hero panel**: contenido destacado (primer item del catálogo)
-- **Continua viendo**: fila horizontal con barra de progreso visual
-- **Mi lista (Favoritos)**: fila horizontal de contenidos guardados
-- **Actividad reciente**: grid de historial de reproducción
-- **Catálogo por categoría**: agrupado y filtrable por tipo, categoría y clasificación
-- **Navbar responsive**: hamburger menu con perfil activo, avatar, y acciones
-- Todas las tarjetas son clicables → navegan a `ContentDetailPage`
-
-#### ContentDetailPage (~1005 líneas)
-Vista de detalle con 6 secciones funcionales:
-1. **Hero de detalle**: título, sinopsis, badges, botones de acción
-2. **Reproducir ahora**: `POST /playback/start`
-3. **Favoritos**: toggle agregar/quitar con estado consultado al montar
-4. **Calificación**: 5 estrellas interactivas + textarea de reseña + upsert/delete
-5. **Reportar contenido**: selector de motivo + detalle opcional + historial de reportes previos
-6. **Contenido relacionado**: misma categoría, filtrado para excluir el actual
-
-#### ReportsModerationPage
-- Vista exclusiva para roles `admin` y `soporte`
-- Bandeja de reportes filtrable por estado
-- Acción de moderación: cambiar estado + escribir resolución
-
-### 5.5 API Client
-
-[client.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-frontend/src/shared/api/client.ts) configura axios con:
-- `baseURL`: `VITE_API_URL` o `http://localhost:3000/api/v1`
-- Timeout de 10s
-- Interceptor de request que inyecta `Authorization: Bearer <token>` automáticamente
-
-### 5.6 Diseño Visual
-
-- **Paleta**: cinematica con acentos rojos (#e50914) y dorados sobre fondo oscuro
-- **Tipografía**: Helvetica Neue / Helvetica / Arial
-- **Clases CSS** con prefijo `nf-` (Netflix-inspired): `nf-shell`, `nf-browse-*`, `nf-content-tile`, etc.
-- **Animaciones**: framer-motion con entrada escalonada (opacity + y-offset)
-- **Responsive**: hamburger menu con media queries
+| Archivo | Uso |
+|---|---|
+| `shared/api/client.ts` | Axios con `baseURL`, timeout e interceptor JWT. |
+| `shared/session/authSession.ts` | Decodifica token y obtiene usuario/rol. |
+| `shared/session/profileSession.ts` | Guarda perfil activo. |
+| `shared/helpers/avatarUrl.ts` | Resuelve avatars. |
+| `shared/helpers/plansCatalog.ts` | Catálogo visual de planes. |
+| `shared/ui/buttonStyles.ts` | Estilos reutilizables de botones. |
+| `shared/ui/components/DataTable.tsx` | Render de resultados tabulares. |
+| `index.css` | Sistema visual con clases `nf-`. |
 
 ---
 
-## 6. Documentación del Proyecto
+## 7. Consultas SQL por clase
 
-### 6.1 Archivos en `Docs/`
+### 7.1 Resumen
 
-| Archivo | Contenido |
-|---------|-----------|
-| [Enunciado.md](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/Docs/Enunciado.md) | Requerimientos académicos completos (14.6KB) |
-| [Epicas.md](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/Docs/Epicas.md) | 6 épicas INVEST con trazabilidad a roles y cobertura del enunciado |
-| [Plan_Desarrollo.md](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/Docs/Plan_Desarrollo.md) | Plan detallado de iteraciones (28.8KB) |
-| [Guia_Diseno_UI.md](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/Docs/Guia_Diseno_UI.md) | Paleta, tipografía y convenciones de diseño |
-| [Credenciales_Seed_Login.md](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/Docs/Credenciales_Seed_Login.md) | Usuarios de prueba con contraseñas para cada rol |
-| [Seed_Extra_Datos_Funcionales.md](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/Docs/Seed_Extra_Datos_Funcionales.md) | Documentación del dataset funcional de pruebas |
+| Tipo de acceso | Clases | Descripción |
+|---|---|---|
+| Repositorios TypeORM | `AuthService`, `CatalogService`, `PlaybackService`, `CommunityService`, `FinanceService` | CRUD y consultas sobre entidades. |
+| QueryBuilder | `AuthService`, `CatalogService`, `PlaybackService`, `CommunityService`, `FinanceService` | Filtros, joins y ordenamientos. |
+| SQL nativo | `AnalyticsService`, `ShowcaseService` | Consultas directas a vistas, diccionario Oracle, funciones y reportes académicos. |
 
-### 6.2 Épicas INVEST
+### 7.2 `AnalyticsService`
 
-| # | Épica | Estado Backend | Estado Frontend | Estado Oracle |
-|---|-------|----------------|-----------------|---------------|
-| 1 | Catálogo multiformato | ✅ Módulo `catalog` operativo | ✅ BrowsePage + filtros | ✅ Tablas + seed. Catálogo extendido (07) parcial |
-| 2 | Cuentas, planes y perfiles | ✅ AuthModule completo | ✅ Login, Register, Profiles CRUD | ✅ Triggers de límite |
-| 3 | Motor de reproducción | ✅ PlaybackModule completo | ✅ Continuar viendo + historial | ✅ Vista VW_CONTINUAR_VIENDO |
-| 4 | Comunidad (fav, ratings, reportes) | ✅ CommunityModule completo | ✅ Detalle + moderación | ✅ Triggers de regla 50% + moderación |
-| 5 | Finanzas | ❌ Sin módulo backend | ❌ Sin vistas | ✅ Tablas + triggers + SP |
-| 6 | Analítica | ❌ Sin módulo backend | ❌ Sin dashboards | ❌ Sin vistas materializadas |
+| Método | Vista | Qué hace |
+|---|---|---|
+| `getConsumption()` | `VW_ANALITICA_CONSUMO` | Consumo por ciudad, categoría, género, dispositivo, plan y mes. |
+| `getFinance()` | `VW_ANALITICA_FINANZAS` | Facturas, ingresos, cobrados, pendientes y usuarios facturados. |
+| `getInternalPerformance()` | `VW_ANALITICA_RENDIMIENTO` | Empleados, jefes y activos por departamento/cohorte. |
 
----
+Patrón técnico:
 
-## 7. Análisis de Tests
-
-| Archivo | Módulo | Líneas |
-|---------|--------|--------|
-| [auth.service.spec.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/auth/auth.service.spec.ts) | Auth | ~4.9KB |
-| [playback.service.spec.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/playback/playback.service.spec.ts) | Playback | ~8.8KB |
-| [community.service.spec.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/community/community.service.spec.ts) | Community | ~15.8KB |
-| [app.controller.spec.ts](file:///c:/Universidad/Noveno%20Semestre/Bases_II/MinFlix/minflix-backend/src/app.controller.spec.ts) | Root | ~0.7KB |
-
-> [!NOTE]
-> Solo existen tests unitarios para los servicios del backend con mocks de repositorios. No hay tests e2e funcionales ni tests de frontend (vitest configurado pero sin archivos de test).
-
----
-
-## 8. Hallazgos y Observaciones
-
-### 8.1 Dependencias Fuera de Lugar
-
-> [!WARNING]
-> El `package.json` del backend incluye dependencias que pertenecen al frontend:
-> - `lucide-react` (línea 44)
-> - `react-hot-toast` (línea 52)
->
-> Estas no causan errores en runtime pero ensucian el árbol de dependencias del backend.
-
-### 8.2 Patrón de Manejo de Errores Oracle
-
-El backend implementa un **patrón consistente** de catch de errores Oracle con código específico:
-```typescript
-if (this.isOracleBusinessRuleError(error, 'ORA-20011')) {
-  throw new BadRequestException('...');
-}
+```sql
+SELECT *
+FROM (
+  SELECT columnas
+  FROM VW_ANALITICA_CONSUMO
+  WHERE filtros_dinamicos
+  ORDER BY TOTAL_REPRODUCCIONES DESC
+)
+WHERE ROWNUM <= :limit
 ```
-Este patrón se repite en `AuthService`, `PlaybackService` y `CommunityService` — podría ser candidato a **refactorización** en un helper compartido o interceptor.
 
-### 8.3 Brechas Funcionales Identificadas
+Puntos para explicar:
 
-| Brecha | Detalle |
-|--------|---------|
-| **Épica 5 - Finanzas** | Las tablas Oracle existen pero **no hay módulo NestJS** ni vistas frontend |
-| **Épica 6 - Analítica** | Sin implementación en ninguna capa. Los scripts OLAP y vistas materializadas están pendientes |
-| **Catálogo extendido** | Tablas `GENEROS`, `TEMPORADAS`, `EPISODIOS`, `CONTENIDOS_RELACIONADOS` en Oracle pero **sin mapeo TypeORM** ni endpoints |
-| **Organización** | Tablas `DEPARTAMENTOS`, `EMPLEADOS` en Oracle sin representación en backend/frontend |
-| **Tests frontend** | Vitest configurado pero sin archivos de test |
-| **Refresh token** | Comentario en LoginPage: "En la siguiente iteración se moverá a un store seguro con refresh token" |
+- Usa `DataSource.query()`.
+- Construye filtros opcionales con bind parameters.
+- Convierte tipos Oracle con helpers `toNumber`, `toText` y `toNullableText`.
+- Solo roles `admin` y `analista` pueden consultar.
 
-### 8.4 Fortalezas
+### 7.3 `ShowcaseService`
 
-| Aspecto | Evaluación |
-|---------|-----------|
-| **Documentación TSDoc** | ✅ Excelente: todos los servicios, controladores y entidades documentados en español |
-| **Contratos de API** | ✅ Tipos de vista bien definidos como interfaz entre entidades y respuestas |
-| **Validación doble** | ✅ App-level (NestJS pipes + service) + DB-level (Oracle triggers) |
-| **Seguridad** | ✅ bcrypt, JWT, Helmet, CORS, ValidationPipe, roles por endpoint |
-| **UX del frontend** | ✅ Flujo Netflix-like completo: login → perfil → browse → detalle |
-| **Consistencia de SQL** | ✅ Scripts versionados y ordenados con dependencias claras |
-| **Swagger** | ✅ Todos los endpoints documentados con ApiOperation y ApiBearerAuth |
-| **Git hooks** | ✅ Husky + lint-staged para calidad pre-commit |
+| Método | SQL/Objeto | Núcleo | Qué demuestra |
+|---|---|---|---|
+| `getPartitions()` | `USER_TAB_PARTITIONS` | NT1 | Particiones de `REPRODUCCIONES`. |
+| `getMaterializedViews()` | `USER_MVIEWS` | NT1 | Vistas materializadas. |
+| `getPivotSample()` | `PIVOT` sobre `REPRODUCCIONES` | NT1 | Tabla cruzada por dispositivo/mes. |
+| `getRollupSample()` | `GROUP BY ROLLUP` sobre `FACTURACIONES` | NT1 | Subtotales y total general. |
+| `getCarteraVencida()` | `FACTURACIONES` + `USUARIOS` | NT2 | Cartera vencida tipo cursor. |
+| `getFunctionMonto()` | `FN_CALCULAR_MONTO` | NT2 | Función de monto con descuentos. |
+| `getFunctionRecommendation()` | `FN_CONTENIDO_RECOMENDADO` | NT2 | Recomendación PL/SQL. |
+| `getTriggers()` | `USER_TRIGGERS` | NT2 | Triggers del esquema. |
+| `getTransactionAtomicDemo()` | Usuarios, perfiles y facturas | NT3 | Atomicidad. |
+| `getTransactionSavepointDemo()` | Usuarios activos y facturas | NT3 | Savepoints. |
+| `getTransactionCascadeDemo()` | `UNION ALL` de entidades relacionadas | NT3 | Cascada/eliminación controlada. |
+| `getConcurrencyLocks()` | `GV$LOCK`, `GV$SESSION` | NT3 | Bloqueos. |
+| `getSessionInfo()` | `GV$SESSION` | NT3 | Sesiones activas. |
+| `getIndexes()` | `USER_INDEXES`, `USER_IND_COLUMNS` | NT4 | Índices creados. |
+| `getExplainPlanReference()` | Consulta de historial | NT4 | Referencia para `EXPLAIN PLAN`. |
+
+Ejemplo PIVOT:
+
+```sql
+SELECT *
+FROM (
+  SELECT NVL(ULTIMO_DISPOSITIVO, 'Sin dispositivo') AS DISPOSITIVO,
+         EXTRACT(MONTH FROM FECHA_INICIO) AS MES,
+         ID_REPRODUCCION
+  FROM REPRODUCCIONES
+)
+PIVOT (
+  COUNT(ID_REPRODUCCION)
+  FOR MES IN (1 AS MES_1, 2 AS MES_2, 3 AS MES_3, 4 AS MES_4,
+              5 AS MES_5, 6 AS MES_6, 7 AS MES_7, 8 AS MES_8,
+              9 AS MES_9, 10 AS MES_10, 11 AS MES_11, 12 AS MES_12)
+)
+ORDER BY DISPOSITIVO
+```
+
+Ejemplo ROLLUP:
+
+```sql
+SELECT PERIODO_ANIO,
+       PERIODO_MES,
+       SUM(MONTO_FINAL) AS INGRESOS_TOTALES,
+       COUNT(ID_FACTURACION) AS TOTAL_FACTURAS
+FROM FACTURACIONES
+GROUP BY ROLLUP(PERIODO_ANIO, PERIODO_MES)
+ORDER BY PERIODO_ANIO NULLS LAST, PERIODO_MES NULLS LAST
+```
+
+### 7.4 Otros servicios
+
+| Clase | Consultas que realiza | Propósito |
+|---|---|---|
+| `AuthService` | Usuario por email, plan, perfiles, creación de usuario/perfil. | Login, registro y perfiles. |
+| `CatalogService` | Categorías, contenidos con filtros, géneros, temporadas, episodios, relacionados. | Catálogo navegable. |
+| `PlaybackService` | Validación de perfil/contenido, inserción de reproducción, historial y `VW_CONTINUAR_VIENDO`. | Tracking y continuidad. |
+| `CommunityService` | Favoritos, calificaciones, reportes, bandeja de moderación. | Interacción social. |
+| `FinanceService` | Facturas, pagos, referidos y resumen financiero. | Estado de cuenta y pagos simulados. |
 
 ---
 
-## 9. Mapa de Archivos con Líneas de Código
+## 8. Flujos principales
 
-| Capa | Archivos | ~LOC totales |
-|------|----------|-------------|
-| Database scripts (14) | `.sql` | ~3,500+ |
-| Backend services (4) | `.service.ts` | ~1,960 |
-| Backend controllers (4) | `.controller.ts` | ~730 |
-| Backend entities (11) | `.entity.ts` | ~700 |
-| Backend DTOs (24) | `.dto.ts` | ~850 |
-| Backend specs (4) | `.spec.ts` | ~1,200 |
-| Frontend pages (8) | `.tsx` | ~3,800 |
-| Frontend shared (8) | `.ts/.tsx` | ~450 |
-| CSS | `index.css` + `App.css` | ~1,150 |
-| **Total estimado** | | **~14,300+** |
+### 8.1 Login
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Login as LoginPage
+    participant AuthApi as /auth/login
+    participant Local as LocalStrategy
+    participant AuthService
+    participant Oracle as USUARIOS
+
+    Usuario->>Login: Ingresa email y contraseña
+    Login->>AuthApi: POST /auth/login
+    AuthApi->>Local: Valida credenciales
+    Local->>AuthService: validateUser(email, password)
+    AuthService->>Oracle: Busca usuario por email
+    Oracle-->>AuthService: Usuario + hash
+    AuthService->>AuthService: bcrypt.compare
+    AuthService-->>AuthApi: userId, email, role
+    AuthApi-->>Login: accessToken
+    Login->>Login: Guarda JWT
+    Login-->>Usuario: Redirige a selección de perfil
+```
+
+### 8.2 Reproducción
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Detail as ContentDetailPage
+    participant Playback as PlaybackController
+    participant Service as PlaybackService
+    participant Oracle as REPRODUCCIONES
+
+    Usuario->>Detail: Clic en reproducir
+    Detail->>Playback: POST /playback/start
+    Playback->>Service: startPlayback
+    Service->>Oracle: Valida perfil y contenido
+    Oracle->>Oracle: Trigger valida edad/cuenta/progreso
+    Service->>Oracle: Inserta reproducción
+    Oracle-->>Service: Evento creado
+    Service-->>Detail: PlaybackEventView
+```
+
+### 8.3 Calificación
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Detail as ContentDetailPage
+    participant Community as CommunityController
+    participant Service as CommunityService
+    participant Oracle as CALIFICACIONES
+
+    Usuario->>Detail: Envía estrellas y reseña
+    Detail->>Community: POST /community/ratings
+    Community->>Service: upsertRating
+    Service->>Oracle: Inserta/actualiza calificación
+    Oracle->>Oracle: Trigger valida más del 50% visto
+    Oracle-->>Service: OK o error ORA-20041
+    Service-->>Detail: Resultado o mensaje de error
+```
+
+### 8.4 Pago simulado
+
+```mermaid
+sequenceDiagram
+    actor Usuario
+    participant Billing as BillingPage
+    participant Finance as FinanceController
+    participant Service as FinanceService
+    participant Oracle as FACTURACIONES/PAGOS
+
+    Usuario->>Billing: Diligencia pago
+    Billing->>Finance: POST /finance/payments/checkout
+    Finance->>Service: checkoutPayment
+    Service->>Oracle: Inserta pago simulado
+    Oracle->>Oracle: Trigger actualiza factura a PAGADA
+    Oracle-->>Service: Pago registrado
+    Service-->>Billing: Resultado
+```
+
+---
+
+## 9. Seguridad y reglas de negocio
+
+### 9.1 Seguridad por capa
+
+| Capa | Mecanismos |
+|---|---|
+| Frontend | `RequireAuth`, `RequireProfileSelection`, JWT en `localStorage`, perfil activo. |
+| Backend | `JwtAuthGuard`, `LocalAuthGuard`, Passport JWT/Local, DTOs, `ValidationPipe`, roles por endpoint. |
+| Oracle | Roles, grants, profile operativo, constraints, triggers y funciones. |
+
+### 9.2 Reglas principales
+
+| Regla | Dónde se valida | Explicación |
+|---|---|---|
+| Límite de perfiles | Backend + trigger Oracle | Depende del plan. |
+| Edad/clasificación | Backend + Oracle | Perfil infantil no debe ver contenido adulto. |
+| Cuenta activa | Playback + Oracle | Cuenta suspendida/morosa no reproduce. |
+| Progreso válido | Oracle | El avance no supera la duración. |
+| Rating después del 50% | Trigger Oracle | Evita calificaciones sin consumo real. |
+| Pago actualiza factura | Trigger Oracle | Pago exitoso cambia estado de factura. |
+| Moderación por rol | Backend + Oracle | Solo soporte/admin modera. |
+| Descuentos | PL/SQL | Referidos y fidelidad afectan monto final. |
+
+---
+
+## 10. Núcleos académicos NT1..NT4
+
+### 10.1 NT1 - Consultas avanzadas y almacenamiento
+
+| Tema | Implementación | Archivo/Clase |
+|---|---|---|
+| Particionamiento | `REPRODUCCIONES` por rango de `FECHA_INICIO`. | `17_analitica_nt1.sql`, `ShowcaseService.getPartitions()` |
+| Vistas materializadas | `MV_CALIFICACIONES_PROMEDIO`, `MV_METRICAS_FINANCIERAS`. | `17_analitica_nt1.sql` |
+| PIVOT | Reproducciones por dispositivo y mes. | `ShowcaseService.getPivotSample()` |
+| ROLLUP | Ingresos por año/mes. | `ShowcaseService.getRollupSample()` |
+| Vistas analíticas | `VW_ANALITICA_CONSUMO`, `VW_ANALITICA_FINANZAS`, `VW_ANALITICA_RENDIMIENTO`. | `AnalyticsService` |
+
+### 10.2 NT2 - PL/SQL
+
+| Tema | Implementación |
+|---|---|
+| Funciones | `FN_CALCULAR_MONTO`, `FN_CONTENIDO_RECOMENDADO`, `FN_CLASIFICACION_PERMITIDA_PARA_PERFIL`. |
+| Procedimientos | `SP_APLICAR_MORA_CUENTAS` y rutinas de negocio. |
+| Cursores | Procesamiento de cartera vencida. |
+| Excepciones | Errores `ORA-20xxx` capturados por backend. |
+| Triggers | Validaciones automáticas en tablas críticas. |
+
+### 10.3 NT3 - Transacciones y concurrencia
+
+| Tema | Implementación |
+|---|---|
+| Atomicidad | Usuario + perfil + factura como unidad lógica. |
+| Savepoints | Manejo de errores parciales. |
+| Rollback | Reversión ante errores. |
+| Locks | Consulta de `GV$LOCK`. |
+| Sesiones | Consulta de `GV$SESSION`. |
+
+### 10.4 NT4 - Índices y optimización
+
+| Tema | Implementación |
+|---|---|
+| Consulta pesada | Historial de reproducciones por perfil. |
+| Índice clave | `IDX_REPRODUCCIONES_PERFIL_FECHA_INICIO`. |
+| Justificación | La consulta filtra por perfil y ordena por fecha. |
+| Evidencia | `EXPLAIN PLAN` antes/después. |
+
+---
+
+## 11. Guía de sustentación
+
+### 11.1 Explicación de 2 minutos
+
+MinFlix es una plataforma de streaming desarrollada con React, NestJS y Oracle. El usuario puede registrarse, iniciar sesión, seleccionar un perfil, navegar contenido, reproducir, continuar viendo, guardar favoritos, calificar, reportar y pagar facturas simuladas. Además, roles administrativos pueden moderar reportes, consultar analítica y ejecutar un showcase académico.
+
+La parte fuerte es Oracle: la base implementa reglas de negocio con triggers y PL/SQL, seguridad con roles, analítica con vistas y optimización con índices. Así, el proyecto no solo muestra una aplicación funcionando, sino también conceptos avanzados de Bases de Datos II aplicados a un dominio real.
+
+### 11.2 Orden recomendado de demostración
+
+1. **Arquitectura:** explicar tres capas.
+2. **Login:** mostrar JWT y selección de perfil.
+3. **Catálogo:** navegar `/browse` y abrir detalle.
+4. **Reproducción:** iniciar contenido y explicar `REPRODUCCIONES`.
+5. **Comunidad:** favorito, rating y reporte.
+6. **Moderación:** bandeja de soporte/admin.
+7. **Finanzas:** factura y pago simulado.
+8. **Analítica:** dashboard ejecutivo.
+9. **Showcase:** ejecutar NT1, NT2, NT3 y NT4.
+
+### 11.3 Frases clave
+
+- "Oracle no es una base pasiva; protege reglas de negocio con triggers y PL/SQL."
+- "El backend separa controladores, servicios, DTOs, entidades y contratos."
+- "El frontend separa autenticación de selección de perfil como una plataforma de streaming real."
+- "Las consultas analíticas se hacen sobre vistas diseñadas en Oracle."
+- "El showcase conecta directamente los núcleos de Bases II con endpoints reales."
+- "La regla del 50% para calificar vive en Oracle para evitar inconsistencias."
+- "Los índices se justifican con una consulta pesada real del historial de reproducciones."
+
+---
+
+## 12. Preguntas probables
+
+### ¿Por qué NestJS?
+
+Porque organiza el backend en módulos, controladores, servicios, DTOs y guards. Esto permite separar claramente autenticación, catálogo, reproducción, comunidad, finanzas, analítica y showcase.
+
+### ¿Por qué Oracle?
+
+Porque permite demostrar conceptos avanzados de Bases de Datos II: PL/SQL, triggers, vistas materializadas, particiones, roles, índices, transacciones y consultas analíticas.
+
+### ¿Dónde están las reglas de negocio?
+
+En dos niveles: backend y Oracle. El backend valida DTOs, roles y ownership. Oracle aplica constraints, triggers, funciones y procedimientos.
+
+### ¿Qué pasa si alguien se salta el backend?
+
+Oracle sigue protegiendo reglas críticas como límite de perfiles, clasificación por edad, rating después del 50%, facturación y pagos.
+
+### ¿Qué clases tienen SQL nativo?
+
+Principalmente `AnalyticsService` y `ShowcaseService`. `AnalyticsService` consulta vistas `VW_ANALITICA_*`; `ShowcaseService` ejecuta consultas académicas NT1..NT4.
+
+### ¿Cómo se maneja la seguridad?
+
+Con guards de frontend, JWT en backend, Passport, roles por endpoint y roles/grants en Oracle.
+
+### ¿Cómo demuestran optimización?
+
+Con `20_indices_nt4.sql`: se identifica una consulta pesada, se analiza con `EXPLAIN PLAN`, se crea un índice compuesto y se compara el efecto esperado.
+
+### ¿Cuál es la diferencia entre `AnalyticsModule` y `ShowcaseModule`?
+
+`AnalyticsModule` es funcional para dashboards ejecutivos. `ShowcaseModule` es académico y demuestra NT1..NT4.
+
+---
+
+## 13. Mapa de archivos importantes
+
+### 13.1 Backend
+
+| Archivo | Importancia |
+|---|---|
+| `src/main.ts` | Bootstrap, Swagger, CORS, validación y seguridad HTTP. |
+| `src/app.module.ts` | Integra módulos funcionales. |
+| `src/config/database.config.ts` | Conexión Oracle con TypeORM. |
+| `src/auth/auth.controller.ts` | Login, registro y perfiles. |
+| `src/auth/auth.service.ts` | Lógica de auth y perfiles. |
+| `src/catalog/catalog.controller.ts` | Endpoints de catálogo. |
+| `src/catalog/catalog.service.ts` | Filtros y catálogo extendido. |
+| `src/playback/playback.service.ts` | Tracking e historial. |
+| `src/community/community.service.ts` | Favoritos, ratings y reportes. |
+| `src/finance/finance.service.ts` | Facturas, pagos y referidos. |
+| `src/analytics/analytics.service.ts` | SQL nativo sobre vistas analíticas. |
+| `src/showcase/showcase.service.ts` | SQL nativo NT1..NT4. |
+
+### 13.2 Frontend
+
+| Archivo | Importancia |
+|---|---|
+| `src/router/AppRouter.tsx` | Rutas públicas, privadas y protegidas por perfil. |
+| `src/pages/BrowsePage.tsx` | Catálogo principal. |
+| `src/pages/ContentDetailPage.tsx` | Detalle, reproducción y comunidad. |
+| `src/pages/BillingPage.tsx` | Facturación. |
+| `src/pages/AnalyticsDashboardPage.tsx` | Dashboards. |
+| `src/pages/AcademicShowcasePage.tsx` | Demostración NT1..NT4. |
+| `src/shared/api/client.ts` | Axios e interceptor JWT. |
+| `src/shared/session/authSession.ts` | Sesión JWT. |
+| `src/shared/session/profileSession.ts` | Perfil activo. |
+
+### 13.3 Base de datos
+
+| Archivo | Importancia |
+|---|---|
+| `database/run_all.sql` | Script maestro. |
+| `database/01_bootstrap_oracle_iteracion1.sql` | Usuarios, planes y perfiles. |
+| `database/04_reproducciones_iteracion2.sql` | Reproducciones y continuar viendo. |
+| `database/07_catalogo_extendido_iteracion4.sql` | Catálogo extendido. |
+| `database/09_finanzas_referidos_iteracion5.sql` | Finanzas. |
+| `database/11_seguridad_roles_nt5.sql` | Seguridad Oracle. |
+| `database/17_analitica_nt1.sql` | Analítica NT1. |
+| `database/18_plsql_nt2_completo.sql` | PL/SQL NT2. |
+| `database/19_transacciones_nt3.sql` | Transacciones NT3. |
+| `database/20_indices_nt4.sql` | Índices NT4. |
+| `database/21_validacion_cierre.sql` | Validación final. |
+
+---
+
+## 14. Conclusión
+
+MinFlix integra una aplicación web completa con una base de datos Oracle robusta. El frontend permite demostrar un producto usable, el backend organiza la API por dominios y Oracle evidencia los conceptos centrales de Bases de Datos II: modelo relacional, integridad, triggers, PL/SQL, transacciones, seguridad, analítica e indexación.
+
+Los puntos más fuertes para sustentar son:
+
+- Arquitectura clara de tres capas.
+- Backend modular con NestJS.
+- Frontend funcional tipo streaming.
+- Modelo relacional amplio y coherente.
+- Reglas de negocio en Oracle.
+- Analítica con vistas y consultas avanzadas.
+- Transacciones, concurrencia e índices.
+- Showcase académico conectado al frontend para demostrar NT1..NT4.
